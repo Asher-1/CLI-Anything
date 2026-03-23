@@ -47,6 +47,7 @@
 !/novita/
 !/ollama/
 !/browser/
+!/musescore/
 
 # Step 5: Inside each software dir, ignore everything (including dotfiles)
 /gimp/*
@@ -81,6 +82,8 @@
 /ollama/.*
 /browser/*
 /browser/.*
+/musescore/*
+/musescore/.*
 
 # Step 6: ...except agent-harness/
 !/gimp/agent-harness/
@@ -100,6 +103,7 @@
 !/novita/agent-harness/
 !/ollama/agent-harness/
 !/browser/agent-harness/
+!/musescore/agent-harness/
 
 # Step 7: Ignore build artifacts within allowed dirs
 **/__pycache__/
