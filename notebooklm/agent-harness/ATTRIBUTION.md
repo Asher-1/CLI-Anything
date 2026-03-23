@@ -5,8 +5,8 @@ This harness adapts the CLI-Anything methodology for NotebookLM.
 ## Acknowledgements
 
 - **CLI-Anything**
-  - Project: https://github.com/HKUDS/CLI-Anything
-  - Methodology: https://github.com/HKUDS/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md
+  - Project: https://github.com/Asher-1/CLI-Anything
+  - Methodology: https://github.com/Asher-1/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md
   - We follow its agent-native CLI conventions, including REPL-first design, JSON output, package layout, and test documentation patterns.
 
 - **notebooklm-py**

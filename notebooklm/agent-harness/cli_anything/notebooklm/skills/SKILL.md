@@ -72,7 +72,7 @@ cli-anything-notebooklm --json notebook list
 
 ## References
 
-- CLI-Anything: https://github.com/HKUDS/CLI-Anything
-- CLI-Anything HARNESS.md: https://github.com/HKUDS/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md
+- CLI-Anything: https://github.com/Asher-1/CLI-Anything
+- CLI-Anything HARNESS.md: https://github.com/Asher-1/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md
 - notebooklm-py: https://github.com/teng-lin/notebooklm-py
 - Google NotebookLM help: https://support.google.com/notebooklm/answer/16206563

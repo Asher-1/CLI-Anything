@@ -1,6 +1,6 @@
 {
   "meta": {
-    "repo": "https://github.com/HKUDS/CLI-Anything",
+    "repo": "https://github.com/Asher-1/CLI-Anything",
     "description": "CLI-Hub — Agent-native stateful CLI interfaces for softwares, codebases, and Web Services",
     "updated": "2026-03-18"
   },
@@ -12,7 +12,7 @@
       "description": "Generate docs, slides, websites and more via AnyGen cloud API",
       "requires": "ANYGEN_API_KEY",
       "homepage": "https://anygen.com",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=anygen/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=anygen/agent-harness",
       "entry_point": "cli-anything-anygen",
       "skill_md": "anygen/agent-harness/cli_anything/anygen/skills/SKILL.md",
       "category": "generation",
@@ -26,7 +26,7 @@
       "description": "DNS ad-blocking and network infrastructure management via AdGuardHome REST API",
       "requires": "AdGuardHome instance running",
       "homepage": "https://adguard.com/adguard-home/overview.html",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=adguardhome/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=adguardhome/agent-harness",
       "entry_point": "cli-anything-adguardhome",
       "skill_md": null,
       "category": "network",
@@ -40,12 +40,12 @@
       "description": "Audio editing and processing via sox",
       "requires": "sox (apt install sox)",
       "homepage": "https://www.audacityteam.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=audacity/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=audacity/agent-harness",
       "entry_point": "cli-anything-audacity",
       "skill_md": "audacity/agent-harness/cli_anything/audacity/skills/SKILL.md",
       "category": "audio",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "blender",
@@ -54,12 +54,12 @@
       "description": "3D modeling, animation, and rendering via blender --background --python",
       "requires": "blender",
       "homepage": "https://www.blender.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=blender/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=blender/agent-harness",
       "entry_point": "cli-anything-blender",
       "skill_md": "blender/agent-harness/cli_anything/blender/skills/SKILL.md",
       "category": "3d",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "browser",
@@ -68,7 +68,7 @@
       "description": "Browser automation via DOMShell MCP server. Maps Chrome's Accessibility Tree to a virtual filesystem for agent-native navigation.",
       "requires": "Node.js, npx, Chrome + DOMShell extension",
       "homepage": "https://github.com/apireno/DOMShell",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=browser/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=browser/agent-harness",
       "entry_point": "cli-anything-browser",
       "skill_md": "browser/agent-harness/cli_anything/browser/skills/SKILL.md",
       "category": "web",
@@ -82,7 +82,7 @@
       "description": "AI image generation workflow management via ComfyUI REST API",
       "requires": "ComfyUI running at http://localhost:8188",
       "homepage": "https://github.com/comfyanonymous/ComfyUI",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=comfyui/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=comfyui/agent-harness",
       "entry_point": "cli-anything-comfyui",
       "skill_md": null,
       "category": "ai",
@@ -96,7 +96,7 @@
       "description": "Diagram creation and export via draw.io CLI",
       "requires": "draw.io desktop app",
       "homepage": "https://www.drawio.com",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=drawio/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=drawio/agent-harness",
       "entry_point": "cli-anything-drawio",
       "skill_md": "drawio/agent-harness/cli_anything/drawio/skills/SKILL.md",
       "category": "diagrams",
@@ -110,12 +110,12 @@
       "description": "Raster image processing via gimp -i -b (batch mode)",
       "requires": "gimp (apt install gimp)",
       "homepage": "https://www.gimp.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=gimp/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness",
       "entry_point": "cli-anything-gimp",
       "skill_md": "gimp/agent-harness/cli_anything/gimp/skills/SKILL.md",
       "category": "image",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "inkscape",
@@ -124,12 +124,12 @@
       "description": "SVG vector graphics with export via inkscape --export-filename",
       "requires": "inkscape (apt install inkscape)",
       "homepage": "https://inkscape.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=inkscape/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=inkscape/agent-harness",
       "entry_point": "cli-anything-inkscape",
       "skill_md": "inkscape/agent-harness/cli_anything/inkscape/skills/SKILL.md",
       "category": "image",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "kdenlive",
@@ -138,12 +138,12 @@
       "description": "Video editing and rendering via melt",
       "requires": "melt (apt install melt)",
       "homepage": "https://kdenlive.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=kdenlive/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=kdenlive/agent-harness",
       "entry_point": "cli-anything-kdenlive",
       "skill_md": "kdenlive/agent-harness/cli_anything/kdenlive/skills/SKILL.md",
       "category": "video",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "libreoffice",
@@ -152,12 +152,12 @@
       "description": "Create and manipulate ODF documents, export to PDF/DOCX/XLSX/PPTX via headless mode",
       "requires": "libreoffice",
       "homepage": "https://www.libreoffice.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=libreoffice/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=libreoffice/agent-harness",
       "entry_point": "cli-anything-libreoffice",
       "skill_md": "libreoffice/agent-harness/cli_anything/libreoffice/skills/SKILL.md",
       "category": "office",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "mubu",
@@ -166,7 +166,7 @@
       "description": "Knowledge management and outlining via local Mubu desktop data",
       "requires": "Mubu desktop app",
       "homepage": "https://mubu.com",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=mubu/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=mubu/agent-harness",
       "entry_point": "cli-anything-mubu",
       "skill_md": "mubu/agent-harness/cli_anything/mubu/skills/SKILL.md",
       "category": "office",
@@ -180,7 +180,7 @@
       "description": "Mermaid Live Editor state files and renderer URLs",
       "requires": null,
       "homepage": "https://mermaid.js.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=mermaid/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=mermaid/agent-harness",
       "entry_point": "cli-anything-mermaid",
       "skill_md": null,
       "category": "diagrams",
@@ -194,7 +194,7 @@
       "description": "Experimental NotebookLM harness scaffold wrapping the installed notebooklm CLI for notebook, source, chat, artifact, download, and sharing workflows",
       "requires": "notebooklm CLI from notebooklm-py + valid local NotebookLM login session",
       "homepage": "https://notebooklm.google.com",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=notebooklm/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=notebooklm/agent-harness",
       "entry_point": "cli-anything-notebooklm",
       "skill_md": "notebooklm/agent-harness/cli_anything/notebooklm/skills/SKILL.md",
       "category": "ai",
@@ -208,12 +208,12 @@
       "description": "Local LLM inference and model management via Ollama REST API",
       "requires": "Ollama running at http://localhost:11434",
       "homepage": "https://ollama.com",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=ollama/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=ollama/agent-harness",
       "entry_point": "cli-anything-ollama",
       "skill_md": "ollama/agent-harness/cli_anything/ollama/skills/SKILL.md",
       "category": "ai",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "obs-studio",
@@ -222,12 +222,12 @@
       "description": "Create and manage streaming/recording scenes via command line",
       "requires": "obs-studio",
       "homepage": "https://obsproject.com",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=obs-studio/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=obs-studio/agent-harness",
       "entry_point": "cli-anything-obs-studio",
       "skill_md": "obs-studio/agent-harness/cli_anything/obs_studio/skills/SKILL.md",
       "category": "streaming",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "shotcut",
@@ -236,12 +236,12 @@
       "description": "Video editing and rendering via melt/ffmpeg",
       "requires": "melt (apt install melt), ffmpeg (apt install ffmpeg)",
       "homepage": "https://shotcut.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=shotcut/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=shotcut/agent-harness",
       "entry_point": "cli-anything-shotcut",
       "skill_md": "shotcut/agent-harness/cli_anything/shotcut/skills/SKILL.md",
       "category": "video",
       "contributor": "CLI-Anything-Team",
-      "contributor_url": "https://github.com/HKUDS/CLI-Anything"
+      "contributor_url": "https://github.com/Asher-1/CLI-Anything"
     },
     {
       "name": "zoom",
@@ -250,7 +250,7 @@
       "description": "Meeting management via Zoom REST API (OAuth2)",
       "requires": "Zoom account + OAuth app credentials",
       "homepage": "https://zoom.us",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=zoom/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=zoom/agent-harness",
       "entry_point": "cli-anything-zoom",
       "skill_md": "zoom/agent-harness/cli_anything/zoom/skills/SKILL.md",
       "category": "communication",
@@ -264,7 +264,7 @@
       "description": "Access AI models via Novita's OpenAI-compatible API (DeepSeek, GLM, MiniMax)",
       "requires": "NOVITA_API_KEY",
       "homepage": "https://novita.ai",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=novita/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=novita/agent-harness",
       "entry_point": "cli-anything-novita",
       "skill_md": "novita/agent-harness/cli_anything/novita/skills/SKILL.md",
       "category": "ai",
@@ -278,12 +278,26 @@
       "description": "CLI for music notation — transpose, export PDF/audio/MIDI, extract parts, manage instruments",
       "requires": "MuseScore 4 (musescore.org)",
       "homepage": "https://musescore.org",
-      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=musescore/agent-harness",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=musescore/agent-harness",
       "entry_point": "cli-anything-musescore",
       "skill_md": "musescore/agent-harness/cli_anything/musescore/skills/SKILL.md",
       "category": "music",
       "contributor": "tamvicky",
       "contributor_url": "https://github.com/tamvicky"
+    },
+    {
+      "name": "acloudviewer",
+      "display_name": "ACloudViewer",
+      "version": "2.0.0",
+      "description": "3D point cloud and mesh processing via ACloudViewer binary CLI and JSON-RPC",
+      "requires": "ACloudViewer binary on PATH or ACV_BINARY env var",
+      "homepage": "https://github.com/Asher-1/ACloudViewer",
+      "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=acloudviewer/agent-harness",
+      "entry_point": "cli-anything-acloudviewer",
+      "skill_md": "acloudviewer/agent-harness/cli_anything/acloudviewer/skills/SKILL.md",
+      "category": "3d",
+      "contributor": "Asher-1",
+      "contributor_url": "https://github.com/Asher-1"
     }
   ]
 }

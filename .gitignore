@@ -49,6 +49,7 @@
 !/ollama/
 !/browser/
 !/musescore/
+!/acloudviewer/
 
 # Step 5: Inside each software dir, ignore everything (including dotfiles)
 /gimp/*
@@ -87,6 +88,8 @@
 /browser/.*
 /musescore/*
 /musescore/.*
+/acloudviewer/*
+/acloudviewer/.*
 
 # Step 6: ...except agent-harness/
 !/gimp/agent-harness/
@@ -108,6 +111,7 @@
 !/ollama/agent-harness/
 !/browser/agent-harness/
 !/musescore/agent-harness/
+!/acloudviewer/agent-harness/
 
 # Step 7: Ignore build artifacts within allowed dirs
 **/__pycache__/

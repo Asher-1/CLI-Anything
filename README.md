@@ -5,13 +5,13 @@
 CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</strong><br>
 </p>
 
-**🌐 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)**: Browse & install all community CLIs in one place. Have a CLI for a new software? [Open a PR](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
+**🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: Browse & install all community CLIs in one place. Have a CLI for a new software? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="Quick Start"></a>
-  <a href="https://hkuds.github.io/CLI-Anything/"><img src="https://img.shields.io/badge/CLI_Hub-Browse_%26_Install-ff69b4?style=for-the-badge" alt="CLI Hub"></a>
-  <a href="#-demonstrations"><img src="https://img.shields.io/badge/Demos-16_Apps-green?style=for-the-badge" alt="Demos"></a>
-  <a href="#-test-results"><img src="https://img.shields.io/badge/Tests-1%2C839_Passing-brightgreen?style=for-the-badge" alt="Tests"></a>
+  <a href="https://asher-1.github.io/CLI-Anything/"><img src="https://img.shields.io/badge/CLI_Hub-Browse_%26_Install-ff69b4?style=for-the-badge" alt="CLI Hub"></a>
+  <a href="#-demonstrations"><img src="https://img.shields.io/badge/Demos-17_Apps-green?style=for-the-badge" alt="Demos"></a>
+  <a href="#-test-results"><img src="https://img.shields.io/badge/Tests-2%2C024_Passing-brightgreen?style=for-the-badge" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"></a>
 </p>
 
@@ -21,11 +21,13 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
   <img src="https://img.shields.io/badge/pytest-100%25_pass-brightgreen" alt="Pytest">
   <img src="https://img.shields.io/badge/coverage-unit_%2B_e2e-orange" alt="Coverage">
   <img src="https://img.shields.io/badge/output-JSON_%2B_Human-blueviolet" alt="Output">
-  <a href="https://github.com/HKUDS/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/Feishu-Group-E9DBFC?style=flat&logo=feishu&logoColor=white" alt="Feishu"></a>
-<a href="https://github.com/HKUDS/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/WeChat-Group-C5EAB4?style=flat&logo=wechat&logoColor=white" alt="WeChat"></a>
+  <a href="https://github.com/Asher-1/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/Feishu-Group-E9DBFC?style=flat&logo=feishu&logoColor=white" alt="Feishu"></a>
+<a href="https://github.com/Asher-1/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/WeChat-Group-C5EAB4?style=flat&logo=wechat&logoColor=white" alt="WeChat"></a>
 </p>
 
 **One Command Line**: Make any software agent-ready for OpenClaw, nanobot, Cursor, Claude Code, etc.&nbsp;&nbsp;[**中文文档**](README_CN.md) | [**日本語ドキュメント**](README_JA.md)
+
+**Note**: This repository is based on HKUDS and thanks to [HKUDS](https://github.com/HKUDS/CLI-Anything)
 
 <p align="center">
   <img src="assets/cli-typing.gif" alt="CLI-Anything typing demo" width="800">
@@ -41,7 +43,9 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 > Thanks to all invaluable efforts from the community! More updates continuously on the way everyday..
 
-- **2026-03-17** 🌐 Launched the **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command. Contributors can add new CLIs or update existing ones by simply opening a PR with a `registry.json` entry. The hub updates automatically on merge.
+- **2026-03-23** 🔬 Added [ACloudViewer](https://github.com/Asher-1/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 39 tools, 30+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 185 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
+
+- **2026-03-17** 🌐 Launched the **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command. Contributors can add new CLIs or update existing ones by simply opening a PR with a `registry.json` entry. The hub updates automatically on merge.
 
 - **2026-03-16** 🤖 Added **SKILL.md generation** (Phase 6.5) — every generated CLI now ships with an AI-discoverable skill definition inside the Python package. ReplSkin auto-detects the skill file after `pip install`, and the REPL banner displays the absolute path for agents. Includes `skill_generator.py`, Jinja2 template, `package_data` in all setup.py files, and 51 new tests.
 
@@ -83,7 +87,7 @@ CLI is the universal interface for both humans and AI agents:
 ### Prerequisites
 
 - **Python 3.10+**
-- Target software installed (e.g., GIMP, Blender, LibreOffice, or your own application)
+- Target software installed (e.g., ACloudViewer, GIMP, Blender, LibreOffice, or your own application)
 - A supported AI coding agent: [Claude Code](#-claude-code) | [OpenClaw](#-openclaw) | [OpenCode](#-opencode) | [Codex](#-codex) | [Qodercli](#-qodercli) | [GitHub Copilot CLI](#-github-copilot-cli) | [More Platforms](#-more-platforms-coming-soon)
 
 ### Pick Your Platform
@@ -97,7 +101,7 @@ CLI-Anything is distributed as a Claude Code plugin marketplace hosted on GitHub
 
 ```bash
 # Add the CLI-Anything marketplace
-/plugin marketplace add HKUDS/CLI-Anything
+/plugin marketplace add Asher-1/CLI-Anything
 ```
 
 **Step 2: Install the Plugin**
@@ -152,7 +156,7 @@ If you prefer not to use the marketplace:
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Copy plugin to Claude Code plugins directory
 cp -r CLI-Anything/cli-anything-plugin ~/.claude/plugins/cli-anything
@@ -176,7 +180,7 @@ Copy the CLI-Anything commands **and** `HARNESS.md` to your OpenCode commands di
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Global install (available in all projects)
 cp CLI-Anything/opencode-commands/*.md ~/.config/opencode/commands/
@@ -245,7 +249,7 @@ Once Goose is configured, start a session and use the same CLI-Anything commands
 **Step 1: Register the Plugin**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 bash CLI-Anything/qoder-plugin/setup-qodercli.sh
 ```
 
@@ -270,7 +274,7 @@ CLI-Anything provides a native OpenClaw `SKILL.md` file. Copy it to your OpenCla
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Install to the global skills folder
 mkdir -p ~/.openclaw/skills/cli-anything
@@ -297,7 +301,7 @@ Run the bundled installer:
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Install the skill
 bash CLI-Anything/codex-skill/scripts/install.sh
@@ -334,7 +338,7 @@ OpenCode commands, while keeping the generated Python harness format unchanged.
 **Step 1: Install the Plugin**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything
 copilot plugin install ./cli-anything-plugin
 ```
@@ -425,7 +429,7 @@ AI agents are great at reasoning but terrible at using real professional softwar
 | 💸 "UI automation breaks constantly" | No screenshots, no clicking, no RPA fragility. Pure command-line reliability with structured interfaces |
 | 📊 "Agents need structured data" | Built-in JSON output for seamless agent consumption + human-readable formats for debugging |
 | 🔧 "Custom integrations are expensive" | One Claude plugin auto-generates CLIs for ANY codebase through proven 7-phase pipeline |
-| ⚡ "Prototype vs Production gap" | 1,839+ tests with real software validation. Battle-tested across 16 major applications |
+| ⚡ "Prototype vs Production gap" | 2,024+ tests with real software validation. Battle-tested across 17 major applications |
 
 ---
 
@@ -676,12 +680,19 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td align="center">✅ 98</td>
 </tr>
 <tr>
+<td align="center"><strong>🔬 <a href="acloudviewer/agent-harness/">ACloudViewer</a></strong></td>
+<td>3D Point Cloud & Mesh Processing</td>
+<td><code>cli-anything-acloudviewer</code></td>
+<td>ACloudViewer binary CLI + JSON-RPC</td>
+<td align="center">✅ 185</td>
+</tr>
+<tr>
 <td align="center" colspan="4"><strong>Total</strong></td>
-<td align="center"><strong>✅ 1,839</strong></td>
+<td align="center"><strong>✅ 2,024</strong></td>
 </tr>
 </table>
 
-> **100% pass rate** across all 1,839 tests — 1,355 unit tests + 484 end-to-end tests.
+> **100% pass rate** across all 2,024 tests — 1,533 unit tests + 491 end-to-end tests.
 
 ---
 
@@ -715,8 +726,9 @@ notebooklm     21 passed  ✅   (21 unit + 0 e2e)
 comfyui        70 passed  ✅   (60 unit + 10 e2e)
 adguardhome    36 passed  ✅   (24 unit + 12 e2e)
 ollama         98 passed  ✅   (87 unit + 11 e2e)
+acloudviewer  185 passed  ✅   (178 unit + 7 e2e)
 ──────────────────────────────────────────────────────────────────────────────
-TOTAL        1,839 passed  ✅   100% pass rate
+TOTAL        2,024 passed  ✅   100% pass rate
 ```
 
 ---
@@ -783,7 +795,8 @@ cli-anything/
 ├── 🖼️ comfyui/agent-harness/            # ComfyUI CLI (70 tests)
 ├── 🧠 notebooklm/agent-harness/         # NotebookLM CLI (experimental, 21 tests)
 ├── 🛡️ adguardhome/agent-harness/       # AdGuard Home CLI (36 tests)
-└── 🦙 ollama/agent-harness/             # Ollama CLI (98 tests)
+├── 🦙 ollama/agent-harness/             # Ollama CLI (98 tests)
+└── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (185 tests)
 ```
 
 Each `agent-harness/` contains an installable Python package under `cli_anything.<software>/` with Click CLI, core modules, utils (including `repl_skin.py` and backend wrapper), and comprehensive tests.
@@ -906,7 +919,7 @@ The playbook distills key insights from successfully building all 16 diverse, pr
 
 ```bash
 # Add marketplace & install (recommended)
-/plugin marketplace add HKUDS/CLI-Anything
+/plugin marketplace add Asher-1/CLI-Anything
 /plugin install cli-anything
 
 # Build a CLI for any software with a codebase
@@ -988,11 +1001,11 @@ Each generated harness also includes:
 If CLI-Anything helps make your software Agent-native, give us a star! ⭐
 
 <div align="center">
-  <a href="https://star-history.com/#HKUDS/CLI-Anything&Date">
+  <a href="https://star-history.com/#Asher-1/CLI-Anything&Date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date" />
     </picture>
   </a>
 </div>
@@ -1009,7 +1022,7 @@ MIT License — free to use, modify, and distribute.
 
 **CLI-Anything** — *Make any software with a codebase Agent-native.*
 
-<sub>A methodology for the age of AI agents | 16 professional software demos | 1,839 passing tests</sub>
+<sub>A methodology for the age of AI agents | 17 professional software demos | 2,024 passing tests</sub>
 
 <br>
 
@@ -1019,5 +1032,5 @@ MIT License — free to use, modify, and distribute.
 
 <p align="center">
   <em> Thanks for visiting ✨ CLI-Anything!</em><br><br>
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=HKUDS.CLI-Anything&style=for-the-badge&color=00d4ff" alt="Views">
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=Asher-1.CLI-Anything&style=for-the-badge&color=00d4ff" alt="Views">
 </p>

@@ -247,7 +247,7 @@ First `npx` call downloads DOMShell package (10-50 MB). Subsequent calls are fas
 
 ## Architecture
 
-This CLI follows the [CLI-Anything harness methodology](https://github.com/HKUDS/CLI-Anything/tree/main/cli-anything-plugin/HARNESS.md):
+This CLI follows the [CLI-Anything harness methodology](https://github.com/Asher-1/CLI-Anything/tree/main/cli-anything-plugin/HARNESS.md):
 
 - **Backend**: DOMShell MCP server via stdio transport
 - **State**: Page state (URL, working directory, navigation history)
@@ -256,9 +256,9 @@ This CLI follows the [CLI-Anything harness methodology](https://github.com/HKUDS
 ## Links
 
 - [DOMShell GitHub](https://github.com/apireno/DOMShell)
-- [CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-- [Issue #90](https://github.com/HKUDS/CLI-Anything/issues/90)
+- [CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- [Issue #90](https://github.com/Asher-1/CLI-Anything/issues/90)
 
 ## License
 
-MIT License — See [CLI-Anything](https://github.com/HKUDS/CLI-Anything) for details.
+MIT License — See [CLI-Anything](https://github.com/Asher-1/CLI-Anything) for details.

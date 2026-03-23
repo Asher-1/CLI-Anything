@@ -25,7 +25,7 @@ Fixes #<!-- issue number -->
 - [ ] Unit tests at `cli_anything/<software>/tests/test_core.py` are present and pass without backend
 - [ ] E2E tests at `cli_anything/<software>/tests/test_full_e2e.py` are present
 - [ ] `README.md` includes the new software (with link to harness directory)
-- [ ] `registry.json` includes an entry for the new software (for the [CLI-Hub](https://hkuds.github.io/CLI-Anything/hub/))
+- [ ] `registry.json` includes an entry for the new software (for the [CLI-Hub](https://asher-1.github.io/CLI-Anything/hub/))
 - [ ] `repl_skin.py` in `utils/` is an unmodified copy from the plugin
 
 ### For Existing CLI Modifications

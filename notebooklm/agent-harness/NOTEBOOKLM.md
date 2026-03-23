@@ -39,6 +39,6 @@ This harness is designed to be safe for an upstream contribution review:
 
 ## References
 
-- CLI-Anything methodology: https://github.com/HKUDS/CLI-Anything
+- CLI-Anything methodology: https://github.com/Asher-1/CLI-Anything
 - notebooklm-py project: https://github.com/teng-lin/notebooklm-py
 - Google NotebookLM help: https://support.google.com/notebooklm/answer/16206563

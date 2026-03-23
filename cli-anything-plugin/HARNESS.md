@@ -480,7 +480,7 @@ def ls(path: str = "/") -> dict:
 
 **Example implementations:**
 - `browser/agent-harness` — DOMShell MCP server for browser automation
-- See: https://github.com/HKUDS/CLI-Anything/tree/main/browser/agent-harness
+- See: https://github.com/Asher-1/CLI-Anything/tree/main/browser/agent-harness
 
 ### Filter Translation Pitfalls
 
@@ -703,6 +703,7 @@ This same SOP applies to any GUI application:
 | Audacity | `sox` | .aup3 | `apt install sox` | Generate sox commands → sox processes audio |
 | OBS Studio | `obs-websocket` | scene.json | `apt install obs-studio` | WebSocket API → OBS captures/records |
 | Browser (DOMShell) | `npx @apireno/domshell` (MCP) | Accessibility Tree (virtual FS) | `npm install -g npx` (if needed) + Chrome ext | MCP SDK → DOMShell tools → filesystem navigation |
+| ACloudViewer | `ACloudViewer -SILENT -O ...` | .ply/.pcd/.obj/30+ formats | ACloudViewer binary + `ACV_BINARY` env | Binary CLI + JSON-RPC WebSocket → 3D point cloud/mesh processing |
 
 **The software is a required dependency, not optional.** The CLI generates valid
 intermediate files (ODF, MLT XML, bpy scripts, SVG) and hands them to the real

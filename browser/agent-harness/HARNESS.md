@@ -284,7 +284,7 @@ Complex pages may have thousands of accessible elements:
 - [DOMShell Benchmark](https://github.com/apireno/DOMShell/tree/main/experiments/claude_domshell_vs_cic)
 - [Chrome Accessibility Tree](https://developer.chrome.com/docs/accessibility/tree)
 - [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-- [CLI-Anything HARNESS.md](https://github.com/HKUDS/CLI-Anything/tree/main/cli-anything-plugin/HARNESS.md)
+- [CLI-Anything HARNESS.md](https://github.com/Asher-1/CLI-Anything/tree/main/cli-anything-plugin/HARNESS.md)
 
 ## Applying This Pattern
 

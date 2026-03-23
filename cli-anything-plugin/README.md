@@ -284,7 +284,8 @@ The cli-anything methodology has successfully built CLIs for:
 | OBS Studio | 153 | Streaming/recording (JSON scene collections) |
 | Kdenlive | 151 | Video editor (MLT XML) |
 | Shotcut | 144 | Video editor (MLT XML, ffmpeg) |
-| **Total** | **1,245** | All tests passing |
+| ACloudViewer | 31 | 3D point cloud/mesh processing (binary CLI + JSON-RPC) |
+| **Total** | **1,276** | All tests passing |
 
 ## Key Features
 

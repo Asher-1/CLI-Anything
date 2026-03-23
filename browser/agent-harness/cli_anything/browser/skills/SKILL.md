@@ -174,5 +174,5 @@ This avoids the 1-3 second cold start overhead for each command.
 ## Links
 
 - [DOMShell GitHub](https://github.com/apireno/DOMShell)
-- [CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-- [Issue #90](https://github.com/HKUDS/CLI-Anything/issues/90)
+- [CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- [Issue #90](https://github.com/Asher-1/CLI-Anything/issues/90)

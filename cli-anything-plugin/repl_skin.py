@@ -39,14 +39,15 @@ _LIGHT_GRAY = "\033[38;5;250m"
 
 # Software accent colors — each software gets a unique accent
 _ACCENT_COLORS = {
-    "gimp":        "\033[38;5;214m",   # warm orange
-    "blender":     "\033[38;5;208m",   # deep orange
-    "inkscape":    "\033[38;5;39m",    # bright blue
-    "audacity":    "\033[38;5;33m",    # navy blue
-    "libreoffice": "\033[38;5;40m",    # green
-    "obs_studio":  "\033[38;5;55m",    # purple
-    "kdenlive":    "\033[38;5;69m",    # slate blue
-    "shotcut":     "\033[38;5;35m",    # teal green
+    "gimp":          "\033[38;5;214m",   # warm orange
+    "blender":       "\033[38;5;208m",   # deep orange
+    "inkscape":      "\033[38;5;39m",    # bright blue
+    "audacity":      "\033[38;5;33m",    # navy blue
+    "libreoffice":   "\033[38;5;40m",    # green
+    "obs_studio":    "\033[38;5;55m",    # purple
+    "kdenlive":      "\033[38;5;69m",    # slate blue
+    "shotcut":       "\033[38;5;35m",    # teal green
+    "acloudviewer":  "\033[38;5;45m",    # bright teal
 }
 _DEFAULT_ACCENT = "\033[38;5;75m"      # default sky blue
 
@@ -512,6 +513,7 @@ _ANSI_256_TO_HEX = {
     "\033[38;5;35m":  "#00af5f",  # shotcut teal
     "\033[38;5;39m":  "#00afff",  # inkscape bright blue
     "\033[38;5;40m":  "#00d700",  # libreoffice green
+    "\033[38;5;45m":  "#00d7ff",  # acloudviewer bright teal
     "\033[38;5;55m":  "#5f00af",  # obs purple
     "\033[38;5;69m":  "#5f87ff",  # kdenlive slate blue
     "\033[38;5;75m":  "#5fafff",  # default sky blue

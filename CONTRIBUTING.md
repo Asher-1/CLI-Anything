@@ -14,7 +14,7 @@ Adding a new CLI harness is the most impactful contribution. Before submitting a
 2. **`SKILL.md`** — the AI-discoverable skill definition exists inside the Python package at `cli_anything/<software>/SKILL.md`.
 3. **Tests** — unit tests (`test_core.py`, passable without backend) and E2E tests (`test_full_e2e.py`) are present and passing.
 4. **`README.md`** — the project README includes the new software with a link to its harness directory.
-5. **`registry.json`** — add an entry for the new software so it appears on the [CLI-Hub](https://hkuds.github.io/CLI-Anything/hub/).
+5. **`registry.json`** — add an entry for the new software so it appears on the [CLI-Hub](https://asher-1.github.io/CLI-Anything/hub/).
 6. **`repl_skin.py`** — an unmodified copy from the plugin exists in `utils/`.
 
 ### B) New Features
@@ -35,7 +35,7 @@ Bug fixes resolve incorrect behavior in existing harnesses or the plugin.
 
 ## CLI-Hub & Registry
 
-All available CLIs are listed in `registry.json` at the repo root and displayed on the [CLI-Hub](https://hkuds.github.io/CLI-Anything/hub/). The hub reads `registry.json` directly from `main`, so it updates immediately when a PR is merged.
+All available CLIs are listed in `registry.json` at the repo root and displayed on the [CLI-Hub](https://asher-1.github.io/CLI-Anything/hub/). The hub reads `registry.json` directly from `main`, so it updates immediately when a PR is merged.
 
 ### Adding a new CLI to the Hub
 
@@ -48,7 +48,7 @@ Include an entry in `registry.json` as part of your PR. Each entry has this shap
   "version": "1.0.0",
   "description": "Short description of what the CLI does",
   "requires": "backend software or null",
-  "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=my-software/agent-harness",
+  "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=my-software/agent-harness",
   "entry_point": "cli-anything-my-software",
   "skill_md": "my-software/agent-harness/cli_anything/my_software/skills/SKILL.md",
   "category": "category-name"
@@ -69,7 +69,7 @@ Each generated CLI lives in `<software>/agent-harness/` and is an independent Py
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything
 
 # Install a harness in editable mode
@@ -126,4 +126,4 @@ python3 -m pytest cli_anything/<software>/tests/ -v
 
 ## Questions?
 
-If you have questions, feel free to open a [Discussion](https://github.com/HKUDS/CLI-Anything/discussions) or an issue tagged with `type: question`.
+If you have questions, feel free to open a [Discussion](https://github.com/Asher-1/CLI-Anything/discussions) or an issue tagged with `type: question`.

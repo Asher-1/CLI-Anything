@@ -9,7 +9,7 @@ setup(
     description="CLI harness for Mermaid Live Editor state files and renderer URLs",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     install_requires=[
         "click>=8.0.0",
