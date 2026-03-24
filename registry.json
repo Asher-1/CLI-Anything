@@ -146,6 +146,20 @@
       "contributor_url": "https://github.com/HKUDS/CLI-Anything"
     },
     {
+      "name": "krita",
+      "display_name": "Krita",
+      "version": "1.0.0",
+      "description": "Digital painting and raster image editing via Krita CLI export pipeline",
+      "requires": "krita (krita.org)",
+      "homepage": "https://krita.org",
+      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=krita/agent-harness",
+      "entry_point": "cli-anything-krita",
+      "skill_md": "krita/agent-harness/cli_anything/krita/skills/SKILL.md",
+      "category": "image",
+      "contributor": "AlexGabbia",
+      "contributor_url": "https://github.com/AlexGabbia"
+    },
+    {
       "name": "libreoffice",
       "display_name": "LibreOffice",
       "version": "1.0.0",
