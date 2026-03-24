@@ -153,6 +153,7 @@ class TestInstalledHarnesses:
         ("gimp", "gimp"),
         ("inkscape", "inkscape"),
         ("kdenlive", "kdenlive"),
+        ("krita", "krita"),
         ("libreoffice", "libreoffice"),
         ("mermaid", "mermaid"),
         ("mubu", "mubu"),

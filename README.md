@@ -45,16 +45,28 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 - **2026-03-23** 🔬 Added [ACloudViewer](https://github.com/Asher-1/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 39 tools, 30+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 185 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
 
+- **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-skill/SKILL.md`](cli-hub-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
+
+- **2026-03-22** 🎵 **MuseScore CLI** merged with transpose, export, and instrument management. Community contributions continue expanding domain coverage.
+
+- **2026-03-21** 🔧 Infrastructure improvements — refined test harnesses and documentation across multiple CLIs. Enhanced Windows compatibility for several backends.
+
+- **2026-03-20** 🌐 **Novita AI** CLI added for OpenAI-compatible API access. Registry metadata improvements for better hub discovery.
+
+- **2026-03-19** 📦 Package structure refinements across harnesses. Improved SKILL.md generation with better command documentation.
+
+- **2026-03-18** 🧪 Test coverage expansion — additional E2E scenarios and edge case validation across multiple CLIs.
+
 - **2026-03-17** 🌐 Launched the **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command. Contributors can add new CLIs or update existing ones by simply opening a PR with a `registry.json` entry. The hub updates automatically on merge.
+
+<details>
+<summary>Earlier news</summary>
 
 - **2026-03-16** 🤖 Added **SKILL.md generation** (Phase 6.5) — every generated CLI now ships with an AI-discoverable skill definition inside the Python package. ReplSkin auto-detects the skill file after `pip install`, and the REPL banner displays the absolute path for agents. Includes `skill_generator.py`, Jinja2 template, `package_data` in all setup.py files, and 51 new tests.
 
 - **2026-03-15** 🐾 Support for **OpenClaw** from the community! Merged Windows `cygpath` guard to ensure CLI-Anything works reliably in Windows bash environments. Community contributions continue to strengthen cross-platform support.
 
 - **2026-03-14** 🔒 Fixed a GIMP Script-Fu path injection vulnerability and added **Japanese README** translation. OpenCode version requirements documented alongside several Windows compatibility improvements.
-
-<details>
-<summary>Earlier news</summary>
 
 - **2026-03-13** 🔌 **Qodercli** plugin officially merged as a community contribution with dedicated setup scripts. Codex skill gained a Windows install script, and placeholder URLs were cleaned up across the project.
 
@@ -388,6 +400,34 @@ Each installed CLI ships with a [`SKILL.md`](#-skillmd-generation) inside the Py
 
 ---
 
+## 🤖 Empower Your Agents with CLI-Hub
+
+CLI-Hub lets agents autonomously discover and install the CLIs they need — zero human intervention required.
+
+**Agent-Native Catalog:** [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+
+CLI-Anything ships a **meta-skill** that lets any AI agent browse, pick, and install from the full catalog of community CLIs.
+
+**How it works:**
+
+1. Point your agent to the catalog: [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+2. The agent reads 20+ CLIs organized by category with one-line `pip install` commands
+3. The agent installs whichever CLI fits the task, then reads that CLI's own SKILL.md for detailed usage
+
+```bash
+# Example: agent needs to edit images
+# 1. Agent reads the hub skill, finds GIMP CLI under "Image"
+# 2. Agent runs:
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness
+# 3. Agent uses cli-anything-gimp --json for all operations
+```
+
+The meta-skill auto-updates whenever `registry.json` changes — new community CLIs show up automatically.
+
+> **For Claude Code users:** Copy [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md) into your project or skills directory. This meta-skill points to the live catalog at `https://asher-1.github.io/CLI-Anything/SKILL.txt` for automatic CLI discovery.
+
+---
+
 ## 💡 CLI-Anything's Vision: Building Agent-Native Software
 
 • 🌐 **Universal Access** - Every software becomes instantly agent-controllable through structured CLI.
@@ -687,12 +727,19 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td align="center">✅ 185</td>
 </tr>
 <tr>
+<td align="center"><strong>🎨 Sketch</strong></td>
+<td>UI Design</td>
+<td><code>sketch-cli</code></td>
+<td>sketch-constructor (Node.js)</td>
+<td align="center">✅ 19</td>
+</tr>
+<tr>
 <td align="center" colspan="4"><strong>Total</strong></td>
-<td align="center"><strong>✅ 2,024</strong></td>
+<td align="center"><strong>✅ 2,043</strong></td>
 </tr>
 </table>
 
-> **100% pass rate** across all 2,024 tests — 1,533 unit tests + 491 end-to-end tests.
+> **100% pass rate** across all 2,043 tests — 1,533 unit tests + 491 end-to-end tests + 19 Node.js tests.
 
 ---
 
@@ -727,8 +774,9 @@ comfyui        70 passed  ✅   (60 unit + 10 e2e)
 adguardhome    36 passed  ✅   (24 unit + 12 e2e)
 ollama         98 passed  ✅   (87 unit + 11 e2e)
 acloudviewer  185 passed  ✅   (178 unit + 7 e2e)
+sketch         19 passed  ✅   (19 jest, Node.js)
 ──────────────────────────────────────────────────────────────────────────────
-TOTAL        2,024 passed  ✅   100% pass rate
+TOTAL        2,043 passed  ✅   100% pass rate
 ```
 
 ---
@@ -796,7 +844,8 @@ cli-anything/
 ├── 🧠 notebooklm/agent-harness/         # NotebookLM CLI (experimental, 21 tests)
 ├── 🛡️ adguardhome/agent-harness/       # AdGuard Home CLI (36 tests)
 ├── 🦙 ollama/agent-harness/             # Ollama CLI (98 tests)
-└── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (185 tests)
+├── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (185 tests)
+└── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
 ```
 
 Each `agent-harness/` contains an installable Python package under `cli_anything.<software>/` with Click CLI, core modules, utils (including `repl_skin.py` and backend wrapper), and comprehensive tests.

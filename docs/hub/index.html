@@ -79,6 +79,27 @@
 
     .header-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+    .agent-skill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .agent-skill-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
     .cta {
       font-size: 0.95rem;
       color: var(--text-muted);
@@ -358,6 +379,12 @@
   <div class="header">
     <h1><span>CLI-</span><span style="color: #86868b;">Anything</span> <span>Hub</span></h1>
     <p class="tagline"><strong>Any software. Any codebase. Any Web API.</strong> Generate an agent-native CLI and let AI agents operate it &mdash; install with a single pip command.</p>
+    <div style="text-align: center; margin: 1.5rem 0;">
+      <a class="agent-skill-btn" href="./SKILL.txt" target="_blank">
+        🤖 Agent Catalog (SKILL.txt)
+      </a>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Feed this to your AI agent for autonomous CLI discovery & installation</p>
+    </div>
     <div class="header-links">
       <a class="header-btn" href="https://github.com/Asher-1/CLI-Anything" target="_blank">
         <svg viewBox="0 0 98 96" width="18" height="18" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6C29.304 70.25 17.9 66.013 17.9 47.02c0-5.52 1.94-10.046 5.127-13.58-.486-1.302-2.264-6.437.486-13.34 0 0 4.206-1.302 13.59 5.216 3.963-1.14 8.17-1.628 12.34-1.628 4.17 0 8.376.568 12.34 1.628 9.384-6.518 13.59-5.216 13.59-5.216 2.75 6.903.972 12.038.486 13.34 3.268 3.534 5.127 8.06 5.127 13.58 0 19.074-11.485 23.15-22.328 24.29 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"/></svg>

@@ -6,8 +6,10 @@ on:
       - main
     paths:
       - '*/agent-harness/**'
+      - 'registry.json'
       - '.github/workflows/deploy-pages.yml'
       - '.github/scripts/update_registry_dates.py'
+      - '.github/scripts/generate_meta_skill.py'
   workflow_dispatch:
 
 permissions:
@@ -35,6 +37,12 @@ jobs:
 
       - name: Generate registry dates
         run: python3 .github/scripts/update_registry_dates.py
+
+      - name: Generate meta-skill
+        run: python3 .github/scripts/generate_meta_skill.py
+
+      - name: Copy catalog as .txt to avoid Jekyll processing
+        run: cp cli-hub-skill/SKILL.md docs/hub/SKILL.txt
 
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1

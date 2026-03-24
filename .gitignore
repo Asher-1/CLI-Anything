@@ -28,6 +28,10 @@
 !/codex-skill/
 !/skill_generation/
 !/openclaw-skill/
+!/cli-hub-meta-skill/
+
+# Ignore cli-hub-skill (auto-generated, not tracked)
+/cli-hub-skill/
 
 # Step 4: Allow each software dir (top level only)
 !/gimp/
@@ -41,6 +45,7 @@
 !/shotcut/
 !/anygen/
 !/zoom/
+!/sketch/
 !/drawio/
 !/mermaid/
 !/comfyui/
@@ -49,7 +54,7 @@
 !/ollama/
 !/browser/
 !/musescore/
-!/acloudviewer/
+!/krita/
 
 # Step 5: Inside each software dir, ignore everything (including dotfiles)
 /gimp/*
@@ -74,6 +79,8 @@
 /anygen/.*
 /zoom/*
 /zoom/.*
+/sketch/*
+/sketch/.*
 /drawio/*
 /drawio/.*
 /mermaid/*
@@ -90,6 +97,8 @@
 /musescore/.*
 /acloudviewer/*
 /acloudviewer/.*
+/krita/*
+/krita/.*
 
 # Step 6: ...except agent-harness/
 !/gimp/agent-harness/
@@ -103,6 +112,7 @@
 !/shotcut/agent-harness/
 !/anygen/agent-harness/
 !/zoom/agent-harness/
+!/sketch/agent-harness/
 !/drawio/agent-harness/
 !/mermaid/agent-harness/
 !/comfyui/agent-harness/
@@ -112,6 +122,7 @@
 !/browser/agent-harness/
 !/musescore/agent-harness/
 !/acloudviewer/agent-harness/
+!/krita/agent-harness/
 
 # Step 7: Ignore build artifacts within allowed dirs
 **/__pycache__/
