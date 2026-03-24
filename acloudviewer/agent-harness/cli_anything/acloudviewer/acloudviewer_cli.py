@@ -32,6 +32,13 @@ from cli_anything.acloudviewer.utils.acloudviewer_backend import (
     ACloudViewerBackend, BackendError,
     POINT_CLOUD_FORMATS, MESH_FORMATS, IMAGE_FORMATS,
 )
+from cli_anything.acloudviewer.utils.installer import (
+    detect_platform, fetch_releases, get_latest_release,
+    find_matching_wheel, find_matching_app,
+    install_wheel, install_app,
+    check_installation, format_check_report,
+    InstallError, HOMEPAGE,
+)
 from cli_anything.acloudviewer.utils.repl_skin import ReplSkin
 
 # ── Global state ─────────────────────────────────────────────────────────
@@ -126,6 +133,83 @@ def handle_error(fn):
     return wrapper
 
 
+# ── Interactive install prompt ────────────────────────────────────────────
+
+def _prompt_install_if_missing(skin: ReplSkin) -> str | None:
+    """If binary not found, interactively offer to install. Returns binary path or None."""
+    binary = ACloudViewerBackend.find_binary()
+    if binary:
+        return binary
+
+    skin.warning("ACloudViewer binary not found!")
+    skin.info("")
+
+    if not click.confirm("  Would you like to install ACloudViewer now?", default=True):
+        skin.hint("You can install later with: cli-anything-acloudviewer install app")
+        skin.hint(f"Or download manually from: {HOMEPAGE}")
+        return None
+
+    channel_choices = {"1": "stable", "2": "beta"}
+    skin.info("")
+    skin.info("  Choose release channel:")
+    skin.info("    [1] stable  — Latest stable release (recommended)")
+    skin.info("    [2] beta    — Latest development build")
+    channel_input = click.prompt("  Select", type=click.Choice(["1", "2"]), default="1")
+    channel = channel_choices[channel_input]
+
+    plat = detect_platform()
+    gpu_choices = {"1": False, "2": True}
+    if plat.has_nvidia_gpu:
+        skin.info("")
+        skin.info("  NVIDIA GPU detected. Choose variant:")
+        skin.info("    [1] CUDA  — GPU-accelerated (larger download)")
+        skin.info("    [2] CPU   — CPU-only (smaller download)")
+        gpu_input = click.prompt("  Select", type=click.Choice(["1", "2"]), default="1")
+        cpu_only = gpu_choices[gpu_input]
+    else:
+        cpu_only = True
+
+    skin.info("")
+    try:
+        release = get_latest_release(channel=channel)
+        skin.info(f"  Release: {release.label}")
+
+        asset = find_matching_app(release, plat, cpu_only=cpu_only)
+        if not asset:
+            skin.error(f"  No matching installer for this platform.")
+            skin.hint(f"  Download manually from: {HOMEPAGE}")
+            return None
+
+        skin.info(f"  Package: {asset.name} ({asset.size_mb:.0f} MB)")
+
+        if not click.confirm("  Proceed with download and install?", default=True):
+            return None
+
+        result = install_app(asset)
+
+        if result.get("status") == "installed" and result.get("binary"):
+            skin.info("")
+            skin.info(f"  Installed! Binary: {result['binary']}")
+            skin.hint(f"  Tip: export ACV_BINARY={result['binary']}")
+            return result["binary"]
+
+        if result.get("status") == "downloaded":
+            skin.info("")
+            skin.info(f"  {result.get('message', 'Downloaded.')}")
+            return None
+
+        skin.warning(f"  Install result: {result.get('status', 'unknown')}")
+        return None
+
+    except InstallError as e:
+        skin.error(f"  Install failed: {e}")
+        skin.hint(f"  Download manually from: {HOMEPAGE}")
+        return None
+    except Exception as e:
+        skin.error(f"  Unexpected error: {e}")
+        return None
+
+
 # ── Main CLI group ───────────────────────────────────────────────────────
 
 @click.group(invoke_without_command=True)
@@ -146,12 +230,22 @@ def cli(ctx, use_json, mode, rpc_url):
     _backend = ACloudViewerBackend(mode=mode, rpc_url=rpc_url)
 
     if ctx.invoked_subcommand is None:
-        skin = ReplSkin("acloudviewer", version="2.0.0")
+        skin = ReplSkin("acloudviewer", version="3.0.0")
         skin.info(f"Mode: {_backend.mode}")
         if _backend.mode == "gui":
             skin.info(f"RPC: {rpc_url}")
+
         binary = ACloudViewerBackend.find_binary()
-        skin.info(f"Binary: {binary or 'not found'}")
+        if binary:
+            skin.info(f"Binary: {binary}")
+        elif not use_json:
+            installed = _prompt_install_if_missing(skin)
+            if installed:
+                _backend._binary = installed
+                skin.info(f"Binary: {installed}")
+        else:
+            skin.warning("Binary: not found")
+
         ctx.invoke(repl)
 
 
@@ -171,6 +265,182 @@ def cmd_info():
     }
     get_session().snapshot("info")
     output(info)
+
+
+# ── Check & Install ──────────────────────────────────────────────────────
+
+@cli.command("check")
+@handle_error
+def cmd_check():
+    """Check ACloudViewer installation status and suggest fixes."""
+    status = check_installation()
+    if _json_output:
+        output(status)
+    else:
+        click.echo(format_check_report(status))
+
+
+@cli.group("install")
+def install_group():
+    """Install ACloudViewer components (binary app or Python wheel)."""
+    pass
+
+
+@install_group.command("wheel")
+@click.option("--channel", type=click.Choice(["stable", "beta", "any"]),
+              default="stable", help="Release channel")
+@click.option("--cpu-only", is_flag=True, help="Install CPU-only variant")
+@click.option("--pip-args", default="", help="Extra args passed to pip install")
+@handle_error
+def install_wheel_cmd(channel, cpu_only, pip_args):
+    """Download and install the cloudViewer Python wheel."""
+    skin = ReplSkin("acloudviewer", version="3.0.0")
+    plat = detect_platform()
+
+    skin.info(f"Platform: {plat.os_id} {plat.os_version}, "
+              f"Python {plat.python_version[0]}.{plat.python_version[1]}, "
+              f"arch={plat.arch}")
+
+    try:
+        release = get_latest_release(channel=channel)
+    except InstallError as e:
+        skin.error(str(e))
+        return
+    skin.info(f"Release: {release.label}")
+
+    asset = find_matching_wheel(release, plat, cpu_only=cpu_only)
+    if not asset:
+        skin.error(
+            f"No matching wheel found for {plat.python_tag} / {plat.manylinux_tag}.\n"
+            f"  Visit {HOMEPAGE} to download manually."
+        )
+        return
+
+    skin.info(f"Package: {asset.name} ({asset.size_mb:.0f} MB)")
+
+    extra_args = pip_args.split() if pip_args else None
+    try:
+        result = install_wheel(asset, pip_args=extra_args)
+    except InstallError as e:
+        skin.error(str(e))
+        return
+
+    output(result, message="cloudViewer Python wheel installed successfully.")
+
+
+@install_group.command("app")
+@click.option("--channel", type=click.Choice(["stable", "beta", "any"]),
+              default="stable", help="Release channel")
+@click.option("--cpu-only", is_flag=True, help="CPU-only variant (smaller download)")
+@click.option("--install-dir", type=click.Path(), default=None,
+              help="Install location (default: ~/.local/share/ACloudViewer)")
+@click.option("--from-file", "local_file", type=click.Path(exists=True), default=None,
+              help="Install from a local .run/.dmg/.exe file instead of downloading")
+@handle_error
+def install_app_cmd(channel, cpu_only, install_dir, local_file):
+    """Download and install the ACloudViewer desktop application binary."""
+    skin = ReplSkin("acloudviewer", version="3.0.0")
+
+    if local_file:
+        from cli_anything.acloudviewer.utils.installer import install_app_from_file
+        from pathlib import Path as P
+        target = P(install_dir) if install_dir else None
+        try:
+            result = install_app_from_file(P(local_file), install_dir=target)
+        except InstallError as e:
+            skin.error(str(e))
+            return
+        output(result)
+        if result.get("binary"):
+            skin.info(f"export ACV_BINARY={result['binary']}")
+        return
+
+    plat = detect_platform()
+
+    skin.info(f"Platform: {plat.os_id} {plat.os_version}, arch={plat.arch}, "
+              f"NVIDIA GPU: {'yes' if plat.has_nvidia_gpu else 'no'}")
+
+    try:
+        release = get_latest_release(channel=channel)
+    except InstallError as e:
+        skin.error(str(e))
+        return
+    skin.info(f"Release: {release.label}")
+
+    asset = find_matching_app(release, plat, cpu_only=cpu_only)
+    if not asset:
+        skin.error(
+            f"No matching installer found for this platform.\n"
+            f"  Visit {HOMEPAGE} to download manually."
+        )
+        return
+
+    skin.info(f"Installer: {asset.name} ({asset.size_mb:.0f} MB)")
+
+    from pathlib import Path as P
+    target = P(install_dir) if install_dir else None
+    try:
+        result = install_app(asset, install_dir=target)
+    except InstallError as e:
+        skin.error(str(e))
+        return
+
+    output(result)
+
+    if result.get("binary"):
+        skin.info("Add to your shell profile for permanent use:")
+        skin.info(f"  export ACV_BINARY={result['binary']}")
+
+
+@install_group.command("auto")
+@click.option("--channel", type=click.Choice(["stable", "beta", "any"]),
+              default="stable", help="Release channel")
+@click.option("--cpu-only", is_flag=True, help="CPU-only variant")
+@handle_error
+def install_auto_cmd(channel, cpu_only):
+    """Auto-detect missing components and install them."""
+    skin = ReplSkin("acloudviewer", version="3.0.0")
+    plat = detect_platform()
+    status = check_installation()
+
+    if status["ready"] and status["python_package"]["found"]:
+        skin.info("Everything is already installed!")
+        output(status)
+        return
+
+    try:
+        release = get_latest_release(channel=channel)
+    except InstallError as e:
+        skin.error(str(e))
+        return
+    skin.info(f"Using release: {release.label}")
+
+    if not status["binary"]["found"]:
+        skin.section("Installing ACloudViewer binary...")
+        asset = find_matching_app(release, plat, cpu_only=cpu_only)
+        if asset:
+            try:
+                result = install_app(asset)
+                output(result)
+                if result.get("binary"):
+                    skin.info(f"Binary installed: {result['binary']}")
+                    skin.info(f"  export ACV_BINARY={result['binary']}")
+            except InstallError as e:
+                skin.error(f"App install failed: {e}")
+        else:
+            skin.warning(f"No matching app found. Visit {HOMEPAGE}")
+
+    if not status["python_package"]["found"]:
+        skin.section("Installing cloudViewer Python wheel...")
+        asset = find_matching_wheel(release, plat, cpu_only=cpu_only)
+        if asset:
+            try:
+                result = install_wheel(asset)
+                output(result)
+            except InstallError as e:
+                skin.error(f"Wheel install failed: {e}")
+        else:
+            skin.warning(f"No matching wheel found. Visit {HOMEPAGE}")
 
 
 # ── File operations ──────────────────────────────────────────────────────
@@ -217,7 +487,7 @@ def cmd_batch_convert(input_dir, output_dir, output_format, filter_ext):
 @handle_error
 def cmd_formats():
     """List all supported file formats."""
-    skin = ReplSkin("acloudviewer", version="2.0.0")
+    skin = ReplSkin("acloudviewer", version="3.0.0")
     if _json_output:
         output(ACloudViewerBackend.supported_formats())
     else:
@@ -853,7 +1123,7 @@ def repl(project_path):
     global _repl_mode
     _repl_mode = True
 
-    skin = ReplSkin("acloudviewer", version="2.0.0")
+    skin = ReplSkin("acloudviewer", version="3.0.0")
 
     if project_path:
         sess = get_session()
@@ -866,6 +1136,8 @@ def repl(project_path):
 
     _repl_commands = {
         "info":        "show backend info",
+        "check":       "check installation status",
+        "install":     "auto|app|wheel — install missing components",
         "open":        "open <file>",
         "convert":     "convert <in> <out>",
         "batch-convert": "batch-convert <dir-in> <dir-out> [-f .ply]",

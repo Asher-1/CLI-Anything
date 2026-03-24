@@ -31,7 +31,8 @@ from .rpc_client import ACloudViewerRPCClient, RPCError
 
 POINT_CLOUD_FORMATS = {
     ".ply", ".pcd", ".xyz", ".xyzn", ".xyzrgb", ".pts", ".txt", ".asc",
-    ".csv", ".las", ".laz", ".e57", ".ptx", ".bin", ".sbf", ".drc",
+    ".neu", ".csv", ".las", ".laz", ".e57", ".ptx", ".bin", ".sbf", ".drc",
+    ".vtk",
 }
 
 MESH_FORMATS = {
@@ -46,10 +47,21 @@ ALL_SUPPORTED_FORMATS = POINT_CLOUD_FORMATS | MESH_FORMATS | IMAGE_FORMATS | {
 }
 
 CLOUD_FORMAT_MAP = {
-    ".ply": "PLY", ".pcd": "PCD", ".xyz": "ASCII", ".pts": "PTS",
+    ".ply": "PLY", ".pcd": "PCD", ".pts": "ASC",
     ".las": "LAS", ".laz": "LAS", ".e57": "E57", ".bin": "BIN",
-    ".sbf": "SBF", ".asc": "ASCII", ".csv": "ASCII", ".txt": "ASCII",
-    ".drc": "DRC",
+    ".sbf": "SBF", ".drc": "DRC", ".vtk": "VTK",
+    ".asc": "ASC", ".xyz": "ASC", ".txt": "ASC", ".csv": "ASC",
+    ".xyzrgb": "ASC", ".xyzn": "ASC", ".neu": "ASC",
+}
+
+_FORMAT_ALIAS_EXTS: dict[str, list[str]] = {
+    ".xyz": [".xyz", ".asc"],
+    ".csv": [".csv", ".asc"],
+    ".txt": [".txt", ".asc"],
+    ".pts": [".pts", ".asc"],
+    ".xyzrgb": [".xyzrgb", ".asc"],
+    ".xyzn": [".xyzn", ".asc"],
+    ".neu": [".neu", ".asc"],
 }
 
 MESH_FORMAT_MAP = {
@@ -224,26 +236,166 @@ class ACloudViewerBackend:
 
     @staticmethod
     def get_version() -> str | None:
+        """Detect ACloudViewer version.
+
+        Priority: --version / -v flag > maintenancetool > .desktop > CHANGELOG.
+        """
         binary = ACloudViewerBackend.find_binary()
         if not binary:
             return None
-        try:
-            env = ACloudViewerBackend._build_env_for_binary(binary)
-            result = subprocess.run(
-                [binary, "--version"],
-                capture_output=True, text=True, timeout=10, env=env)
-            return result.stdout.strip() or result.stderr.strip()
-        except Exception:
-            return None
+
+        import re as _re
+        env = ACloudViewerBackend._build_env_for_binary(binary)
+
+        for flag in ("--version", "-v"):
+            try:
+                result = subprocess.run(
+                    [binary, flag],
+                    capture_output=True, text=True, timeout=10, env=env,
+                )
+                if result.returncode == 0:
+                    out = result.stdout.strip()
+                    m = _re.search(r"(\d+\.\d+\.\d+\S*)", out)
+                    if m:
+                        return m.group(1)
+                    if out:
+                        return out
+            except Exception:
+                pass
+
+        binary_dir = Path(binary).resolve().parent
+
+        mt = binary_dir / "maintenancetool"
+        if mt.exists():
+            try:
+                result = subprocess.run(
+                    [str(mt), "li"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                m = _re.search(
+                    r'name="ACloudViewer"[^>]*version="([^"]+)"',
+                    result.stdout,
+                )
+                if m:
+                    return m.group(1)
+            except Exception:
+                pass
+
+        desktop = binary_dir / "ACloudViewer.desktop"
+        if desktop.exists():
+            try:
+                for line in desktop.read_text().splitlines():
+                    if line.startswith("Version="):
+                        return line.split("=", 1)[1].strip()
+            except Exception:
+                pass
+
+        for name in ("CHANGELOG.txt", "CHANGELOG.md"):
+            changelog = binary_dir / name
+            if changelog.exists():
+                try:
+                    text = changelog.read_text(errors="replace")[:2000]
+                    m = _re.search(r"v?(\d+\.\d+\.\d+)", text)
+                    if m:
+                        return m.group(1)
+                except Exception:
+                    pass
+
+        return None
 
     def _ensure_binary(self) -> str:
         if self._binary:
             return self._binary
         self._binary = self.find_binary()
-        if not self._binary:
-            raise BackendError(
-                "ACloudViewer binary not found. Set ACV_BINARY env var or add to PATH.")
-        return self._binary
+        if self._binary:
+            return self._binary
+
+        import sys
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            self._binary = self._interactive_install()
+            if self._binary:
+                return self._binary
+
+        raise BackendError(
+            "ACloudViewer binary not found.\n"
+            "\n"
+            "Quick fix options:\n"
+            "  1. Auto-install:  cli-anything-acloudviewer install app\n"
+            "  2. Manual:        Download from https://asher-1.github.io/ACloudViewer/\n"
+            "  3. Already have it? Set: export ACV_BINARY=/path/to/ACloudViewer\n"
+            "\n"
+            "Run 'cli-anything-acloudviewer check' for full diagnostics."
+        )
+
+    def _interactive_install(self) -> str | None:
+        """Prompt user to install ACloudViewer when running interactively."""
+        from .installer import (
+            detect_platform, get_latest_release, find_matching_app,
+            install_app, InstallError, HOMEPAGE,
+        )
+
+        print("\n  ACloudViewer binary not found.")
+        try:
+            answer = input("  Install now? [Y/n] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            return None
+        if answer and answer not in ("y", "yes"):
+            return None
+
+        print("  Release channel:  [1] stable (recommended)  [2] beta")
+        try:
+            ch = input("  Select [1]: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return None
+        channel = "beta" if ch == "2" else "stable"
+
+        plat = detect_platform()
+        cpu_only = True
+        if plat.has_nvidia_gpu:
+            print("  NVIDIA GPU detected:  [1] CUDA (larger)  [2] CPU-only (smaller)")
+            try:
+                gv = input("  Select [1]: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                return None
+            cpu_only = (gv == "2")
+
+        try:
+            print("  Querying GitHub releases ...")
+            release = get_latest_release(channel=channel)
+            asset = find_matching_app(release, plat, cpu_only=cpu_only)
+            if not asset:
+                print(f"  No matching installer found for your platform.")
+                print(f"  Download manually from: {HOMEPAGE}")
+                return None
+
+            print(f"\n  Package: {asset.name} ({asset.size_mb:.0f} MB)")
+            print(f"  Release: {release.label}")
+            try:
+                confirm = input("  Download and install? [Y/n] ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                return None
+            if confirm and confirm not in ("y", "yes"):
+                return None
+
+            result = install_app(asset)
+            status = result.get("status", "")
+            if result.get("binary"):
+                binary = result["binary"]
+                print(f"\n  Installed successfully!")
+                print(f"  Binary: {binary}")
+                if result.get("hint"):
+                    print(f"  Hint:   {result['hint']}")
+                return binary
+            if result.get("message"):
+                print(f"  {result['message']}")
+
+        except InstallError as e:
+            print(f"\n  Install failed: {e}")
+            print(f"  Download manually from: {HOMEPAGE}")
+        except Exception as e:
+            print(f"\n  Error: {e}")
+
+        return None
 
     def _run_cli(self, args: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
         """Run ACloudViewer in CLI mode with -SILENT prefix."""
@@ -297,33 +449,39 @@ class ACloudViewerBackend:
             except RPCError:
                 pass  # fall through to binary CLI
 
-        is_cloud_in = in_ext in POINT_CLOUD_FORMATS
-        is_mesh_in = in_ext in MESH_FORMATS
-        is_cloud_out = out_ext in POINT_CLOUD_FORMATS
-        is_mesh_out = out_ext in MESH_FORMATS
+        can_cloud_in = in_ext in POINT_CLOUD_FORMATS
+        can_mesh_in = in_ext in MESH_FORMATS
+        can_cloud_out = out_ext in POINT_CLOUD_FORMATS
+        can_mesh_out = out_ext in MESH_FORMATS
+
+        cloud_fmt = CLOUD_FORMAT_MAP.get(out_ext)
+        mesh_fmt = MESH_FORMAT_MAP.get(out_ext)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
 
-            out_fmt_key = CLOUD_FORMAT_MAP.get(out_ext) or MESH_FORMAT_MAP.get(out_ext)
-
-            if is_cloud_in and is_cloud_out:
-                if out_fmt_key:
-                    args += ["-C_EXPORT_FMT", out_fmt_key]
+            if can_cloud_in and can_cloud_out:
+                if cloud_fmt:
+                    args += ["-C_EXPORT_FMT", cloud_fmt]
                 args += ["-SAVE_CLOUDS", "FILE", output_path]
-            elif is_mesh_in and is_mesh_out:
-                if out_fmt_key:
-                    args += ["-M_EXPORT_FMT", out_fmt_key]
+            elif can_mesh_in and can_mesh_out and not can_cloud_in:
+                if mesh_fmt:
+                    args += ["-M_EXPORT_FMT", mesh_fmt]
                 args += ["-SAVE_MESHES", "FILE", output_path]
-            elif is_mesh_in and is_cloud_out:
-                args += ["-SAMPLE_MESH", "POINTS", str(sample_points)]
-                if out_fmt_key:
-                    args += ["-C_EXPORT_FMT", out_fmt_key]
-                args += ["-SAVE_CLOUDS", "FILE", output_path]
-            elif is_cloud_in and is_mesh_out:
+            elif can_cloud_in and can_mesh_out:
                 args += ["-DELAUNAY"]
-                if out_fmt_key:
-                    args += ["-M_EXPORT_FMT", out_fmt_key]
+                fmt = mesh_fmt or cloud_fmt
+                if fmt:
+                    args += ["-M_EXPORT_FMT", fmt]
+                args += ["-SAVE_MESHES", "FILE", output_path]
+            elif can_mesh_in and can_cloud_out:
+                args += ["-SAMPLE_MESH", "POINTS", str(sample_points)]
+                if cloud_fmt:
+                    args += ["-C_EXPORT_FMT", cloud_fmt]
+                args += ["-SAVE_CLOUDS", "FILE", output_path]
+            elif can_mesh_in and can_mesh_out:
+                if mesh_fmt:
+                    args += ["-M_EXPORT_FMT", mesh_fmt]
                 args += ["-SAVE_MESHES", "FILE", output_path]
             else:
                 args += ["-SAVE_CLOUDS", "FILE", output_path]
@@ -334,10 +492,13 @@ class ACloudViewerBackend:
             out_dir = Path(output_path).parent
             out_stem = Path(output_path).stem
             in_stem = Path(input_path).stem
-            candidates = (
-                list(out_dir.glob(f"{out_stem}*{out_ext}"))
-                + list(out_dir.glob(f"{in_stem}*{out_ext}"))
-            )
+
+            search_exts = _FORMAT_ALIAS_EXTS.get(out_ext, [out_ext])
+            candidates = []
+            for ext in search_exts:
+                candidates += list(out_dir.glob(f"{out_stem}*{ext}"))
+                candidates += list(out_dir.glob(f"{in_stem}*{ext}"))
+
             seen = set()
             unique = []
             for c in candidates:

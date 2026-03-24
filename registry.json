@@ -316,10 +316,10 @@
     {
       "name": "acloudviewer",
       "display_name": "ACloudViewer",
-      "version": "2.0.0",
+      "version": "3.0.0",
       "description": "3D point cloud and mesh processing via ACloudViewer binary CLI and JSON-RPC",
       "requires": "ACloudViewer binary on PATH or ACV_BINARY env var",
-      "homepage": "https://github.com/Asher-1/ACloudViewer",
+      "homepage": "https://asher-1.github.io/ACloudViewer",
       "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=acloudviewer/agent-harness",
       "entry_point": "cli-anything-acloudviewer",
       "skill_md": "acloudviewer/agent-harness/cli_anything/acloudviewer/skills/SKILL.md",

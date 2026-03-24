@@ -272,6 +272,259 @@ class TestFormats:
             assert ext in IMAGE_FORMATS
 
 
+# ── Format Conversion Tests ──────────────────────────────────────
+
+class TestFormatConversion:
+    """Tests for convert_format dispatch logic (mocked binary)."""
+
+    @pytest.fixture
+    def backend(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
+        from unittest.mock import patch, MagicMock
+        b = ACloudViewerBackend.__new__(ACloudViewerBackend)
+        b._binary = "/mock/ACloudViewer"
+        b._mode = "headless"
+        b._rpc = None
+        return b
+
+    def _patch_run(self, backend, output_exists=True):
+        from unittest.mock import patch, MagicMock
+        import subprocess
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+
+        def side_effect(args, **kwargs):
+            if output_exists:
+                for i, a in enumerate(args):
+                    if a == "FILE" and i + 1 < len(args):
+                        Path(args[i + 1]).parent.mkdir(parents=True, exist_ok=True)
+                        Path(args[i + 1]).write_text("mock data")
+            return mock_result
+
+        return patch.object(backend, '_run_cli', side_effect=side_effect)
+
+    def test_cloud_to_cloud_ply_to_pcd(self, backend, tmp_path):
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.pcd"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        assert result["status"] == "converted"
+        args = mock_run.call_args[0][0]
+        assert "-C_EXPORT_FMT" in args
+        assert "PCD" in args
+        assert "-SAVE_CLOUDS" in args
+
+    def test_cloud_to_cloud_ply_to_asc(self, backend, tmp_path):
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.asc"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        assert result["status"] == "converted"
+        args = mock_run.call_args[0][0]
+        assert "-C_EXPORT_FMT" in args
+        assert "ASC" in args
+
+    def test_cloud_to_cloud_ply_to_xyz_uses_asc(self, backend, tmp_path):
+        """XYZ output should use ASC export format (ACloudViewer naming)."""
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.xyz"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        args = mock_run.call_args[0][0]
+        assert "ASC" in args
+
+    def test_cloud_to_cloud_ply_to_vtk(self, backend, tmp_path):
+        """VTK is in both cloud and mesh sets; cloud→cloud should take priority."""
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.vtk"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        args = mock_run.call_args[0][0]
+        assert "-C_EXPORT_FMT" in args
+        assert "VTK" in args
+        assert "-DELAUNAY" not in args
+
+    def test_cloud_to_mesh_ply_to_obj(self, backend, tmp_path):
+        """PLY (cloud) → OBJ (mesh) should trigger Delaunay."""
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.obj"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        args = mock_run.call_args[0][0]
+        assert "-DELAUNAY" in args
+        assert "-M_EXPORT_FMT" in args
+        assert "OBJ" in args
+        assert "-SAVE_MESHES" in args
+
+    def test_cloud_to_mesh_ply_to_stl(self, backend, tmp_path):
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.stl"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        args = mock_run.call_args[0][0]
+        assert "-DELAUNAY" in args
+        assert "STL" in args
+
+    def test_mesh_to_mesh_obj_to_stl(self, backend, tmp_path):
+        """OBJ (mesh-only) → STL should not trigger Delaunay."""
+        src = tmp_path / "in.obj"
+        src.write_text("mock")
+        dst = tmp_path / "out.stl"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        args = mock_run.call_args[0][0]
+        assert "-DELAUNAY" not in args
+        assert "-SAVE_MESHES" in args
+        assert "STL" in args
+
+    def test_mesh_to_cloud_obj_to_pcd(self, backend, tmp_path):
+        """OBJ → PCD should sample mesh to cloud."""
+        src = tmp_path / "in.obj"
+        src.write_text("mock")
+        dst = tmp_path / "out.pcd"
+        with self._patch_run(backend) as mock_run:
+            result = backend.convert_format(str(src), str(dst))
+        args = mock_run.call_args[0][0]
+        assert "-SAMPLE_MESH" in args
+        assert "-SAVE_CLOUDS" in args
+
+    def test_alias_lookup_xyz_finds_asc(self, backend, tmp_path):
+        """When .xyz output not found, should look for .asc alias."""
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.xyz"
+        asc_file = tmp_path / "out.asc"
+        asc_file.write_text("asc data")
+
+        with self._patch_run(backend, output_exists=False):
+            result = backend.convert_format(str(src), str(dst))
+
+        assert result["status"] == "converted"
+        assert dst.exists()
+
+    def test_alias_lookup_csv_finds_asc(self, backend, tmp_path):
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.csv"
+        asc_file = tmp_path / "out.asc"
+        asc_file.write_text("csv data")
+
+        with self._patch_run(backend, output_exists=False):
+            result = backend.convert_format(str(src), str(dst))
+
+        assert result["status"] == "converted"
+        assert dst.exists()
+
+    def test_format_map_asc_not_ascii(self):
+        """CLOUD_FORMAT_MAP must use 'ASC' not 'ASCII' for ACloudViewer CLI."""
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import CLOUD_FORMAT_MAP
+        for ext in (".asc", ".xyz", ".csv", ".txt"):
+            assert CLOUD_FORMAT_MAP[ext] == "ASC", f"{ext} should map to ASC, got {CLOUD_FORMAT_MAP[ext]}"
+
+    def test_vtk_in_both_format_sets(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import (
+            POINT_CLOUD_FORMATS, MESH_FORMATS, CLOUD_FORMAT_MAP, MESH_FORMAT_MAP,
+        )
+        assert ".vtk" in POINT_CLOUD_FORMATS
+        assert ".vtk" in MESH_FORMATS
+        assert CLOUD_FORMAT_MAP[".vtk"] == "VTK"
+        assert MESH_FORMAT_MAP[".vtk"] == "VTK"
+
+    def test_format_alias_exts_defined(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import _FORMAT_ALIAS_EXTS
+        assert ".xyz" in _FORMAT_ALIAS_EXTS
+        assert ".asc" in _FORMAT_ALIAS_EXTS[".xyz"]
+        assert ".csv" in _FORMAT_ALIAS_EXTS
+        assert ".asc" in _FORMAT_ALIAS_EXTS[".csv"]
+
+    def test_failed_conversion_returns_failed(self, backend, tmp_path):
+        src = tmp_path / "in.ply"
+        src.write_text("mock")
+        dst = tmp_path / "out.pcd"
+        with self._patch_run(backend, output_exists=False):
+            result = backend.convert_format(str(src), str(dst))
+        assert result["status"] == "failed"
+
+    def test_input_not_found_raises(self, backend):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError, match="Input not found"):
+            backend.convert_format("/nonexistent/file.ply", "/tmp/out.pcd")
+
+
+# ── Version Detection Tests ──────────────────────────────────────
+
+class TestVersionDetection:
+    def test_version_from_maintenancetool(self, tmp_path):
+        from unittest.mock import patch, MagicMock
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
+
+        resolved = tmp_path.resolve()
+        mt = resolved / "maintenancetool"
+        mt.write_text("#!/bin/sh\n")
+        mt.chmod(0o755)
+        binary = resolved / "ACloudViewer.sh"
+        binary.write_text("#!/bin/sh\n")
+        binary.chmod(0o755)
+
+        xml_output = '''<?xml version="1.0"?>
+<localpackages>
+    <package name="ACloudViewer" displayname="ACloudViewer" version="99.88.77"/>
+</localpackages>'''
+
+        def mock_run(cmd, **kwargs):
+            result = MagicMock()
+            result.stderr = ""
+            if str(mt) in cmd:
+                result.returncode = 0
+                result.stdout = xml_output
+            else:
+                result.returncode = 1
+                result.stdout = ""
+            return result
+
+        mod = "cli_anything.acloudviewer.utils.acloudviewer_backend"
+        with patch.object(ACloudViewerBackend, 'find_binary', return_value=str(binary)), \
+             patch(f'{mod}.subprocess.run', side_effect=mock_run):
+            ver = ACloudViewerBackend.get_version()
+        assert ver == "99.88.77"
+
+    def test_version_from_desktop_file(self, tmp_path):
+        from unittest.mock import patch, MagicMock
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
+
+        resolved = tmp_path.resolve()
+        binary = resolved / "ACloudViewer.sh"
+        binary.write_text("#!/bin/sh\n")
+        binary.chmod(0o755)
+        desktop = resolved / "ACloudViewer.desktop"
+        desktop.write_text("[Desktop Entry]\nVersion=11.22.33\nName=ACloudViewer\n")
+
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+
+        mod = "cli_anything.acloudviewer.utils.acloudviewer_backend"
+        with patch.object(ACloudViewerBackend, 'find_binary', return_value=str(binary)), \
+             patch(f'{mod}.subprocess.run', return_value=mock_result):
+            ver = ACloudViewerBackend.get_version()
+        assert ver == "11.22.33"
+
+    def test_version_no_binary(self):
+        from unittest.mock import patch
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
+        with patch.object(ACloudViewerBackend, 'find_binary', return_value=None):
+            assert ACloudViewerBackend.get_version() is None
+
+
 # ── Binary Discovery Tests ───────────────────────────────────────
 
 class TestBinaryDiscovery:

@@ -22,6 +22,33 @@ pip install cli-anything-acloudviewer
 - ACloudViewer binary on PATH or set `ACV_BINARY` env var
 - For reconstruction: Colmap binary on PATH or set `COLMAP_PATH` env var
 
+### Auto-Install ACloudViewer Binary
+
+If ACloudViewer is not installed, the CLI will **interactively prompt** you to download and install it. You can also use these commands:
+
+```bash
+# Check what's installed and what's missing
+cli-anything-acloudviewer check
+
+# Auto-install desktop app (detects platform, downloads from GitHub Releases)
+cli-anything-acloudviewer install app                    # CUDA version (if GPU detected)
+cli-anything-acloudviewer install app --cpu-only          # CPU-only (smaller download)
+cli-anything-acloudviewer install app --channel beta      # Latest beta build
+
+# Install from a local .run/.dmg/.exe file (no download needed)
+cli-anything-acloudviewer install app --from-file /path/to/ACloudViewer-*.run
+
+# Auto-detect missing components and install everything
+cli-anything-acloudviewer install auto
+
+# Optionally install cloudViewer Python package (for Python bindings)
+cli-anything-acloudviewer install wheel
+cli-anything-acloudviewer install wheel --cpu-only
+```
+
+Supported platforms: Ubuntu 18.04-24.04, macOS (ARM64/x86_64), Windows (x86_64).
+Download page: https://asher-1.github.io/ACloudViewer/
+
 ## Usage
 
 ### Basic Commands
@@ -57,6 +84,18 @@ cli-anything-acloudviewer
 | **Headless** | Subprocess: `ACloudViewer -SILENT -O ... -SS ...` | ACloudViewer binary |
 
 ## Command Groups
+
+### Check & Install
+
+Installation diagnostics and auto-install commands.
+
+| Command | Description |
+|---------|-------------|
+| `check` | Check installation status and suggest fixes |
+| `install app` | Download and install ACloudViewer desktop binary |
+| `install app --from-file` | Install from a local .run/.dmg/.exe file |
+| `install wheel` | Download and install cloudViewer Python wheel |
+| `install auto` | Auto-detect missing components and install them |
 
 ### File I/O
 

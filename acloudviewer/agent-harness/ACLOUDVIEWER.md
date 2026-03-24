@@ -61,6 +61,49 @@ When a bare binary (not `.sh`/`.bat`) is found, the backend automatically
 sets platform-appropriate library paths (`LD_LIBRARY_PATH` on Linux,
 `DYLD_LIBRARY_PATH` on macOS, `PATH` on Windows) and `PYTHONPATH`.
 
+### Auto-Install & Diagnostics (`utils/installer.py`)
+
+When the binary is not found, the CLI provides interactive installation
+guidance and automated download/install:
+
+```
+Binary not found ──→ Interactive TTY? ──yes──→ Prompt: Install now? [Y/n]
+                              │                     ├─→ Channel: stable / beta
+                              │                     ├─→ Variant: CUDA / CPU-only
+                              │                     └─→ Download + Qt IFW install
+                              │
+                              └── no (pipe/script) ──→ Raise BackendError with
+                                                       3 fix options + URLs
+```
+
+**Platform detection** (`detect_platform()`): Identifies OS, distro, version,
+arch, Python version, glibc version, and NVIDIA GPU presence.
+
+**Asset matching**: Queries GitHub Releases API, matches the correct installer
+(`.run`/`.dmg`/`.exe`) or Python wheel (`.whl`) based on platform info.
+
+**Installer formats supported**:
+
+| Format | Platform | Mechanism |
+|--------|----------|-----------|
+| `.run` (Qt IFW) | Linux | `<installer> in --accept-licenses --confirm-command --root <dir>` |
+| `.run` (makeself) | Linux | `<installer> --noexec --target <dir>` |
+| `.dmg` | macOS | `hdiutil attach` → run embedded Qt IFW installer |
+| `.exe` | Windows | `<installer> in --accept-licenses --confirm-command --root <dir>` |
+
+**CLI commands**:
+
+| Command | Description |
+|---------|-------------|
+| `check` | Diagnose installation status (text or JSON) |
+| `install app` | Download + install from GitHub (stable/beta, CUDA/CPU) |
+| `install app --from-file <path>` | Silent install from local `.run`/`.dmg`/`.exe` |
+| `install wheel` | Download + install `cloudViewer` Python package |
+| `install auto` | Detect and install all missing components |
+
+**Download strategy**: Prefers `curl` (with retry/progress) > `wget` > `urllib`
+fallback, to handle slow or unreliable GitHub CDN connections.
+
 ## Core Domains
 
 | Domain | Module | Key Operations |
@@ -187,10 +230,11 @@ This ensures operations succeed regardless of whether the GUI is running.
 
 ## Testing Strategy
 
-Five-level test suite covering progressively deeper integration:
+Six-level test suite covering progressively deeper integration:
 
 | Level | Tests | What | Needs |
 |-------|-------|------|-------|
+| 0 | Installer | Platform detection, asset matching, download, Qt IFW (61 tests, fully mocked) | None |
 | 1 | C++ source | Dispatch table, header declarations, build | cmake (optional) |
 | 2 | CLI harness | `--help`, subcommands, JSON output, session | CLI installed |
 | 3 | Headless processing | subsample, normals, formats, binary load | ACloudViewer binary |

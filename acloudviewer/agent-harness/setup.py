@@ -34,7 +34,7 @@ setup(
     project_urls={
         "Source": "https://github.com/Asher-1/CLI-Anything",
         "Tracker": "https://github.com/Asher-1/CLI-Anything/issues",
-        "ACloudViewer": "https://github.com/Asher-1/ACloudViewer",
+        "ACloudViewer": "https://asher-1.github.io/ACloudViewer/",
     },
 
     license="MIT",

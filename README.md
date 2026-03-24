@@ -43,7 +43,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 > Thanks to all invaluable efforts from the community! More updates continuously on the way everyday..
 
-- **2026-03-23** 🔬 Added [ACloudViewer](https://github.com/Asher-1/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 39 tools, 30+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 185 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
+- **2026-03-23** 🔬 Added [ACloudViewer](https://asher-1.github.io/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 39 tools, 30+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 185 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
 
 - **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-skill/SKILL.md`](cli-hub-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
 
