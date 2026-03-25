@@ -24,22 +24,18 @@ python -m pytest cli_anything/acloudviewer/tests/test_e2e.py -v
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
 
-## Results
+## Test Coverage (310 tests)
 
-```
-test_core.py::TestSession::test_empty                  PASSED
-test_core.py::TestSession::test_snapshot_undo_redo      PASSED
-test_core.py::TestFormats::test_ply_in_both            PASSED
-test_core.py::TestFormats::test_common_extensions      PASSED
-test_core.py::TestFormats::test_all_is_superset        PASSED
-test_core.py::TestFormats::test_supported_formats_static PASSED
-test_core.py::TestBinaryDiscovery::test_find_binary     PASSED
-test_core.py::TestBinaryDiscovery::test_acv_binary_env  PASSED
-test_cli.py::TestCLIHelp::test_help                    PASSED
-test_cli.py::TestCLIHelp::test_subcommand_help[...]    PASSED (x9)
-test_cli.py::TestCLIHelp::test_process_subcommands    PASSED
-test_cli.py::TestHeadlessMode::test_info               PASSED
-test_cli.py::TestHeadlessMode::test_session_status     PASSED
-test_cli.py::TestHeadlessMode::test_formats            PASSED
-test_e2e.py (requires ACloudViewer binary)             SKIPPED or PASSED
-```
+| File | Test Classes | Count |
+|------|-------------|-------|
+| `test_core.py` | Session, Scene, Formats, FormatConversion, VersionDetection, BinaryDiscovery, ColmapBackend, RPCClient, BackendMode | ~85 |
+| `test_utils.py` | RPCClientCall, RPCClientConvenience, RPCClientNewWrappers, BackendOpenFile, BackendExportFile, BackendSceneOps, BackendGUIOnly (incl. new SF/mesh/colmap methods), BackendRunCLI, BackendConvertFormat, BackendBatchConvert, BackendProcessing, BackendSIBR, ColmapRun, ColmapBinaryDiscovery, ColmapArgConstruction, ReplSkin | ~141 |
+| `test_cli.py` | CLIHelp, SubcommandHelp, ProcessSubcommands, SessionHistory, HeadlessMode | ~70 |
+| `test_installer.py` | Installer commands (check, install) | ~5 |
+| `test_e2e.py` | E2E with real ACloudViewer binary (skipped if not installed) | ~9 |
+
+### New tests added for extended RPC capabilities
+
+- `TestRPCClientNewWrappers`: 15 tests for new RPC convenience methods (cloud SF management, cloud geometry, mesh operations, colmap.run)
+- `TestBackendGUIOnly` (extended): 15 new tests verifying all new GUI-only methods correctly raise `BackendError` in headless mode
+- `test_call_raises_on_error_with_data`: Verifies RPCError includes structured `data` field from error responses

@@ -111,21 +111,21 @@ def handle_error(fn):
             return fn(*args, **kwargs)
         except BackendError as e:
             if _json_output:
-                click.echo(json.dumps({"error": str(e), "type": "backend_error"}))
+                click.echo(json.dumps({"error": str(e), "type": "backend_error", "status": "failed"}))
             else:
                 click.echo(f"Error: {e}", err=True)
             if not _repl_mode:
                 sys.exit(1)
         except FileNotFoundError as e:
             if _json_output:
-                click.echo(json.dumps({"error": str(e), "type": "file_not_found"}))
+                click.echo(json.dumps({"error": str(e), "type": "file_not_found", "status": "failed"}))
             else:
                 click.echo(f"Error: {e}", err=True)
             if not _repl_mode:
                 sys.exit(1)
         except (ValueError, IndexError, RuntimeError) as e:
             if _json_output:
-                click.echo(json.dumps({"error": str(e), "type": type(e).__name__}))
+                click.echo(json.dumps({"error": str(e), "type": type(e).__name__, "status": "failed"}))
             else:
                 click.echo(f"Error: {type(e).__name__}: {e}", err=True)
             if not _repl_mode:
@@ -230,7 +230,7 @@ def cli(ctx, use_json, mode, rpc_url):
     _backend = ACloudViewerBackend(mode=mode, rpc_url=rpc_url)
 
     if ctx.invoked_subcommand is None:
-        skin = ReplSkin("acloudviewer", version="3.0.0")
+        skin = ReplSkin("acloudviewer", version="3.1.0")
         skin.info(f"Mode: {_backend.mode}")
         if _backend.mode == "gui":
             skin.info(f"RPC: {rpc_url}")
@@ -294,7 +294,7 @@ def install_group():
 @handle_error
 def install_wheel_cmd(channel, cpu_only, pip_args):
     """Download and install the cloudViewer Python wheel."""
-    skin = ReplSkin("acloudviewer", version="3.0.0")
+    skin = ReplSkin("acloudviewer", version="3.1.0")
     plat = detect_platform()
 
     skin.info(f"Platform: {plat.os_id} {plat.os_version}, "
@@ -339,7 +339,7 @@ def install_wheel_cmd(channel, cpu_only, pip_args):
 @handle_error
 def install_app_cmd(channel, cpu_only, install_dir, local_file):
     """Download and install the ACloudViewer desktop application binary."""
-    skin = ReplSkin("acloudviewer", version="3.0.0")
+    skin = ReplSkin("acloudviewer", version="3.1.0")
 
     if local_file:
         from cli_anything.acloudviewer.utils.installer import install_app_from_file
@@ -399,7 +399,7 @@ def install_app_cmd(channel, cpu_only, install_dir, local_file):
 @handle_error
 def install_auto_cmd(channel, cpu_only):
     """Auto-detect missing components and install them."""
-    skin = ReplSkin("acloudviewer", version="3.0.0")
+    skin = ReplSkin("acloudviewer", version="3.1.0")
     plat = detect_platform()
     status = check_installation()
 
@@ -443,17 +443,24 @@ def install_auto_cmd(channel, cpu_only):
             skin.warning(f"No matching wheel found. Visit {HOMEPAGE}")
 
 
-# ── File operations ──────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════
+# GUI MODE — commands requiring a running ACloudViewer with JSON-RPC
+# ══════════════════════════════════════════════════════════════════════════
 
 @cli.command("open")
 @click.argument("file_path", type=click.Path(exists=True))
 @handle_error
 def cmd_open(file_path):
-    """Open a file in ACloudViewer."""
+    """Open a file in ACloudViewer (GUI mode)."""
+    file_path = str(Path(file_path).resolve())
     result = get_backend().open_file(file_path)
     get_session().snapshot(f"open {file_path}")
     output(result)
 
+
+# ══════════════════════════════════════════════════════════════════════════
+# HEADLESS MODE — commands that invoke ACloudViewer binary in -SILENT mode
+# ══════════════════════════════════════════════════════════════════════════
 
 @cli.command("convert")
 @click.argument("input_file", type=click.Path(exists=True))
@@ -487,7 +494,7 @@ def cmd_batch_convert(input_dir, output_dir, output_format, filter_ext):
 @handle_error
 def cmd_formats():
     """List all supported file formats."""
-    skin = ReplSkin("acloudviewer", version="3.0.0")
+    skin = ReplSkin("acloudviewer", version="3.1.0")
     if _json_output:
         output(ACloudViewerBackend.supported_formats())
     else:
@@ -499,7 +506,7 @@ def cmd_formats():
         skin.info(", ".join(sorted(IMAGE_FORMATS)))
 
 
-# ── Scene (GUI) ──────────────────────────────────────────────────────────
+# ── Scene (GUI) ──
 
 @cli.group("scene")
 def scene_group():
@@ -525,7 +532,122 @@ def scene_info(entity_id):
     output(result)
 
 
-# ── View (GUI) ───────────────────────────────────────────────────────────
+@scene_group.command("remove")
+@click.argument("entity_id", type=int)
+@handle_error
+def scene_remove(entity_id):
+    """Remove an entity from the scene."""
+    get_backend().scene_remove(entity_id)
+    get_session().snapshot(f"scene remove {entity_id}")
+    output({"entity_id": entity_id, "status": "removed"})
+
+
+@scene_group.command("show")
+@click.argument("entity_id", type=int)
+@handle_error
+def scene_show(entity_id):
+    """Show (unhide) an entity."""
+    get_backend().scene_set_visible(entity_id, True)
+    output({"entity_id": entity_id, "visible": True})
+
+
+@scene_group.command("hide")
+@click.argument("entity_id", type=int)
+@handle_error
+def scene_hide(entity_id):
+    """Hide an entity."""
+    get_backend().scene_set_visible(entity_id, False)
+    output({"entity_id": entity_id, "visible": False})
+
+
+@scene_group.command("select")
+@click.argument("entity_ids", nargs=-1, type=int, required=True)
+@handle_error
+def scene_select(entity_ids):
+    """Select one or more entities."""
+    get_backend().scene_select(list(entity_ids))
+    output({"selected": list(entity_ids)})
+
+
+@scene_group.command("clear")
+@handle_error
+def scene_clear():
+    """Remove all entities from the scene."""
+    get_backend().scene_clear()
+    get_session().snapshot("scene clear")
+    output({"status": "cleared"})
+
+
+# ── Entity (GUI) ──
+
+@cli.group("entity")
+def entity_group():
+    """Entity manipulation (GUI mode)."""
+    pass
+
+
+@entity_group.command("rename")
+@click.argument("entity_id", type=int)
+@click.argument("name")
+@handle_error
+def entity_rename(entity_id, name):
+    """Rename an entity."""
+    get_backend().entity_rename(entity_id, name)
+    get_session().snapshot(f"entity rename {entity_id} → {name}")
+    output({"entity_id": entity_id, "name": name})
+
+
+@entity_group.command("set-color")
+@click.argument("entity_id", type=int)
+@click.argument("r", type=int)
+@click.argument("g", type=int)
+@click.argument("b", type=int)
+@handle_error
+def entity_set_color(entity_id, r, g, b):
+    """Set entity display color (RGB 0-255)."""
+    get_backend().entity_set_color(entity_id, r, g, b)
+    output({"entity_id": entity_id, "color": [r, g, b]})
+
+
+# ── Export ──
+
+@cli.command("export")
+@click.argument("entity_id", type=int)
+@click.argument("output_file", type=click.Path())
+@handle_error
+def cmd_export(entity_id, output_file):
+    """Export an entity to a file (GUI mode)."""
+    output_file = str(Path(output_file).resolve())
+    result = get_backend().export_file(entity_id, output_file)
+    get_session().snapshot(f"export {entity_id} → {output_file}")
+    output(result)
+
+
+# ── Clear (top-level alias) ──
+
+@cli.command("clear")
+@handle_error
+def cmd_clear():
+    """Clear all entities from the scene (GUI mode)."""
+    get_backend().scene_clear()
+    get_session().snapshot("clear")
+    output({"status": "cleared"})
+
+
+# ── Methods ──
+
+@cli.command("methods")
+@handle_error
+def cmd_methods():
+    """List all available RPC methods (GUI mode)."""
+    b = get_backend()
+    if b.mode != "gui":
+        raise BackendError("methods command requires GUI mode")
+    result = b._rpc.list_methods()
+    output(result)
+
+
+# ── View (GUI) ──
 
 @cli.group("view")
 def view_group():
@@ -538,6 +660,7 @@ def view_group():
 @handle_error
 def view_screenshot(filename):
     """Capture viewport screenshot."""
+    filename = str(Path(filename).resolve())
     result = get_backend().screenshot_gui(filename)
     get_session().snapshot(f"screenshot {filename}")
     output(result)
@@ -551,11 +674,226 @@ def view_camera():
     output(result)
 
 
-# ── Processing ───────────────────────────────────────────────────────────
+@view_group.command("orient")
+@click.argument("direction", type=click.Choice(
+    ["top", "bottom", "front", "back", "left", "right", "iso1", "iso2"],
+    case_sensitive=False))
+@handle_error
+def view_orient(direction):
+    """Set camera view orientation."""
+    get_backend().view_set_orientation(direction.lower())
+    output({"orientation": direction.lower()})
+
+
+@view_group.command("zoom")
+@click.option("--entity", "entity_id", type=int, default=None,
+              help="Zoom to a specific entity")
+@handle_error
+def view_zoom(entity_id):
+    """Zoom to fit all entities or a specific entity."""
+    get_backend().view_zoom_fit(entity_id)
+    output({"status": "zoomed", "entity_id": entity_id})
+
+
+@view_group.command("refresh")
+@handle_error
+def view_refresh_cmd():
+    """Force a display redraw."""
+    get_backend().view_refresh()
+    output({"status": "refreshed"})
+
+
+@view_group.command("perspective")
+@click.argument("mode", type=click.Choice(["object", "viewer"],
+                case_sensitive=False))
+@handle_error
+def view_perspective(mode):
+    """Set perspective projection mode."""
+    get_backend().view_set_perspective(mode.lower())
+    output({"perspective": mode.lower()})
+
+
+@view_group.command("pointsize")
+@click.argument("action", type=click.Choice(["+", "-", "increase", "decrease"]))
+@handle_error
+def view_pointsize(action):
+    """Adjust point display size (+ or -)."""
+    act = "increase" if action in ("+", "increase") else "decrease"
+    get_backend().view_set_point_size(act)
+    output({"point_size": act})
+
+
+# ── Cloud (GUI) ──
+
+@cli.group("cloud")
+def cloud_group():
+    """Point cloud operations on scene entities (GUI mode)."""
+    pass
+
+
+@cloud_group.command("paint-uniform")
+@click.argument("entity_id", type=int)
+@click.argument("r", type=int)
+@click.argument("g", type=int)
+@click.argument("b", type=int)
+@handle_error
+def cloud_paint_uniform(entity_id, r, g, b):
+    """Paint all points with a uniform color (RGB 0-255)."""
+    result = get_backend().cloud_paint_uniform_gui(entity_id, r, g, b)
+    output(result)
+
+
+@cloud_group.command("paint-by-height")
+@click.argument("entity_id", type=int)
+@click.option("--axis", type=click.Choice(["x", "y", "z"]), default="z")
+@handle_error
+def cloud_paint_by_height(entity_id, axis):
+    """Colorize a point cloud by height gradient."""
+    result = get_backend().cloud_paint_by_height_gui(entity_id, axis=axis)
+    output(result)
+
+
+@cloud_group.command("paint-by-scalar-field")
+@click.argument("entity_id", type=int)
+@click.option("--field", "field_name", default="", help="Scalar field name")
+@handle_error
+def cloud_paint_by_scalar_field(entity_id, field_name):
+    """Colorize a point cloud by a scalar field."""
+    result = get_backend().cloud_paint_by_scalar_field_gui(entity_id,
+                                                           field_name=field_name)
+    output(result)
+
+
+@cloud_group.command("get-scalar-fields")
+@click.argument("entity_id", type=int)
+@handle_error
+def cloud_get_scalar_fields(entity_id):
+    """List all scalar fields on a point cloud."""
+    result = get_backend().cloud_get_scalar_fields(entity_id)
+    output(result)
+
+
+@cloud_group.command("crop")
+@click.argument("entity_id", type=int)
+@click.option("--min-x", type=float, required=True)
+@click.option("--min-y", type=float, required=True)
+@click.option("--min-z", type=float, required=True)
+@click.option("--max-x", type=float, required=True)
+@click.option("--max-y", type=float, required=True)
+@click.option("--max-z", type=float, required=True)
+@handle_error
+def cloud_crop_gui(entity_id, min_x, min_y, min_z, max_x, max_y, max_z):
+    """Crop a point cloud by bounding box (GUI mode)."""
+    result = get_backend().crop(
+        "", "", min_x=min_x, min_y=min_y, min_z=min_z,
+        max_x=max_x, max_y=max_y, max_z=max_z, entity_id=entity_id)
+    output(result)
+
+
+# ── Mesh (GUI) ──
+
+@cli.group("mesh")
+def mesh_group():
+    """Mesh operations on scene entities (GUI mode)."""
+    pass
+
+
+@mesh_group.command("simplify")
+@click.argument("entity_id", type=int)
+@click.option("--method", type=click.Choice(["quadric", "vertex_clustering"]),
+              default="quadric")
+@click.option("--target-triangles", type=int, default=10000)
+@click.option("--voxel-size", type=float, default=0.05)
+@handle_error
+def mesh_simplify(entity_id, method, target_triangles, voxel_size):
+    """Simplify a triangle mesh."""
+    result = get_backend().mesh_simplify_gui(
+        entity_id, method=method,
+        target_triangles=target_triangles, voxel_size=voxel_size)
+    output(result)
+
+
+@mesh_group.command("smooth")
+@click.argument("entity_id", type=int)
+@click.option("--method", type=click.Choice(["laplacian", "taubin", "simple"]),
+              default="laplacian")
+@click.option("--iterations", type=int, default=5)
+@click.option("--lambda", "lambda_val", type=float, default=0.5)
+@click.option("--mu", type=float, default=-0.53)
+@handle_error
+def mesh_smooth(entity_id, method, iterations, lambda_val, mu):
+    """Smooth a triangle mesh."""
+    result = get_backend().mesh_smooth_gui(
+        entity_id, method=method, iterations=iterations,
+        lambda_val=lambda_val, mu=mu)
+    output(result)
+
+
+@mesh_group.command("subdivide")
+@click.argument("entity_id", type=int)
+@click.option("--method", type=click.Choice(["midpoint", "loop"]),
+              default="midpoint")
+@click.option("--iterations", type=int, default=1)
+@handle_error
+def mesh_subdivide(entity_id, method, iterations):
+    """Subdivide a triangle mesh."""
+    result = get_backend().mesh_subdivide_gui(
+        entity_id, method=method, iterations=iterations)
+    output(result)
+
+
+@mesh_group.command("sample-points")
+@click.argument("entity_id", type=int)
+@click.option("--method", type=click.Choice(["uniform", "poisson_disk"]),
+              default="uniform")
+@click.option("--count", type=int, default=100000)
+@handle_error
+def mesh_sample_points(entity_id, method, count):
+    """Sample points from a mesh surface."""
+    result = get_backend().mesh_sample_points_gui(
+        entity_id, method=method, count=count)
+    output(result)
+
+
+# ── Transform ──
+
+@cli.group("transform")
+def transform_group():
+    """Transformation operations."""
+    pass
+
+
+@transform_group.command("apply")
+@click.argument("entity_id", type=int)
+@click.argument("matrix", nargs=16, type=float)
+@handle_error
+def transform_apply(entity_id, matrix):
+    """Apply a 4x4 transformation matrix to an entity (GUI mode).
+
+    MATRIX: 16 floats in column-major order (OpenGL convention).
+    """
+    get_backend().transform_apply_gui(entity_id, list(matrix))
+    get_session().snapshot(f"transform apply {entity_id}")
+    output({"entity_id": entity_id, "status": "transformed"})
+
+
+@transform_group.command("apply-file")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.argument("matrix_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def transform_apply_file(input_file, matrix_file, output_file):
+    """Apply a transformation matrix from a file (headless mode)."""
+    result = get_backend().apply_transformation(input_file, output_file, matrix_file)
+    get_session().snapshot(f"transform apply-file {input_file}")
+    output(result)
+
+
+# ── Processing (headless) ──
 
 @cli.group("process")
 def process_group():
-    """Point cloud and mesh processing commands."""
+    """Point cloud and mesh processing commands (headless — no GUI needed)."""
     pass
 
 
@@ -723,11 +1061,447 @@ def process_color_banding(input_file, output_file, axis, frequency):
     output(result)
 
 
-# ── Reconstruct ──────────────────────────────────────────────────────────
+# ── Scalar field operations ──
+
+@process_group.command("set-active-sf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", type=str, default="0", help="Scalar field index or name")
+@handle_error
+def process_set_active_sf(input_file, output_file, sf_index):
+    """Set the active scalar field."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().set_active_sf(input_file, output_file, sf_index=sf_idx)
+    output(result)
+
+
+@process_group.command("remove-all-sfs")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_remove_all_sfs(input_file, output_file):
+    """Remove all scalar fields."""
+    result = get_backend().remove_all_sfs(input_file, output_file)
+    output(result)
+
+
+@process_group.command("remove-sf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", type=int, default=0)
+@handle_error
+def process_remove_sf(input_file, output_file, sf_index):
+    """Remove a specific scalar field by index."""
+    result = get_backend().remove_sf(input_file, output_file, sf_index=sf_index)
+    output(result)
+
+
+@process_group.command("rename-sf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", type=str, default="0")
+@click.option("--new-name", required=True)
+@handle_error
+def process_rename_sf(input_file, output_file, sf_index, new_name):
+    """Rename a scalar field."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().rename_sf(input_file, output_file,
+                                     sf_index=sf_idx, new_name=new_name)
+    output(result)
+
+
+@process_group.command("sf-arithmetic")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", type=str, default="0")
+@click.option("--operation", type=str, default="SQRT",
+              help="SQRT, ABS, INV, EXP, LOG, LOG10, etc.")
+@handle_error
+def process_sf_arithmetic(input_file, output_file, sf_index, operation):
+    """Apply a unary arithmetic operation to a scalar field."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().sf_arithmetic(input_file, output_file,
+                                         sf_index=sf_idx, operation=operation)
+    output(result)
+
+
+@process_group.command("sf-op")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", type=str, default="0")
+@click.option("--operation", type=click.Choice(["ADD", "SUB", "MULTIPLY", "DIVIDE"]),
+              default="ADD")
+@click.option("--value", type=float, required=True)
+@handle_error
+def process_sf_op(input_file, output_file, sf_index, operation, value):
+    """Apply an arithmetic operation with a scalar value to a SF."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().sf_operation(input_file, output_file,
+                                        sf_index=sf_idx, operation=operation,
+                                        value=value)
+    output(result)
+
+
+@process_group.command("coord-to-sf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--dimension", type=click.Choice(["X", "Y", "Z"]), default="Z")
+@handle_error
+def process_coord_to_sf(input_file, output_file, dimension):
+    """Export a coordinate dimension as a scalar field."""
+    result = get_backend().coord_to_sf(input_file, output_file, dimension=dimension)
+    output(result)
+
+
+@process_group.command("sf-gradient")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--euclidean", is_flag=True, help="Use Euclidean gradient")
+@handle_error
+def process_sf_gradient(input_file, output_file, euclidean):
+    """Compute scalar field gradient."""
+    result = get_backend().sf_gradient(input_file, output_file, euclidean=euclidean)
+    output(result)
+
+
+@process_group.command("filter-sf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--min", "min_val", type=str, default="MIN")
+@click.option("--max", "max_val", type=str, default="MAX")
+@handle_error
+def process_filter_sf(input_file, output_file, min_val, max_val):
+    """Filter points by active scalar field value range."""
+    result = get_backend().filter_sf(input_file, output_file,
+                                     min_val=min_val, max_val=max_val)
+    output(result)
+
+
+@process_group.command("sf-color-scale")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--scale-file", type=click.Path(exists=True), required=True)
+@handle_error
+def process_sf_color_scale(input_file, output_file, scale_file):
+    """Apply a color scale file to the active scalar field."""
+    result = get_backend().sf_color_scale(input_file, output_file,
+                                          scale_file=scale_file)
+    output(result)
+
+
+@process_group.command("sf-to-rgb")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_sf_to_rgb(input_file, output_file):
+    """Convert the active scalar field to RGB colors."""
+    result = get_backend().sf_convert_to_rgb(input_file, output_file)
+    output(result)
+
+
+# ── Advanced normals ──
+
+@process_group.command("octree-normals")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--radius", type=str, default="AUTO", help="Radius or AUTO")
+@click.option("--orient", type=str, default="", help="Normal orientation mode")
+@click.option("--model", type=click.Choice(["", "LS", "TRI", "QUADRIC"]), default="")
+@handle_error
+def process_octree_normals(input_file, output_file, radius, orient, model):
+    """Compute normals using octree method."""
+    try:
+        r = float(radius)
+    except ValueError:
+        r = radius
+    result = get_backend().octree_normals(input_file, output_file,
+                                          radius=r, orient=orient, model=model)
+    output(result)
+
+
+@process_group.command("orient-normals")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--knn", type=int, default=6)
+@handle_error
+def process_orient_normals(input_file, output_file, knn):
+    """Orient normals via Minimum Spanning Tree."""
+    result = get_backend().orient_normals_mst(input_file, output_file, knn=knn)
+    output(result)
+
+
+@process_group.command("invert-normals")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_invert_normals(input_file, output_file):
+    """Invert point cloud normals."""
+    result = get_backend().invert_normals(input_file, output_file)
+    output(result)
+
+
+@process_group.command("clear-normals")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_clear_normals(input_file, output_file):
+    """Remove all normals from a point cloud."""
+    result = get_backend().clear_normals(input_file, output_file)
+    output(result)
+
+
+@process_group.command("normals-to-dip")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_normals_to_dip(input_file, output_file):
+    """Convert normals to dip/dip-direction scalar fields."""
+    result = get_backend().normals_to_dip(input_file, output_file)
+    output(result)
+
+
+@process_group.command("normals-to-sfs")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_normals_to_sfs(input_file, output_file):
+    """Convert normals to Nx/Ny/Nz scalar fields."""
+    result = get_backend().normals_to_sfs(input_file, output_file)
+    output(result)
+
+
+# ── Geometry / analysis ──
+
+@process_group.command("extract-cc")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--octree-level", type=int, default=8)
+@click.option("--min-points", type=int, default=100)
+@handle_error
+def process_extract_cc(input_file, output_file, octree_level, min_points):
+    """Extract connected components."""
+    result = get_backend().extract_connected_components(
+        input_file, output_file, octree_level=octree_level, min_points=min_points)
+    output(result)
+
+
+@process_group.command("approx-density")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--type", "density_type", type=str, default="",
+              help="Density type filter")
+@handle_error
+def process_approx_density(input_file, output_file, density_type):
+    """Compute approximate point density."""
+    result = get_backend().approx_density(input_file, output_file,
+                                          density_type=density_type)
+    output(result)
+
+
+@process_group.command("feature")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--type", "feature_type", type=click.Choice([
+    "SUM_OF_EIGENVALUES", "OMNIVARIANCE", "EIGENTROPY", "ANISOTROPY",
+    "PLANARITY", "LINEARITY", "PCA1", "PCA2", "SURFACE_VARIATION",
+    "SPHERICITY", "VERTICALITY", "EIGENVALUE1", "EIGENVALUE2", "EIGENVALUE3",
+]), default="SURFACE_VARIATION")
+@click.option("--kernel-size", type=float, default=0.1)
+@handle_error
+def process_feature(input_file, output_file, feature_type, kernel_size):
+    """Compute a geometric feature as a scalar field."""
+    result = get_backend().feature(input_file, output_file,
+                                   feature_type=feature_type,
+                                   kernel_size=kernel_size)
+    output(result)
+
+
+@process_group.command("moment")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--kernel-size", type=float, default=0.1)
+@handle_error
+def process_moment(input_file, output_file, kernel_size):
+    """Compute 1st order moment."""
+    result = get_backend().moment(input_file, output_file,
+                                  kernel_size=kernel_size)
+    output(result)
+
+
+@process_group.command("best-fit-plane")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--make-horiz", is_flag=True)
+@click.option("--keep-loaded", is_flag=True)
+@handle_error
+def process_best_fit_plane(input_file, output_file, make_horiz, keep_loaded):
+    """Compute best fit plane for a point cloud."""
+    result = get_backend().best_fit_plane(input_file, output_file,
+                                          make_horiz=make_horiz,
+                                          keep_loaded=keep_loaded)
+    output(result)
+
+
+@process_group.command("mesh-volume")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output-file", type=click.Path(), default="",
+              help="File to write volume result")
+@handle_error
+def process_mesh_volume(input_file, output_file):
+    """Compute mesh enclosed volume."""
+    result = get_backend().mesh_volume(input_file, output_file=output_file)
+    output(result)
+
+
+@process_group.command("extract-vertices")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_extract_vertices(input_file, output_file):
+    """Extract mesh vertices as a point cloud."""
+    result = get_backend().extract_vertices(input_file, output_file)
+    output(result)
+
+
+@process_group.command("flip-triangles")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_flip_triangles(input_file, output_file):
+    """Flip mesh triangle normals."""
+    result = get_backend().flip_triangles(input_file, output_file)
+    output(result)
+
+
+# ── Merge ──
+
+@process_group.command("merge-clouds")
+@click.argument("input_files", nargs=-1, type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_merge_clouds(input_files, output_file):
+    """Merge multiple point clouds into one."""
+    result = get_backend().merge_clouds(list(input_files), output_file)
+    output(result)
+
+
+@process_group.command("merge-meshes")
+@click.argument("input_files", nargs=-1, type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_merge_meshes(input_files, output_file):
+    """Merge multiple meshes into one."""
+    result = get_backend().merge_meshes(list(input_files), output_file)
+    output(result)
+
+
+# ── Cleanup ──
+
+@process_group.command("remove-rgb")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_remove_rgb(input_file, output_file):
+    """Remove RGB colors from a point cloud."""
+    result = get_backend().remove_rgb(input_file, output_file)
+    output(result)
+
+
+@process_group.command("remove-scan-grids")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_remove_scan_grids(input_file, output_file):
+    """Remove scan grid info from a point cloud."""
+    result = get_backend().remove_scan_grids(input_file, output_file)
+    output(result)
+
+
+@process_group.command("match-centers")
+@click.argument("input_files", nargs=-1, type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_match_centers(input_files, output_file):
+    """Match bounding-box centers of multiple entities."""
+    result = get_backend().match_centers(list(input_files), output_file)
+    output(result)
+
+
+@process_group.command("drop-global-shift")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_drop_global_shift(input_file, output_file):
+    """Remove the global coordinate shift from a cloud."""
+    result = get_backend().drop_global_shift(input_file, output_file)
+    output(result)
+
+
+@process_group.command("closest-point-set")
+@click.argument("input_files", nargs=-1, type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_closest_point_set(input_files, output_file):
+    """Compute closest point set between two clouds."""
+    result = get_backend().closest_point_set(list(input_files), output_file)
+    output(result)
+
+
+# ── Rasterize / Volume ──
+
+@process_group.command("rasterize")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--grid-step", type=float, default=1.0)
+@click.option("--vert-dir", type=int, default=2, help="0=X, 1=Y, 2=Z")
+@click.option("--output-cloud", is_flag=True, default=True)
+@click.option("--output-mesh", is_flag=True)
+@click.option("--proj", type=click.Choice(["MIN", "MAX", "AVG"]), default="AVG")
+@click.option("--empty-fill", type=click.Choice(["MIN_H", "MAX_H", "CUSTOM_H", "INTERP"]),
+              default="MIN_H")
+@handle_error
+def process_rasterize(input_file, output_file, grid_step, vert_dir,
+                      output_cloud, output_mesh, proj, empty_fill):
+    """2.5D rasterization of a point cloud."""
+    result = get_backend().rasterize(
+        input_file, output_file, grid_step=grid_step, vert_dir=vert_dir,
+        output_cloud=output_cloud, output_mesh=output_mesh,
+        proj=proj, empty_fill=empty_fill)
+    output(result)
+
+
+@process_group.command("stat-test")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--distribution", type=click.Choice(["GAUSS", "WEIBULL"]), default="GAUSS")
+@click.option("--p-value", type=float, default=0.0001)
+@click.option("--knn", type=int, default=16)
+@handle_error
+def process_stat_test(input_file, output_file, distribution, p_value, knn):
+    """Statistical outlier test."""
+    result = get_backend().stat_test(
+        input_file, output_file, distribution=distribution,
+        p_value=p_value, knn=knn)
+    output(result)
+
+
+# ── Reconstruct (headless, uses Colmap binary) ──
 
 @cli.group("reconstruct")
 def reconstruct_group():
-    """3D reconstruction commands (uses Colmap binary for SfM/MVS)."""
+    """3D reconstruction commands (headless, uses Colmap binary for SfM/MVS)."""
     pass
 
 
@@ -959,11 +1733,11 @@ def reconstruct_analyze_model(input_path):
     output(result)
 
 
-# ── SIBR Dataset Tools ────────────────────────────────────────────────────
+# ── SIBR Dataset Tools (headless) ──
 
 @cli.group("sibr")
 def sibr_group():
-    """SIBR dataset preprocessing tools (requires ACloudViewer with SIBR plugin)."""
+    """SIBR dataset preprocessing tools (headless, requires SIBR plugin)."""
     pass
 
 
@@ -1113,6 +1887,31 @@ def session_redo():
     output({"redone": s.description if s else None})
 
 
+@session_group.command("save")
+@click.argument("project_path", type=click.Path())
+@handle_error
+def session_save(project_path):
+    """Save session/project state."""
+    from cli_anything.acloudviewer.core.scene import save_project, create_project
+    sess = get_session()
+    if hasattr(sess, '_project') and sess._project:
+        save_project(sess._project, project_path)
+    else:
+        proj = create_project(project_path)
+        save_project(proj, project_path)
+    output({"saved": project_path})
+
+
+@session_group.command("history")
+@handle_error
+def session_history():
+    """Show full undo/redo history."""
+    sess = get_session()
+    status = sess.status()
+    history = status.get("history", [])
+    output({"history": history, "length": len(history)})
+
+
 # ── REPL ─────────────────────────────────────────────────────────────────
 
 @cli.command()
@@ -1123,7 +1922,7 @@ def repl(project_path):
     global _repl_mode
     _repl_mode = True
 
-    skin = ReplSkin("acloudviewer", version="3.0.0")
+    skin = ReplSkin("acloudviewer", version="3.1.0")
 
     if project_path:
         sess = get_session()
@@ -1135,20 +1934,32 @@ def repl(project_path):
     pt_session = skin.create_prompt_session()
 
     _repl_commands = {
-        "info":        "show backend info",
-        "check":       "check installation status",
-        "install":     "auto|app|wheel — install missing components",
-        "open":        "open <file>",
-        "convert":     "convert <in> <out>",
-        "batch-convert": "batch-convert <dir-in> <dir-out> [-f .ply]",
-        "formats":     "list supported formats",
-        "process":     "subsample|normals|icp|sor|c2c-dist|c2m-dist|density|curvature|roughness|delaunay|sample-mesh|color-banding",
-        "reconstruct": "mesh|auto|extract-features|match|sparse|undistort|dense-stereo|fuse|poisson",
-        "scene":       "list|info (GUI mode)",
-        "view":        "screenshot|camera (GUI mode)",
-        "session":     "status|undo|redo",
-        "help":        "show this help",
-        "quit":        "exit REPL",
+        # ── General (no backend required) ──
+        "info":          "show backend info",
+        "check":         "check installation status",
+        "install":       "auto|app|wheel — install components",
+        "formats":       "list supported formats",
+        "session":       "status|undo|redo|save|history — session management",
+        "methods":       "[GUI] list available RPC methods",
+        # ── Headless (binary -SILENT mode, no GUI needed) ──
+        "convert":       "[headless] convert <in> <out>",
+        "batch-convert": "[headless] batch-convert <dir-in> <dir-out> [-f .ply]",
+        "process":       "[headless] subsample|normals|icp|sor|c2c-dist|c2m-dist|density|curvature|roughness|delaunay|sample-mesh|color-banding",
+        "reconstruct":   "[headless] mesh|auto|extract-features|match|sparse|undistort|dense-stereo|fuse|poisson|...",
+        "sibr":          "[headless] tool|prepare-colmap|texture-mesh|unwrap-mesh|tonemapper|align-meshes|...",
+        "transform":     "[headless/GUI] apply|apply-file — transformation",
+        # ── GUI (requires running ACloudViewer with JSON-RPC) ──
+        "open":          "[GUI] open <file> in ACloudViewer",
+        "export":        "[GUI] export <entity_id> <output>",
+        "clear":         "[GUI] clear all entities from scene",
+        "scene":         "[GUI] list|info|remove|show|hide|select|clear",
+        "entity":        "[GUI] rename|set-color — entity manipulation",
+        "view":          "[GUI] screenshot|camera|orient|zoom|refresh|perspective|pointsize",
+        "cloud":         "[GUI] paint-uniform|paint-by-height|paint-by-scalar-field|get-scalar-fields|crop",
+        "mesh":          "[GUI] simplify|smooth|subdivide|sample-points",
+        # ──
+        "help":          "show this help",
+        "quit":          "exit REPL",
     }
 
     while True:

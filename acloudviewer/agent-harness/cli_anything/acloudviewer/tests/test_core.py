@@ -459,6 +459,86 @@ class TestFormatConversion:
             backend.convert_format("/nonexistent/file.ply", "/tmp/out.pcd")
 
 
+# ── Extended Format Map Coverage Tests ───────────────────────────
+
+class TestExtendedFormatMaps:
+    """Verify all format maps contain complete entries for supported formats."""
+
+    def test_cloud_format_map_covers_key_formats(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import (
+            CLOUD_FORMAT_MAP, POINT_CLOUD_FORMATS,
+        )
+        required_cloud = {
+            ".ply": "PLY", ".pcd": "PCD", ".las": "LAS", ".laz": "LAS",
+            ".e57": "E57", ".bin": "BIN", ".sbf": "SBF", ".drc": "DRC",
+            ".vtk": "VTK",
+        }
+        for ext, expected_fmt in required_cloud.items():
+            assert ext in POINT_CLOUD_FORMATS, f"{ext} missing from POINT_CLOUD_FORMATS"
+            assert CLOUD_FORMAT_MAP.get(ext) == expected_fmt, (
+                f"CLOUD_FORMAT_MAP['{ext}'] should be '{expected_fmt}', "
+                f"got '{CLOUD_FORMAT_MAP.get(ext)}'"
+            )
+
+    def test_mesh_format_map_covers_key_formats(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import (
+            MESH_FORMAT_MAP, MESH_FORMATS,
+        )
+        required_mesh = {
+            ".obj": "OBJ", ".stl": "STL", ".off": "OFF",
+            ".fbx": "FBX", ".ply": "PLY", ".dxf": "DXF", ".vtk": "VTK",
+        }
+        for ext, expected_fmt in required_mesh.items():
+            assert ext in MESH_FORMATS, f"{ext} missing from MESH_FORMATS"
+            assert MESH_FORMAT_MAP.get(ext) == expected_fmt, (
+                f"MESH_FORMAT_MAP['{ext}'] should be '{expected_fmt}', "
+                f"got '{MESH_FORMAT_MAP.get(ext)}'"
+            )
+
+    def test_point_cloud_formats_complete(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import POINT_CLOUD_FORMATS
+        expected = {".ply", ".pcd", ".xyz", ".xyzn", ".xyzrgb", ".pts",
+                    ".txt", ".asc", ".neu", ".csv", ".las", ".laz",
+                    ".e57", ".ptx", ".bin", ".sbf", ".drc", ".vtk"}
+        missing = expected - POINT_CLOUD_FORMATS
+        assert not missing, f"Missing from POINT_CLOUD_FORMATS: {missing}"
+
+    def test_mesh_formats_complete(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import MESH_FORMATS
+        expected = {".obj", ".stl", ".off", ".gltf", ".glb", ".fbx",
+                    ".dae", ".3ds", ".ply", ".dxf", ".vtk"}
+        missing = expected - MESH_FORMATS
+        assert not missing, f"Missing from MESH_FORMATS: {missing}"
+
+    def test_all_supported_formats_superset(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import (
+            POINT_CLOUD_FORMATS, MESH_FORMATS, IMAGE_FORMATS,
+            ALL_SUPPORTED_FORMATS,
+        )
+        union = POINT_CLOUD_FORMATS | MESH_FORMATS | IMAGE_FORMATS
+        missing = union - ALL_SUPPORTED_FORMATS
+        assert not missing, f"ALL_SUPPORTED_FORMATS missing: {missing}"
+
+    def test_format_alias_all_variants(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import _FORMAT_ALIAS_EXTS
+        for key in (".xyz", ".csv", ".txt", ".neu"):
+            assert key in _FORMAT_ALIAS_EXTS, f"{key} missing from _FORMAT_ALIAS_EXTS"
+            assert ".asc" in _FORMAT_ALIAS_EXTS[key], (
+                f"_FORMAT_ALIAS_EXTS['{key}'] should contain '.asc'"
+            )
+
+    def test_image_formats_tiff(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import IMAGE_FORMATS
+        for ext in (".tif", ".tiff", ".png", ".jpg", ".bmp"):
+            assert ext in IMAGE_FORMATS, f"{ext} missing from IMAGE_FORMATS"
+
+    def test_extra_formats_in_all(self):
+        """SHP, POV, PV, PGM are in ALL_SUPPORTED but not in cloud/mesh sets."""
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ALL_SUPPORTED_FORMATS
+        for ext in (".shp", ".pov", ".pn", ".pv"):
+            assert ext in ALL_SUPPORTED_FORMATS, f"{ext} missing from ALL_SUPPORTED_FORMATS"
+
+
 # ── Version Detection Tests ──────────────────────────────────────
 
 class TestVersionDetection:

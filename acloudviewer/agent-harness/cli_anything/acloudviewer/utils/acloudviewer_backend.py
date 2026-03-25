@@ -113,10 +113,10 @@ class ACloudViewerBackend:
 
         Linux:   ACloudViewer.sh (sets LD_LIBRARY_PATH), ACloudViewer
         macOS:   ACloudViewer (standalone or inside .app bundle)
-        Windows: ACloudViewer.bat (sets PATH/env), ACloudViewer.exe
+        Windows: ACloudViewer.exe (preferred), ACloudViewer.bat (GUI wrapper)
         """
         if IS_WINDOWS:
-            return ("ACloudViewer.bat", "ACloudViewer.exe")
+            return ("ACloudViewer.exe", "ACloudViewer.bat")
         if IS_MACOS:
             return ("ACloudViewer", "ACloudViewer.sh")
         return ("ACloudViewer.sh", "ACloudViewer")
@@ -196,15 +196,16 @@ class ACloudViewerBackend:
         """Set up library search paths for the ACloudViewer binary.
 
         Platform-specific env setup when invoking the bare binary:
-          Linux:   LD_LIBRARY_PATH = <bin_dir>:<bin_dir>/lib
-          macOS:   DYLD_LIBRARY_PATH (with SIP caveats; .app bundles
-                   embed their own rpath so this is usually a no-op)
-          Windows: PATH prepended with <bin_dir> (DLL search)
-
-        All platforms: QT_QPA_PLATFORM=offscreen for headless CLI.
+          Linux:   LD_LIBRARY_PATH + QT_QPA_PLATFORM=offscreen
+          macOS:   DYLD_LIBRARY_PATH; QT_QPA_PLATFORM left unset so
+                   main.cpp can probe for offscreen/minimal/cocoa
+          Windows: PATH prepended + QT_QPA_PLATFORM=offscreen
         """
         env = os.environ.copy()
-        env["QT_QPA_PLATFORM"] = "offscreen"
+        if IS_MACOS:
+            env.pop("QT_QPA_PLATFORM", None)
+        else:
+            env["QT_QPA_PLATFORM"] = "offscreen"
 
         if binary_path.endswith((".sh", ".bat")):
             return env
@@ -243,6 +244,7 @@ class ACloudViewerBackend:
         binary = ACloudViewerBackend.find_binary()
         if not binary:
             return None
+        binary = ACloudViewerBackend._resolve_exe(binary)
 
         import re as _re
         env = ACloudViewerBackend._build_env_for_binary(binary)
@@ -302,6 +304,10 @@ class ACloudViewerBackend:
                     pass
 
         return None
+
+    def _require_gui(self, method_name: str) -> None:
+        if self._mode != "gui":
+            raise BackendError(f"{method_name} requires GUI mode")
 
     def _ensure_binary(self) -> str:
         if self._binary:
@@ -400,6 +406,7 @@ class ACloudViewerBackend:
     def _run_cli(self, args: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
         """Run ACloudViewer in CLI mode with -SILENT prefix."""
         binary = self._ensure_binary()
+        binary = self._resolve_exe(binary)
         cmd = [binary, "-SILENT"] + args
         env = self._build_env_for_binary(binary)
         result = subprocess.run(
@@ -416,6 +423,54 @@ class ACloudViewerBackend:
                 raise BackendError(
                     f"CLI failed (exit {result.returncode}): {combined[:500]}")
         return result
+
+    @staticmethod
+    def _resolve_exe(binary_path: str) -> str:
+        """On Windows, resolve .bat wrappers to the underlying .exe.
+
+        The .bat wrapper (``start /b ... >nul``) is designed for GUI launch:
+        it backgrounds the process and discards output, which is incompatible
+        with headless CLI mode.  Using the .exe directly keeps subprocess.run
+        synchronous so we can capture output and wait for completion.
+        """
+        if not IS_WINDOWS:
+            return binary_path
+        p = Path(binary_path)
+        if p.suffix.lower() == ".bat":
+            exe = p.with_suffix(".exe")
+            if exe.exists():
+                return str(exe)
+        return binary_path
+
+    @staticmethod
+    def _save_args(output_path: str, entity_type: str = "cloud") -> list[str]:
+        """Build CLI args to save with the correct export format for *output_path*.
+
+        Inspects the file extension, looks up the format keyword in
+        CLOUD_FORMAT_MAP / MESH_FORMAT_MAP, and returns a list such as
+        ["-C_EXPORT_FMT", "PCD", "-SAVE_CLOUDS", "FILE", "/path/to/out.pcd"].
+        """
+        ext = Path(output_path).suffix.lower()
+        args: list[str] = []
+        if entity_type == "cloud":
+            fmt = CLOUD_FORMAT_MAP.get(ext)
+            if fmt:
+                args += ["-C_EXPORT_FMT", fmt]
+            args += ["-SAVE_CLOUDS", "FILE", output_path]
+        else:
+            fmt = MESH_FORMAT_MAP.get(ext)
+            if fmt:
+                args += ["-M_EXPORT_FMT", fmt]
+            args += ["-SAVE_MESHES", "FILE", output_path]
+        return args
+
+    @staticmethod
+    def _check_status(output_path: str) -> str:
+        """Return 'completed' if *output_path* exists and has nonzero size, else 'failed'."""
+        p = Path(output_path)
+        if p.exists() and p.stat().st_size > 0:
+            return "completed"
+        return "failed"
 
     # =====================================================================
     # File I/O
@@ -538,11 +593,13 @@ class ACloudViewerBackend:
             except Exception as e:
                 errors.append({"file": str(f), "error": str(e)})
 
+        total_errors = len(errors) + sum(1 for r in results if r.get("status") == "failed")
         return {
             "input_dir": input_dir, "output_dir": output_dir,
             "output_format": output_format,
-            "converted": len(results), "errors": len(errors),
+            "converted": len(results), "errors": total_errors,
             "files": results, "error_details": errors or None,
+            "status": "failed" if total_errors > 0 or not results else "completed",
         }
 
     @staticmethod
@@ -571,7 +628,104 @@ class ACloudViewerBackend:
     def scene_remove(self, entity_id: int) -> None:
         if self._mode != "gui":
             raise BackendError("scene_remove requires GUI mode")
-        self._rpc.call("scene.remove", {"entity_id": entity_id})
+        self._rpc.scene_remove(entity_id)
+
+    def scene_set_visible(self, entity_id: int, visible: bool) -> None:
+        if self._mode != "gui":
+            raise BackendError("scene_set_visible requires GUI mode")
+        self._rpc.scene_set_visible(entity_id, visible)
+
+    def scene_select(self, entity_ids: list[int]) -> None:
+        if self._mode != "gui":
+            raise BackendError("scene_select requires GUI mode")
+        self._rpc.scene_select(entity_ids)
+
+    def scene_clear(self) -> None:
+        if self._mode != "gui":
+            raise BackendError("scene_clear requires GUI mode")
+        self._rpc.clear()
+
+    def entity_set_color(self, entity_id: int,
+                         r: int = 255, g: int = 255, b: int = 255) -> int:
+        if self._mode != "gui":
+            raise BackendError("entity_set_color requires GUI mode")
+        return self._rpc.entity_set_color(entity_id, r, g, b)
+
+    def cloud_get_scalar_fields(self, entity_id: int) -> list[dict]:
+        if self._mode != "gui":
+            raise BackendError("cloud_get_scalar_fields requires GUI mode")
+        return self._rpc.cloud_get_scalar_fields(entity_id)
+
+    # =====================================================================
+    # Mesh operations (GUI only via RPC)
+    # =====================================================================
+
+    def mesh_simplify_gui(self, entity_id: int, method: str = "quadric",
+                          target_triangles: int = 10000,
+                          voxel_size: float = 0.05) -> dict:
+        if self._mode != "gui":
+            raise BackendError("mesh_simplify requires GUI mode")
+        return self._rpc.mesh_simplify(entity_id, method=method,
+                                       target_triangles=target_triangles,
+                                       voxel_size=voxel_size)
+
+    def mesh_smooth_gui(self, entity_id: int, method: str = "laplacian",
+                        iterations: int = 5, lambda_val: float = 0.5,
+                        mu: float = -0.53) -> dict:
+        if self._mode != "gui":
+            raise BackendError("mesh_smooth requires GUI mode")
+        return self._rpc.mesh_smooth(entity_id, method=method,
+                                     iterations=iterations,
+                                     lambda_val=lambda_val, mu=mu)
+
+    def mesh_subdivide_gui(self, entity_id: int, method: str = "midpoint",
+                           iterations: int = 1) -> dict:
+        if self._mode != "gui":
+            raise BackendError("mesh_subdivide requires GUI mode")
+        return self._rpc.mesh_subdivide(entity_id, method=method,
+                                        iterations=iterations)
+
+    def mesh_sample_points_gui(self, entity_id: int, method: str = "uniform",
+                               count: int = 100000) -> dict:
+        if self._mode != "gui":
+            raise BackendError("mesh_sample_points requires GUI mode")
+        return self._rpc.mesh_sample_points(entity_id, method=method,
+                                            count=count)
+
+    # =====================================================================
+    # View control (GUI only via RPC)
+    # =====================================================================
+
+    def view_set_orientation(self, orientation: str) -> int:
+        if self._mode != "gui":
+            raise BackendError("view_set_orientation requires GUI mode")
+        return self._rpc.set_view(orientation)
+
+    def view_zoom_fit(self, entity_id: int | None = None) -> int:
+        if self._mode != "gui":
+            raise BackendError("view_zoom_fit requires GUI mode")
+        return self._rpc.zoom_fit(entity_id)
+
+    def view_refresh(self) -> int:
+        if self._mode != "gui":
+            raise BackendError("view_refresh requires GUI mode")
+        return self._rpc.view_refresh()
+
+    def view_set_perspective(self, mode: str = "object") -> int:
+        if self._mode != "gui":
+            raise BackendError("view_set_perspective requires GUI mode")
+        return self._rpc.view_set_perspective(mode)
+
+    def view_set_point_size(self, action: str = "increase") -> int:
+        if self._mode != "gui":
+            raise BackendError("view_set_point_size requires GUI mode")
+        return self._rpc.view_set_point_size(action)
+
+    def transform_apply_gui(self, entity_id: int,
+                            matrix: list[float]) -> int:
+        if self._mode != "gui":
+            raise BackendError("transform_apply requires GUI mode")
+        return self._rpc.transform_apply(entity_id, matrix)
 
     # =====================================================================
     # Processing — headless via ACloudViewer CLI, GUI via RPC
@@ -588,12 +742,11 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-SS", method.upper(), str(parameter),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
             "method": method, "parameter": parameter,
-            "status": "completed",
+            "status": self._check_status(output_path),
         }
 
     def compute_normals(self, input_path: str, output_path: str,
@@ -608,11 +761,11 @@ class ACloudViewerBackend:
             args += ["-OCTREE_NORMALS", str(radius)]
         else:
             args += ["-OCTREE_NORMALS", "AUTO"]
-        args += ["-SAVE_CLOUDS", "FILE", output_path]
+        args += self._save_args(output_path)
         self._run_cli(args)
         return {
             "input": input_path, "output": output_path,
-            "has_normals": True, "status": "completed",
+            "has_normals": True, "status": self._check_status(output_path),
         }
 
     def icp_registration(self, data_path: str, reference_path: str,
@@ -626,12 +779,11 @@ class ACloudViewerBackend:
             "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-ICP", "-ITER", str(iterations),
             "-OVERLAP", str(overlap),
-            "-SAVE_CLOUDS", "FILE", out,
-        ])
+        ] + self._save_args(out))
         return {
             "data": data_path, "reference": reference_path,
             "output": out, "iterations": iterations,
-            "status": "completed",
+            "status": self._check_status(out),
         }
 
     def sor_filter(self, input_path: str, output_path: str,
@@ -639,11 +791,10 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-SOR", str(knn), str(sigma),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "knn": knn, "sigma": sigma, "status": "completed",
+            "knn": knn, "sigma": sigma, "status": self._check_status(output_path),
         }
 
     def crop(self, input_path: str, output_path: str,
@@ -660,11 +811,10 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-CROP", bbox,
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "status": "completed",
+            "status": self._check_status(output_path),
         }
 
     def c2c_distance(self, compared_path: str, reference_path: str,
@@ -680,11 +830,11 @@ class ACloudViewerBackend:
         ]
         if max_dist > 0:
             args += ["-MAX_DIST", str(max_dist)]
-        args += ["-SAVE_CLOUDS", "FILE", out]
+        args += self._save_args(out)
         self._run_cli(args)
         return {
             "compared": compared_path, "reference": reference_path,
-            "output": out, "status": "completed",
+            "output": out, "status": self._check_status(out),
         }
 
     def c2m_distance(self, cloud_path: str, mesh_path: str,
@@ -700,11 +850,11 @@ class ACloudViewerBackend:
         ]
         if max_dist > 0:
             args += ["-MAX_DIST", str(max_dist)]
-        args += ["-SAVE_CLOUDS", "FILE", out]
+        args += self._save_args(out)
         self._run_cli(args)
         return {
             "cloud": cloud_path, "mesh": mesh_path,
-            "output": out, "status": "completed",
+            "output": out, "status": self._check_status(out),
         }
 
     def delaunay(self, input_path: str, output_path: str,
@@ -715,11 +865,11 @@ class ACloudViewerBackend:
         ]
         if max_edge_length > 0:
             args += ["-MAX_EDGE_LENGTH", str(max_edge_length)]
-        args += ["-SAVE_MESHES", "FILE", output_path]
+        args += self._save_args(output_path, "mesh")
         self._run_cli(args)
         return {
             "input": input_path, "output": output_path,
-            "status": "completed",
+            "status": self._check_status(output_path),
         }
 
     def density(self, input_path: str, output_path: str,
@@ -727,11 +877,10 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-DENSITY", str(radius),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "radius": radius, "status": "completed",
+            "radius": radius, "status": self._check_status(output_path),
         }
 
     def curvature(self, input_path: str, output_path: str,
@@ -739,12 +888,11 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-CURV", curvature_type.upper(), str(radius),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
             "type": curvature_type, "radius": radius,
-            "status": "completed",
+            "status": self._check_status(output_path),
         }
 
     def roughness(self, input_path: str, output_path: str,
@@ -752,11 +900,10 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-ROUGH", str(radius),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "radius": radius, "status": "completed",
+            "radius": radius, "status": self._check_status(output_path),
         }
 
     def sample_mesh(self, input_path: str, output_path: str,
@@ -764,11 +911,10 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-SAMPLE_MESH", "POINTS", str(points),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "points": points, "status": "completed",
+            "points": points, "status": self._check_status(output_path),
         }
 
     def apply_transformation(self, input_path: str, output_path: str,
@@ -776,11 +922,10 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-APPLY_TRANS", matrix_file,
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "matrix_file": matrix_file, "status": "completed",
+            "matrix_file": matrix_file, "status": self._check_status(output_path),
         }
 
     def color_banding(self, input_path: str, output_path: str,
@@ -788,12 +933,443 @@ class ACloudViewerBackend:
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-CBANDING", axis.upper(), str(frequency),
-            "-SAVE_CLOUDS", "FILE", output_path,
-        ])
+        ] + self._save_args(output_path))
         return {
             "input": input_path, "output": output_path,
-            "axis": axis, "frequency": frequency, "status": "completed",
+            "axis": axis, "frequency": frequency, "status": self._check_status(output_path),
         }
+
+    # =====================================================================
+    # Scalar field operations (headless)
+    # =====================================================================
+
+    def set_active_sf(self, input_path: str, output_path: str,
+                      sf_index: int | str = 0) -> dict:
+        """Set the active scalar field (-SET_ACTIVE_SF)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-SET_ACTIVE_SF", str(sf_index),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "sf_index": sf_index, "status": self._check_status(output_path)}
+
+    def remove_all_sfs(self, input_path: str, output_path: str) -> dict:
+        """Remove all scalar fields (-REMOVE_ALL_SFS)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-REMOVE_ALL_SFS",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def remove_sf(self, input_path: str, output_path: str,
+                  sf_index: int = 0) -> dict:
+        """Remove a specific scalar field by index (-REMOVE_SF)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-REMOVE_SF", str(sf_index),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "sf_index": sf_index, "status": self._check_status(output_path)}
+
+    def rename_sf(self, input_path: str, output_path: str,
+                  sf_index: int | str = 0, new_name: str = "") -> dict:
+        """Rename a scalar field (-RENAME_SF)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-RENAME_SF", str(sf_index), new_name,
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "new_name": new_name, "status": self._check_status(output_path)}
+
+    def sf_arithmetic(self, input_path: str, output_path: str,
+                      sf_index: int | str = 0, operation: str = "SQRT") -> dict:
+        """Apply SF arithmetic operation (-SF_ARITHMETIC)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-SF_ARITHMETIC", str(sf_index), operation,
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "operation": operation, "status": self._check_status(output_path)}
+
+    def sf_operation(self, input_path: str, output_path: str,
+                     sf_index: int | str = 0, operation: str = "ADD",
+                     value: float = 0.0) -> dict:
+        """Apply SF arithmetic operation with scalar value (-SF_OP)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-SF_OP", str(sf_index), operation, str(value),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "operation": operation, "value": value,
+                "status": self._check_status(output_path)}
+
+    def coord_to_sf(self, input_path: str, output_path: str,
+                    dimension: str = "Z") -> dict:
+        """Export coordinate as scalar field (-COORD_TO_SF)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-COORD_TO_SF", dimension.upper(),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "dimension": dimension, "status": self._check_status(output_path)}
+
+    def sf_gradient(self, input_path: str, output_path: str,
+                    euclidean: bool = False) -> dict:
+        """Compute scalar field gradient (-SF_GRAD)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-SF_GRAD"]
+        if euclidean:
+            args.append("EUCLIDEAN")
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "euclidean": euclidean, "status": self._check_status(output_path)}
+
+    def filter_sf(self, input_path: str, output_path: str,
+                  min_val: float | str = "MIN", max_val: float | str = "MAX") -> dict:
+        """Filter points by scalar field value (-FILTER_SF)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-FILTER_SF", str(min_val), str(max_val),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "min": min_val, "max": max_val,
+                "status": self._check_status(output_path)}
+
+    def sf_color_scale(self, input_path: str, output_path: str,
+                       scale_file: str = "") -> dict:
+        """Apply a color scale to active SF (-SF_COLOR_SCALE)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-SF_COLOR_SCALE", scale_file,
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "scale_file": scale_file, "status": self._check_status(output_path)}
+
+    def sf_convert_to_rgb(self, input_path: str, output_path: str) -> dict:
+        """Convert active SF to RGB colors (-SF_CONVERT_TO_RGB)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-SF_CONVERT_TO_RGB",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Normals (advanced headless operations)
+    # =====================================================================
+
+    def octree_normals(self, input_path: str, output_path: str,
+                       radius: float | str = "AUTO",
+                       orient: str = "", model: str = "") -> dict:
+        """Compute normals with octree method (-OCTREE_NORMALS)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-OCTREE_NORMALS", str(radius)]
+        if orient:
+            args += ["-ORIENT", orient]
+        if model:
+            args += ["-MODEL", model]
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "radius": radius, "status": self._check_status(output_path)}
+
+    def orient_normals_mst(self, input_path: str, output_path: str,
+                           knn: int = 6) -> dict:
+        """Orient normals via MST (-ORIENT_NORMS_MST)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-ORIENT_NORMS_MST", str(knn),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "knn": knn, "status": self._check_status(output_path)}
+
+    def invert_normals(self, input_path: str, output_path: str) -> dict:
+        """Invert point cloud normals (-INVERT_NORMALS)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-INVERT_NORMALS",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def clear_normals(self, input_path: str, output_path: str) -> dict:
+        """Remove all normals (-CLEAR_NORMALS)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-CLEAR_NORMALS",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def normals_to_dip(self, input_path: str, output_path: str) -> dict:
+        """Convert normals to dip/dip direction (-NORMALS_TO_DIP)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-NORMALS_TO_DIP",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def normals_to_sfs(self, input_path: str, output_path: str) -> dict:
+        """Convert normals to scalar fields (-NORMALS_TO_SFS)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-NORMALS_TO_SFS",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Geometry / analysis (headless)
+    # =====================================================================
+
+    def extract_connected_components(self, input_path: str, output_path: str,
+                                     octree_level: int = 8,
+                                     min_points: int = 100) -> dict:
+        """Extract connected components (-EXTRACT_CC)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-EXTRACT_CC", str(octree_level), str(min_points),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "octree_level": octree_level, "min_points": min_points,
+                "status": self._check_status(output_path)}
+
+    def approx_density(self, input_path: str, output_path: str,
+                       density_type: str = "") -> dict:
+        """Compute approximate point density (-APPROX_DENSITY)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-APPROX_DENSITY"]
+        if density_type:
+            args += ["-TYPE", density_type]
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def feature(self, input_path: str, output_path: str,
+                feature_type: str = "ROUGHNESS",
+                kernel_size: float = 0.1) -> dict:
+        """Compute geometric feature (-FEATURE)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-FEATURE", feature_type.upper(), str(kernel_size),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "feature_type": feature_type, "kernel_size": kernel_size,
+                "status": self._check_status(output_path)}
+
+    def moment(self, input_path: str, output_path: str,
+               kernel_size: float = 0.1) -> dict:
+        """Compute 1st order moment (-MOMENT)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-MOMENT", str(kernel_size),
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "kernel_size": kernel_size, "status": self._check_status(output_path)}
+
+    def best_fit_plane(self, input_path: str, output_path: str,
+                       make_horiz: bool = False,
+                       keep_loaded: bool = False) -> dict:
+        """Compute best fit plane (-BEST_FIT_PLANE)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-BEST_FIT_PLANE"]
+        if make_horiz:
+            args.append("-MAKE_HORIZ")
+        if keep_loaded:
+            args.append("-KEEP_LOADED")
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "make_horiz": make_horiz, "status": self._check_status(output_path)}
+
+    def mesh_volume(self, input_path: str,
+                    output_file: str = "") -> dict:
+        """Compute mesh volume (-MESH_VOLUME)."""
+        args = ["-O", input_path, "-MESH_VOLUME"]
+        if output_file:
+            args += ["-TO_FILE", output_file]
+        result = self._run_cli(args)
+        return {"input": input_path, "output_file": output_file,
+                "status": "completed"}
+
+    def extract_vertices(self, input_path: str, output_path: str) -> dict:
+        """Extract mesh vertices to a point cloud (-EXTRACT_VERTICES)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-EXTRACT_VERTICES",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def flip_triangles(self, input_path: str, output_path: str) -> dict:
+        """Flip mesh triangle normals (-FLIP_TRI)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-FLIP_TRI",
+        ] + self._save_args(output_path, entity_type="mesh"))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Merge operations (headless)
+    # =====================================================================
+
+    def merge_clouds(self, input_paths: list[str], output_path: str) -> dict:
+        """Merge multiple clouds into one (-MERGE_CLOUDS)."""
+        args = ["-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        for p in input_paths:
+            args += ["-O", p]
+        args.append("-MERGE_CLOUDS")
+        self._run_cli(args + self._save_args(output_path))
+        return {"inputs": input_paths, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def merge_meshes(self, input_paths: list[str], output_path: str) -> dict:
+        """Merge multiple meshes into one (-MERGE_MESHES)."""
+        args = ["-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        for p in input_paths:
+            args += ["-O", p]
+        args.append("-MERGE_MESHES")
+        self._run_cli(args + self._save_args(output_path, entity_type="mesh"))
+        return {"inputs": input_paths, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Cleanup operations (headless)
+    # =====================================================================
+
+    def remove_rgb(self, input_path: str, output_path: str) -> dict:
+        """Remove RGB colors from point cloud (-REMOVE_RGB)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-REMOVE_RGB",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def remove_scan_grids(self, input_path: str, output_path: str) -> dict:
+        """Remove scan grid info (-REMOVE_SCAN_GRIDS)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-REMOVE_SCAN_GRIDS",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def match_centers(self, input_paths: list[str], output_path: str) -> dict:
+        """Match bounding-box centers (-MATCH_CENTERS)."""
+        args = ["-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        for p in input_paths:
+            args += ["-O", p]
+        args.append("-MATCH_CENTERS")
+        self._run_cli(args + self._save_args(output_path))
+        return {"inputs": input_paths, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def drop_global_shift(self, input_path: str, output_path: str) -> dict:
+        """Drop the global shift of a cloud (-DROP_GLOBAL_SHIFT)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-DROP_GLOBAL_SHIFT",
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def closest_point_set(self, input_paths: list[str],
+                          output_path: str) -> dict:
+        """Compute closest point set between clouds (-CLOSEST_POINT_SET)."""
+        args = ["-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        for p in input_paths:
+            args += ["-O", p]
+        args.append("-CLOSEST_POINT_SET")
+        self._run_cli(args + self._save_args(output_path))
+        return {"inputs": input_paths, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Rasterize / Volume (headless)
+    # =====================================================================
+
+    def rasterize(self, input_path: str, output_path: str,
+                  grid_step: float = 1.0, vert_dir: int = 2,
+                  output_cloud: bool = True, output_mesh: bool = False,
+                  proj: str = "AVG", empty_fill: str = "MIN_H") -> dict:
+        """2.5D rasterization (-RASTERIZE)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-RASTERIZE", "-GRID_STEP", str(grid_step),
+                "-VERT_DIR", str(vert_dir)]
+        if output_cloud:
+            args.append("-OUTPUT_CLOUD")
+        if output_mesh:
+            args.append("-OUTPUT_MESH")
+        args += ["-PROJ", proj, "-EMPTY_FILL", empty_fill]
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "grid_step": grid_step, "status": self._check_status(output_path)}
+
+    def volume_25d(self, input_paths: list[str], output_path: str,
+                   grid_step: float = 1.0, vert_dir: int = 2,
+                   const_height: float | None = None) -> dict:
+        """Compute 2.5D volume (-VOLUME)."""
+        args = ["-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        for p in input_paths:
+            args += ["-O", p]
+        args += ["-VOLUME", "-GRID_STEP", str(grid_step),
+                 "-VERT_DIR", str(vert_dir)]
+        if const_height is not None:
+            args += ["-CONST_HEIGHT", str(const_height)]
+        args.append("-OUTPUT_MESH")
+        self._run_cli(args + self._save_args(output_path, entity_type="mesh"))
+        return {"inputs": input_paths, "output": output_path,
+                "grid_step": grid_step, "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Crop operations (headless)
+    # =====================================================================
+
+    def crop_2d(self, input_path: str, output_path: str,
+                orthogonal_dim: str = "Z",
+                polygon: list[tuple[float, float]] | None = None) -> dict:
+        """2D polygon crop (-CROP2D)."""
+        dim = orthogonal_dim.upper()
+        pts = polygon or []
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-CROP2D", dim, str(len(pts))]
+        for x, y in pts:
+            args += [str(x), str(y)]
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def cross_section(self, input_path: str, output_path: str,
+                      polyline_file: str = "") -> dict:
+        """Cross-section extraction (-CROSS_SECTION)."""
+        self._run_cli([
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-CROSS_SECTION", polyline_file,
+        ] + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "polyline_file": polyline_file,
+                "status": self._check_status(output_path)}
+
+    # =====================================================================
+    # Statistical test (headless)
+    # =====================================================================
+
+    def stat_test(self, input_path: str, output_path: str,
+                  distribution: str = "GAUSS", params: list[float] | None = None,
+                  p_value: float = 0.0001, knn: int = 16) -> dict:
+        """Statistical outlier test (-STAT_TEST)."""
+        dist_params = params or [0.0, 1.0]
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-STAT_TEST", distribution.upper()]
+        for p in dist_params:
+            args.append(str(p))
+        args += [str(p_value), str(knn)]
+        self._run_cli(args + self._save_args(output_path))
+        return {"input": input_path, "output": output_path,
+                "distribution": distribution, "p_value": p_value,
+                "status": self._check_status(output_path)}
 
     # =====================================================================
     # Cloud colorization (GUI RPC)
@@ -923,3 +1499,102 @@ class ACloudViewerBackend:
         """Apply distortion-aware cropping to images."""
         args = ["-path", dataset_path] + (extra_args or [])
         return self.sibr_tool("distordCrop", args)
+
+    # ── Cloud scalar-field management (GUI mode) ────────────────────────
+
+    def cloud_set_active_sf_gui(self, entity_id: int,
+                                field_index: int = -1,
+                                field_name: str = "") -> dict:
+        """Set the active scalar field on a point cloud (GUI mode)."""
+        self._require_gui("cloud_set_active_sf_gui")
+        return self._rpc.cloud_set_active_sf(entity_id, field_index, field_name)
+
+    def cloud_remove_sf_gui(self, entity_id: int,
+                            field_index: int = -1,
+                            field_name: str = "") -> dict:
+        """Remove a scalar field from a point cloud (GUI mode)."""
+        self._require_gui("cloud_remove_sf_gui")
+        return self._rpc.cloud_remove_sf(entity_id, field_index, field_name)
+
+    def cloud_remove_all_sfs_gui(self, entity_id: int) -> dict:
+        """Remove all scalar fields from a point cloud (GUI mode)."""
+        self._require_gui("cloud_remove_all_sfs_gui")
+        return self._rpc.cloud_remove_all_sfs(entity_id)
+
+    def cloud_rename_sf_gui(self, entity_id: int, new_name: str,
+                            field_index: int = -1,
+                            old_name: str = "") -> dict:
+        """Rename a scalar field on a point cloud (GUI mode)."""
+        self._require_gui("cloud_rename_sf_gui")
+        return self._rpc.cloud_rename_sf(entity_id, new_name, field_index, old_name)
+
+    def cloud_filter_sf_gui(self, entity_id: int,
+                            min_val: float = 0, max_val: float = 1,
+                            field_index: int = -1,
+                            field_name: str = "") -> dict:
+        """Filter cloud by scalar field range (GUI mode)."""
+        self._require_gui("cloud_filter_sf_gui")
+        return self._rpc.cloud_filter_sf(entity_id, min_val, max_val,
+                                         field_index, field_name)
+
+    def cloud_coord_to_sf_gui(self, entity_id: int,
+                              dimension: str = "z") -> dict:
+        """Create scalar field from coordinate dimension (GUI mode)."""
+        self._require_gui("cloud_coord_to_sf_gui")
+        return self._rpc.cloud_coord_to_sf(entity_id, dimension)
+
+    # ── Cloud geometry (GUI mode) ───────────────────────────────────────
+
+    def cloud_remove_rgb_gui(self, entity_id: int) -> dict:
+        """Remove color data from point cloud (GUI mode)."""
+        self._require_gui("cloud_remove_rgb_gui")
+        return self._rpc.cloud_remove_rgb(entity_id)
+
+    def cloud_remove_normals_gui(self, entity_id: int) -> dict:
+        """Remove normals from point cloud (GUI mode)."""
+        self._require_gui("cloud_remove_normals_gui")
+        return self._rpc.cloud_remove_normals(entity_id)
+
+    def cloud_invert_normals_gui(self, entity_id: int) -> dict:
+        """Invert normal directions on point cloud (GUI mode)."""
+        self._require_gui("cloud_invert_normals_gui")
+        return self._rpc.cloud_invert_normals(entity_id)
+
+    def cloud_merge_gui(self, entity_ids: list[int]) -> dict:
+        """Merge multiple point clouds (GUI mode)."""
+        self._require_gui("cloud_merge_gui")
+        return self._rpc.cloud_merge(entity_ids)
+
+    # ── Mesh extended (GUI mode) ────────────────────────────────────────
+
+    def mesh_extract_vertices_gui(self, entity_id: int) -> dict:
+        """Extract mesh vertices as point cloud (GUI mode)."""
+        self._require_gui("mesh_extract_vertices_gui")
+        return self._rpc.mesh_extract_vertices(entity_id)
+
+    def mesh_flip_triangles_gui(self, entity_id: int) -> dict:
+        """Flip triangle winding order on mesh (GUI mode)."""
+        self._require_gui("mesh_flip_triangles_gui")
+        return self._rpc.mesh_flip_triangles(entity_id)
+
+    def mesh_volume_gui(self, entity_id: int) -> dict:
+        """Compute mesh volume (GUI mode)."""
+        self._require_gui("mesh_volume_gui")
+        return self._rpc.mesh_volume(entity_id)
+
+    def mesh_merge_gui(self, entity_ids: list[int]) -> dict:
+        """Merge multiple meshes (GUI mode)."""
+        self._require_gui("mesh_merge_gui")
+        return self._rpc.mesh_merge(entity_ids)
+
+    # ── COLMAP generic (GUI mode) ──────────────────────────────────────
+
+    def colmap_run_gui(self, command: str,
+                       args: list[str] | None = None,
+                       kwargs_: dict[str, str] | None = None,
+                       colmap_binary: str = "colmap",
+                       timeout_ms: int = 3600000) -> dict:
+        """Run any COLMAP subcommand via the RPC plugin (GUI mode)."""
+        self._require_gui("colmap_run_gui")
+        return self._rpc.colmap_run(command, args, kwargs_,
+                                    colmap_binary, timeout_ms)

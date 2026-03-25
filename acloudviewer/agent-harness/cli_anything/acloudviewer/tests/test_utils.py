@@ -69,6 +69,24 @@ class TestRPCClientCall:
         assert exc_info.value.code == -32601
         assert "Method not found" in exc_info.value.message
 
+    def test_call_raises_on_error_with_data(self):
+        from cli_anything.acloudviewer.utils.rpc_client import RPCError
+        c = self._make_client()
+        c._ws.recv.return_value = json.dumps({
+            "jsonrpc": "2.0", "id": 1,
+            "error": {
+                "code": 2, "message": "Entity not found",
+                "data": {"entity_id": 42, "hint": "Use scene.list"}
+            }
+        })
+
+        with pytest.raises(RPCError) as exc_info:
+            c.call("scene.info", {"entity_id": 42})
+        err = exc_info.value
+        assert err.code == 2
+        assert err.data == {"entity_id": 42, "hint": "Use scene.list"}
+        assert "entity_id" in str(err)
+
     def test_call_auto_connects(self):
         from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
         c = ACloudViewerRPCClient("ws://fake:9999")
@@ -179,6 +197,121 @@ class TestRPCClientConvenience:
         sent = json.loads(c._ws.send.call_args[0][0])
         assert sent["method"] == "scene.info"
         assert sent["params"]["entity_id"] == 7
+
+
+class TestRPCClientNewWrappers:
+    """Test convenience wrappers for newly added RPC methods."""
+
+    def _make_client(self):
+        from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
+        c = ACloudViewerRPCClient()
+        c._ws = MagicMock()
+        c._ws.recv.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": {}})
+        return c
+
+    def test_cloud_set_active_sf(self):
+        c = self._make_client()
+        c.cloud_set_active_sf(10, field_index=2)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.setActiveSf"
+        assert sent["params"]["entity_id"] == 10
+        assert sent["params"]["field_index"] == 2
+
+    def test_cloud_remove_sf(self):
+        c = self._make_client()
+        c.cloud_remove_sf(10, field_name="height")
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.removeSf"
+        assert sent["params"]["entity_id"] == 10
+        assert sent["params"]["field_name"] == "height"
+
+    def test_cloud_remove_all_sfs(self):
+        c = self._make_client()
+        c.cloud_remove_all_sfs(10)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.removeAllSfs"
+        assert sent["params"]["entity_id"] == 10
+
+    def test_cloud_rename_sf(self):
+        c = self._make_client()
+        c.cloud_rename_sf(10, "new_sf", field_index=0)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.renameSf"
+        assert sent["params"]["new_name"] == "new_sf"
+
+    def test_cloud_filter_sf(self):
+        c = self._make_client()
+        c.cloud_filter_sf(10, min_val=0.0, max_val=1.0)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.filterSf"
+        assert sent["params"]["min"] == 0.0
+        assert sent["params"]["max"] == 1.0
+
+    def test_cloud_coord_to_sf(self):
+        c = self._make_client()
+        c.cloud_coord_to_sf(10, dimension="z")
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.coordToSf"
+        assert sent["params"]["dimension"] == "z"
+
+    def test_cloud_remove_rgb(self):
+        c = self._make_client()
+        c.cloud_remove_rgb(10)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.removeRgb"
+
+    def test_cloud_remove_normals(self):
+        c = self._make_client()
+        c.cloud_remove_normals(10)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.removeNormals"
+
+    def test_cloud_invert_normals(self):
+        c = self._make_client()
+        c.cloud_invert_normals(10)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.invertNormals"
+
+    def test_cloud_merge(self):
+        c = self._make_client()
+        c.cloud_merge([1, 2, 3])
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "cloud.merge"
+        assert sent["params"]["entity_ids"] == [1, 2, 3]
+
+    def test_mesh_extract_vertices(self):
+        c = self._make_client()
+        c.mesh_extract_vertices(20)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "mesh.extractVertices"
+
+    def test_mesh_flip_triangles(self):
+        c = self._make_client()
+        c.mesh_flip_triangles(20)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "mesh.flipTriangles"
+
+    def test_mesh_volume(self):
+        c = self._make_client()
+        c.mesh_volume(20)
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "mesh.volume"
+
+    def test_mesh_merge(self):
+        c = self._make_client()
+        c.mesh_merge([20, 21])
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "mesh.merge"
+        assert sent["params"]["entity_ids"] == [20, 21]
+
+    def test_colmap_run(self):
+        c = self._make_client()
+        c.colmap_run("feature_extractor",
+                     kwargs_={"database_path": "/db.db", "image_path": "/imgs/"})
+        sent = json.loads(c._ws.send.call_args[0][0])
+        assert sent["method"] == "colmap.run"
+        assert sent["params"]["command"] == "feature_extractor"
+        assert sent["params"]["kwargs"]["database_path"] == "/db.db"
 
 
 class TestRPCContextManager:
@@ -303,6 +436,81 @@ class TestBackendGUIOnly:
         from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
         with pytest.raises(BackendError):
             self._headless_backend().cloud_paint_by_scalar_field_gui(1)
+
+    def test_cloud_set_active_sf_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_set_active_sf_gui(1, field_index=0)
+
+    def test_cloud_remove_sf_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_remove_sf_gui(1, field_index=0)
+
+    def test_cloud_remove_all_sfs_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_remove_all_sfs_gui(1)
+
+    def test_cloud_rename_sf_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_rename_sf_gui(1, "new_name", field_index=0)
+
+    def test_cloud_filter_sf_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_filter_sf_gui(1, min_val=0, max_val=1)
+
+    def test_cloud_coord_to_sf_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_coord_to_sf_gui(1, dimension="z")
+
+    def test_cloud_remove_rgb_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_remove_rgb_gui(1)
+
+    def test_cloud_remove_normals_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_remove_normals_gui(1)
+
+    def test_cloud_invert_normals_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_invert_normals_gui(1)
+
+    def test_cloud_merge_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().cloud_merge_gui([1, 2])
+
+    def test_mesh_extract_vertices_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().mesh_extract_vertices_gui(1)
+
+    def test_mesh_flip_triangles_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().mesh_flip_triangles_gui(1)
+
+    def test_mesh_volume_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().mesh_volume_gui(1)
+
+    def test_mesh_merge_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().mesh_merge_gui([1, 2])
+
+    def test_colmap_run_gui_headless(self):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import BackendError
+        with pytest.raises(BackendError):
+            self._headless_backend().colmap_run_gui("feature_extractor")
 
 
 class TestBackendRunCLI:

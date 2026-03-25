@@ -1,4 +1,4 @@
-# cli-anything-acloudviewer
+# cli-anything-acloudviewer  v3.1.0
 
 CLI harness for **ACloudViewer** — 3D point cloud and mesh processing via
 the ACloudViewer binary CLI (`-SILENT` mode) and JSON-RPC WebSocket.
@@ -17,7 +17,9 @@ pip install -e .
 The ACloudViewer binary must be on `PATH`, or set the `ACV_BINARY`
 environment variable to its absolute path.
 
-## Two Modes
+## Command modes
+
+### Runtime behavior (auto-detect)
 
 | Mode | How it Works | Requirement |
 |------|-------------|-------------|
@@ -27,9 +29,35 @@ environment variable to its absolute path.
 The CLI auto-detects: if a running ACloudViewer instance responds on
 `ws://localhost:6001`, GUI mode is used; otherwise headless.
 
+### Commands by category (what each command needs)
+
+**General** (no ACloudViewer backend required):
+
+`info`, `check`, `install`, `formats`, `session`, `repl`
+
+**Headless** (binary `-SILENT` mode; no GUI):
+
+- `convert`, `batch-convert`
+- `process`: `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`
+- `reconstruct`: `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `simplify-mesh`, `texture-mesh`, `convert-model`, `analyze-model`, `delaunay-mesh`
+- `sibr`: `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop`
+
+**GUI** (requires ACloudViewer running with the JSON-RPC plugin):
+
+- `open`, `clear`
+- `scene`: `list`, `info`, `remove`, `set-visible`
+- `entity`: `rename`, `set-color`
+- `view`: `screenshot`, `camera`, `orientation`, `zoom-fit`, `refresh`, `perspective`, `point-size`
+- `cloud`: `compute-normals`, `subsample`, `crop`, `scalar-fields`, `paint-uniform`, `paint-by-height`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge`
+- `mesh`: `simplify`, `smooth`, `sample-points`, `extract-vertices`, `flip-triangles`, `volume`, `merge`
+- `transform`: `apply`
+- `export`
+- `methods`: `list`
+- `colmap`: `reconstruct`, `run` (generic subcommand executor)
+
 ## Usage Examples
 
-### Basic Operations
+### Basic operations — **General**
 
 ```bash
 # Enter interactive REPL
@@ -38,11 +66,17 @@ cli-anything-acloudviewer
 # Show backend info
 cli-anything-acloudviewer --json info
 
+# Diagnostics: binary, wheel, install hints
+cli-anything-acloudviewer check
+
+# Install app, wheel, or auto (see --help)
+cli-anything-acloudviewer install --help
+
 # List supported file formats
-cli-anything-acloudviewer --json --mode headless formats
+cli-anything-acloudviewer --json formats
 ```
 
-### File Conversion
+### File conversion — **Headless**
 
 ```bash
 # Convert PLY to PCD
@@ -55,7 +89,7 @@ cli-anything-acloudviewer --mode headless convert model.obj model.stl
 cli-anything-acloudviewer --mode headless batch-convert ./scans/ ./output/ -f .pcd
 ```
 
-### Point Cloud Processing
+### Point cloud processing — **Headless**
 
 ```bash
 # Voxel subsample
@@ -95,7 +129,7 @@ cli-anything-acloudviewer --mode headless process sample-mesh mesh.obj -o cloud.
 cli-anything-acloudviewer --mode headless process color-banding input.ply -o colored.ply
 ```
 
-### 3D Reconstruction (Colmap)
+### 3D reconstruction (Colmap) — **Headless**
 
 ```bash
 # Automatic end-to-end reconstruction from images
@@ -140,7 +174,7 @@ cli-anything-acloudviewer reconstruct analyze-model ./sparse/0
 cli-anything-acloudviewer reconstruct mesh input.ply -o mesh.ply
 ```
 
-### SIBR Dataset Tools
+### SIBR dataset tools — **Headless**
 
 Requires ACloudViewer built with the SIBR plugin (`-DPLUGIN_STANDARD_QSIBR=ON`).
 
@@ -182,7 +216,7 @@ cli-anything-acloudviewer sibr distord-crop ./dataset/
 cli-anything-acloudviewer sibr tool prepareColmap4Sibr -path ./dataset/ -fix_metadata
 ```
 
-### Full Reconstruction Pipeline (Colmap + SIBR)
+### Full reconstruction pipeline (Colmap + SIBR) — **Headless**
 
 End-to-end example: images to SIBR-ready dataset:
 
@@ -200,23 +234,110 @@ cli-anything-acloudviewer sibr texture-mesh ./workspace/
 cli-anything-acloudviewer sibr unwrap-mesh ./workspace/
 ```
 
-### GUI Mode (Scene & View)
+### Scene, entity, view & open — **GUI**
+
+Requires a running ACloudViewer with the JSON-RPC plugin (`--mode gui` or auto-detect when `ws://localhost:6001` is available).
 
 ```bash
+# Open a file in the viewer
+cli-anything-acloudviewer --mode gui open /path/to/model.ply
+
 # List all entities in the scene
 cli-anything-acloudviewer --json --mode gui scene list
 
 # Get entity details
 cli-anything-acloudviewer --json --mode gui scene info --id 1
 
+# Remove an entity from the scene
+cli-anything-acloudviewer --mode gui scene remove --id 1
+
+# Rename an entity
+cli-anything-acloudviewer --mode gui entity rename --id 1 --name "MyCloud"
+
+# Set entity color
+cli-anything-acloudviewer --mode gui entity set-color --id 1 --r 255 --g 0 --b 0
+
 # Take a screenshot
 cli-anything-acloudviewer --mode gui view screenshot -o screenshot.png --width 1920 --height 1080
 
 # Get camera parameters
 cli-anything-acloudviewer --json --mode gui view camera
+
+# Set view orientation
+cli-anything-acloudviewer --mode gui view orientation --orient top
+
+# Clear the scene
+cli-anything-acloudviewer --mode gui clear
+
+# List available RPC methods
+cli-anything-acloudviewer --json --mode gui methods list
 ```
 
-### Session Management
+### Cloud operations — **GUI**
+
+```bash
+# Compute normals on a loaded cloud
+cli-anything-acloudviewer --json --mode gui cloud compute-normals --id 1 --radius 0.05
+
+# Subsample a cloud
+cli-anything-acloudviewer --json --mode gui cloud subsample --id 1 --method SPATIAL --param 0.1
+
+# Get scalar field list
+cli-anything-acloudviewer --json --mode gui cloud scalar-fields --id 1
+
+# Set active scalar field
+cli-anything-acloudviewer --json --mode gui cloud set-active-sf --id 1 --index 0
+
+# Remove a scalar field
+cli-anything-acloudviewer --json --mode gui cloud remove-sf --id 1 --index 0
+
+# Coordinate to scalar field
+cli-anything-acloudviewer --json --mode gui cloud coord-to-sf --id 1 --axis z
+
+# Remove RGB colors
+cli-anything-acloudviewer --mode gui cloud remove-rgb --id 1
+
+# Remove/Invert normals
+cli-anything-acloudviewer --mode gui cloud remove-normals --id 1
+cli-anything-acloudviewer --mode gui cloud invert-normals --id 1
+
+# Merge multiple clouds
+cli-anything-acloudviewer --json --mode gui cloud merge --ids 1 2 3
+```
+
+### Mesh operations — **GUI**
+
+```bash
+# Simplify mesh
+cli-anything-acloudviewer --json --mode gui mesh simplify --id 1 --target-count 10000
+
+# Smooth mesh (Laplacian)
+cli-anything-acloudviewer --json --mode gui mesh smooth --id 1 --iterations 3
+
+# Extract vertices as point cloud
+cli-anything-acloudviewer --json --mode gui mesh extract-vertices --id 1
+
+# Compute mesh volume
+cli-anything-acloudviewer --json --mode gui mesh volume --id 1
+
+# Flip triangle normals
+cli-anything-acloudviewer --mode gui mesh flip-triangles --id 1
+
+# Merge meshes
+cli-anything-acloudviewer --json --mode gui mesh merge --ids 1 2
+```
+
+### COLMAP via RPC — **GUI**
+
+```bash
+# Run automatic reconstruction via RPC (live Colmap progress in GUI console)
+cli-anything-acloudviewer --json --mode gui colmap reconstruct --image-path ./images/ -w ./workspace/
+
+# Run any Colmap subcommand via RPC
+cli-anything-acloudviewer --json --mode gui colmap run --subcommand feature_extractor --args "--image_path ./images/"
+```
+
+### Session management — **General**
 
 ```bash
 # Show session status
@@ -229,32 +350,101 @@ cli-anything-acloudviewer session undo
 cli-anything-acloudviewer session redo
 ```
 
-### JSON Output (for agent/script consumption)
+### JSON output (for agent/script consumption)
 
-All commands support `--json` flag for structured output:
+All commands support `--json` flag for structured output. Use **`--mode headless`** or **`--mode gui`** when the command belongs to that category; General commands do not require a backend mode.
 
 ```bash
-cli-anything-acloudviewer --json --mode headless info
-cli-anything-acloudviewer --json --mode headless formats
+cli-anything-acloudviewer --json info
+cli-anything-acloudviewer --json formats
 cli-anything-acloudviewer --json --mode headless process subsample input.ply -o sub.ply --voxel-size 0.05
 ```
 
 ## Command Reference
 
-| Group | Subcommands | Description |
-|-------|------------|-------------|
-| `convert` | — | Convert between 30+ 3D file formats |
-| `batch-convert` | — | Batch convert all files in a directory |
-| `formats` | — | List supported file formats |
-| `info` | — | Show backend info and supported formats |
-| `open` | — | Open a file in ACloudViewer |
-| `process` | `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding` | Point cloud and mesh processing |
-| `reconstruct` | `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `delaunay-mesh`, `texture-mesh`, `convert-model`, `analyze-model` | 3D reconstruction (Colmap SfM/MVS) |
-| `sibr` | `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop` | SIBR dataset preprocessing (10 tools) |
-| `scene` | `list`, `info` | Scene tree operations (GUI mode) |
-| `view` | `screenshot`, `camera` | Viewport control and screenshots (GUI mode) |
-| `session` | `status`, `undo`, `redo` | Session management |
-| `repl` | — | Interactive REPL session |
+| Mode | Group | Subcommands | Description |
+|------|-------|------------|-------------|
+| **General** | `check` | — | Installation diagnostics and fix hints |
+| **General** | `install` | `app`, `wheel`, `auto` | Download / install binary or Python wheel |
+| **General** | `formats` | — | List supported file formats |
+| **General** | `info` | — | Show backend info and supported formats |
+| **General** | `session` | `status`, `undo`, `redo` | Session management |
+| **General** | `repl` | — | Interactive REPL session |
+| **Headless** | `convert` | — | Convert between 30+ 3D file formats |
+| **Headless** | `batch-convert` | — | Batch convert all files in a directory |
+| **Headless** | `process` | `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes` | Point cloud and mesh processing (28 operations) |
+| **Headless** | `reconstruct` | `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `simplify-mesh`, `texture-mesh`, `convert-model`, `analyze-model`, `delaunay-mesh` | 3D reconstruction (Colmap SfM/MVS) |
+| **Headless** | `sibr` | `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop` | SIBR dataset preprocessing (11 tools) |
+| **GUI** | `open` | — | Open a file in the running ACloudViewer |
+| **GUI** | `clear` | — | Clear all entities from the scene |
+| **GUI** | `scene` | `list`, `info`, `remove`, `set-visible` | Scene tree operations |
+| **GUI** | `entity` | `rename`, `set-color` | Entity property management |
+| **GUI** | `view` | `screenshot`, `camera`, `orientation`, `zoom-fit`, `refresh`, `perspective`, `point-size` | Viewport control (7 operations) |
+| **GUI** | `cloud` | `compute-normals`, `subsample`, `crop`, `scalar-fields`, `paint-uniform`, `paint-by-height`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge` | Point cloud operations (16 operations) |
+| **GUI** | `mesh` | `simplify`, `smooth`, `sample-points`, `extract-vertices`, `flip-triangles`, `volume`, `merge` | Mesh operations (7 operations) |
+| **GUI** | `transform` | `apply` | Apply transformations to entities |
+| **GUI** | `export` | — | Export entities to file |
+| **GUI** | `methods` | `list` | List available RPC methods (dynamic discovery) |
+| **GUI** | `colmap` | `reconstruct`, `run` | COLMAP reconstruction via RPC |
+
+## JSON-RPC API (48+ Methods)
+
+When running in GUI mode, the harness communicates via JSON-RPC 2.0 over WebSocket. The method registry is dynamic — use `methods.list` to discover all available methods at runtime.
+
+Key method groups:
+
+| Category | Methods |
+|----------|---------|
+| **Lifecycle** | `ping`, `methods.list` |
+| **File I/O** | `open`, `export`, `file.convert`, `clear` |
+| **Scene** | `scene.list`, `scene.info`, `scene.remove`, `scene.setVisible` |
+| **Entity** | `entity.rename`, `entity.setColor` |
+| **View** | `view.screenshot`, `view.setOrientation`, `view.zoomFit`, `view.refresh`, `view.setPerspective`, `view.setPointSize`, `view.getCamera` |
+| **Cloud** | `cloud.computeNormals`, `cloud.subsample`, `cloud.crop`, `cloud.getScalarFields`, `cloud.paintUniform`, `cloud.paintByHeight`, `cloud.setActiveSf`, `cloud.removeSf`, `cloud.removeAllSfs`, `cloud.renameSf`, `cloud.filterSf`, `cloud.coordToSf`, `cloud.removeRgb`, `cloud.removeNormals`, `cloud.invertNormals`, `cloud.merge` |
+| **Mesh** | `mesh.simplify`, `mesh.smooth`, `mesh.samplePoints`, `mesh.extractVertices`, `mesh.flipTriangles`, `mesh.volume`, `mesh.merge` |
+| **Transform** | `transform.apply` |
+| **COLMAP** | `colmap.reconstruct`, `colmap.run` |
+
+## MCP Server (95+ Tools)
+
+An optional MCP server exposes 95+ tools for integration with AI agents:
+
+```bash
+pip install -e .
+cli-anything-acloudviewer-mcp --mode auto
+```
+
+MCP tool categories mirror the JSON-RPC methods above, plus additional CLI-only tools for headless processing, file conversion, batch operations, SIBR, and session management.
+
+## Supported File Formats
+
+### Point Cloud (Import/Export)
+
+| Format | Extensions | Plugin Required |
+|--------|-----------|----------------|
+| PLY | `.ply` | — (built-in) |
+| ASCII | `.asc`, `.xyz`, `.xyzn`, `.xyzrgb`, `.pts`, `.txt`, `.csv`, `.neu` | — (built-in) |
+| BIN | `.bin` | — (built-in) |
+| VTK | `.vtk` | — (built-in) |
+| PCD | `.pcd` | qPCL |
+| LAS/LAZ | `.las`, `.laz` | qLASIO or qPDALIO |
+| E57 | `.e57` | qE57IO |
+| DRC | `.drc` | qDracoIO |
+| SBF | `.sbf` | qCoreIO |
+| PTX (import only) | `.ptx` | — (built-in) |
+
+### Mesh (Import/Export)
+
+| Format | Extensions | Plugin Required |
+|--------|-----------|----------------|
+| OBJ | `.obj` | — (built-in) |
+| STL | `.stl` | — (built-in) |
+| OFF | `.off` | — (built-in) |
+| FBX | `.fbx` | qFBXIO |
+| DXF | `.dxf` | — (requires CV_DXF_SUPPORT) |
+| glTF (import only) | `.gltf`, `.glb` | qMeshIO |
+| DAE (import only) | `.dae` | qMeshIO |
+| 3DS (import only) | `.3ds` | qMeshIO |
 
 ## Platform Notes
 
@@ -266,14 +456,13 @@ cli-anything-acloudviewer --json --mode headless process subsample input.ply -o 
 
 On all platforms, set `ACV_BINARY` environment variable to override auto-discovery.
 
-## MCP Server
+### Platform-specific format availability
 
-An optional MCP server exposes 39 tools for integration with AI agents:
-
-```bash
-pip install -e ".[mcp]"
-cli-anything-acloudviewer-mcp --mode auto
-```
+- **LAS FWF** (full waveform): Windows only (`qLASFWF` plugin)
+- **STEP/STP** import: Requires OpenCASCADE (varies by build)
+- **GDAL rasters** (`.tif`, `.tiff`): Requires `CV_GDAL_SUPPORT` build flag
+- **SHP**: Requires `CV_SHP_SUPPORT` build flag
+- **SIBR tools**: Not available on macOS
 
 ## Running Tests
 
@@ -281,6 +470,8 @@ cli-anything-acloudviewer-mcp --mode auto
 pip install -e ".[dev]"
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
+
+Test suite: ~320 tests covering CLI structure, format maps, backend logic, RPC client wrappers, MCP tool registration, and session management.
 
 ## Methodology
 

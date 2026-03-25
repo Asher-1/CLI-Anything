@@ -95,11 +95,11 @@ arch, Python version, glibc version, and NVIDIA GPU presence.
 
 | Command | Description |
 |---------|-------------|
-| `check` | Diagnose installation status (text or JSON) |
-| `install app` | Download + install from GitHub (stable/beta, CUDA/CPU) |
-| `install app --from-file <path>` | Silent install from local `.run`/`.dmg`/`.exe` |
-| `install wheel` | Download + install `cloudViewer` Python package |
-| `install auto` | Detect and install all missing components |
+| `check` (general) | Diagnose installation status (text or JSON) |
+| `install app` (general) | Download + install from GitHub (stable/beta, CUDA/CPU) |
+| `install app --from-file <path>` (general) | Silent install from local `.run`/`.dmg`/`.exe` |
+| `install wheel` (general) | Download + install `cloudViewer` Python package |
+| `install auto` (general) | Detect and install all missing components |
 
 **Download strategy**: Prefers `curl` (with retry/progress) > `wget` > `urllib`
 fallback, to handle slow or unreliable GitHub CDN connections.
@@ -108,14 +108,14 @@ fallback, to handle slow or unreliable GitHub CDN connections.
 
 | Domain | Module | Key Operations |
 |--------|--------|----------------|
-| File I/O | `backend.py` | open, convert, batch-convert, export |
-| Processing | `backend.py` | subsample, normals, ICP, SOR, crop |
-| Analysis | `backend.py` | C2C distance, C2M distance, density, curvature, roughness |
-| Reconstruction | `backend.py` | Delaunay triangulation, mesh sampling |
+| File I/O | `backend.py` | open (GUI), convert (headless), batch-convert (headless), export |
+| Processing | `backend.py` | subsample (headless), normals (headless), ICP (headless), SOR (headless), crop (headless) |
+| Analysis | `backend.py` | C2C distance (headless), C2M distance (headless), density (headless), curvature (headless), roughness (headless) |
+| Reconstruction | `backend.py` | Delaunay triangulation (headless), mesh sampling (headless) |
 | Colorization | `rpc_client.py` | paintUniform, paintByHeight, paintByScalarField (GUI only) |
-| Scene | `rpc_client.py` | list, info, remove, visibility, select (GUI only) |
-| View | `rpc_client.py` | screenshot, camera, orientation, zoom (GUI only) |
-| Session | `session.py` | undo/redo with snapshot stack |
+| Scene | `rpc_client.py` | list (GUI), info (GUI), remove (GUI), visibility (GUI), select (GUI) |
+| View | `rpc_client.py` | screenshot (GUI), camera (GUI), orientation (GUI), zoom (GUI) |
+| Session | `session.py` | undo/redo with snapshot stack (general) |
 
 ### Processing Commands (15 operations)
 
@@ -124,21 +124,21 @@ CloudCompare-compatible CLI flags:
 
 | Command | CLI Flags | Description |
 |---------|-----------|-------------|
-| `subsample` | `-SS SPATIAL <step>` | Spatial / random / octree subsampling |
-| `normals` | `-OCTREE_NORMALS <radius>` | Normal estimation |
-| `icp` | `-ICP` | Iterative Closest Point registration |
-| `sor` | `-SOR <knn> <sigma>` | Statistical outlier removal |
-| `c2c-dist` | `-C2C_DIST` | Cloud-to-cloud distance computation |
-| `c2m-dist` | `-C2M_DIST` | Cloud-to-mesh distance computation |
-| `density` | `-DENSITY <radius>` | Local density computation |
-| `curvature` | `-CURV <type> <radius>` | Mean or Gaussian curvature |
-| `roughness` | `-ROUGH <radius>` | Surface roughness |
-| `delaunay` | `-DELAUNAY` | Delaunay 2.5D triangulation |
-| `sample-mesh` | `-SAMPLE_MESH POINTS <n>` | Uniform mesh surface sampling |
-| `color-banding` | `-COLOR_BANDING <dim> <freq>` | Height-based color gradient |
-| `crop` | `-CROP <bounds>` | Axis-aligned bounding box crop |
-| `transform` | `-APPLY_TRANS <matrix>` | Apply 4x4 transformation matrix |
-| `convert` | `-O <in> -C_EXPORT_FMT <fmt>` | Format conversion (40+ formats) |
+| `subsample` (headless) | `-SS SPATIAL <step>` | Spatial / random / octree subsampling |
+| `normals` (headless) | `-OCTREE_NORMALS <radius>` | Normal estimation |
+| `icp` (headless) | `-ICP` | Iterative Closest Point registration |
+| `sor` (headless) | `-SOR <knn> <sigma>` | Statistical outlier removal |
+| `c2c-dist` (headless) | `-C2C_DIST` | Cloud-to-cloud distance computation |
+| `c2m-dist` (headless) | `-C2M_DIST` | Cloud-to-mesh distance computation |
+| `density` (headless) | `-DENSITY <radius>` | Local density computation |
+| `curvature` (headless) | `-CURV <type> <radius>` | Mean or Gaussian curvature |
+| `roughness` (headless) | `-ROUGH <radius>` | Surface roughness |
+| `delaunay` (headless) | `-DELAUNAY` | Delaunay 2.5D triangulation |
+| `sample-mesh` (headless) | `-SAMPLE_MESH POINTS <n>` | Uniform mesh surface sampling |
+| `color-banding` (headless) | `-COLOR_BANDING <dim> <freq>` | Height-based color gradient |
+| `crop` (headless) | `-CROP <bounds>` | Axis-aligned bounding box crop |
+| `transform` (headless) | `-APPLY_TRANS <matrix>` | Apply 4x4 transformation matrix |
+| `convert` (headless) | `-O <in> -C_EXPORT_FMT <fmt>` | Format conversion (40+ formats) |
 
 ### Supported Formats (40+)
 
@@ -174,20 +174,20 @@ reconstruction:
 
 | Command | Colmap Command | Description |
 |---------|---------------|-------------|
-| `auto` | `automatic_reconstructor` | End-to-end pipeline from images |
-| `extract-features` | `feature_extractor` | Detect SIFT features |
-| `match` | `*_matcher` | Match features (exhaustive/sequential/vocab-tree/spatial) |
-| `sparse` | `mapper` | Incremental or hierarchical SfM |
-| `undistort` | `image_undistorter` | Prepare dense workspace |
-| `dense-stereo` | `patch_match_stereo` | Multi-view stereo depth maps |
-| `fuse` | `stereo_fusion` | Fuse depth maps to point cloud |
-| `poisson` | `poisson_mesher` | Poisson surface reconstruction |
-| `delaunay-mesh` | `delaunay_mesher` | Delaunay + visibility meshing |
-| `simplify-mesh` | `mesh_simplifier` | QEM mesh simplification |
-| `texture-mesh` | `mesh_texturer` | Multi-view texture atlas |
-| `convert-model` | `model_converter` | Export to PLY/NVM/Bundler/etc. |
-| `analyze-model` | `model_analyzer` | Model statistics |
-| `mesh` | ACloudViewer `-DELAUNAY` | Point cloud Delaunay (no images) |
+| `auto` (headless) | `automatic_reconstructor` | End-to-end pipeline from images |
+| `extract-features` (headless) | `feature_extractor` | Detect SIFT features |
+| `match` (headless) | `*_matcher` | Match features (exhaustive/sequential/vocab-tree/spatial) |
+| `sparse` (headless) | `mapper` | Incremental or hierarchical SfM |
+| `undistort` (headless) | `image_undistorter` | Prepare dense workspace |
+| `dense-stereo` (headless) | `patch_match_stereo` | Multi-view stereo depth maps |
+| `fuse` (headless) | `stereo_fusion` | Fuse depth maps to point cloud |
+| `poisson` (headless) | `poisson_mesher` | Poisson surface reconstruction |
+| `delaunay-mesh` (headless) | `delaunay_mesher` | Delaunay + visibility meshing |
+| `simplify-mesh` (headless) | `mesh_simplifier` | QEM mesh simplification |
+| `texture-mesh` (headless) | `mesh_texturer` | Multi-view texture atlas |
+| `convert-model` (headless) | `model_converter` | Export to PLY/NVM/Bundler/etc. |
+| `analyze-model` (headless) | `model_analyzer` | Model statistics |
+| `mesh` (headless) | ACloudViewer `-DELAUNAY` | Point cloud Delaunay (no images) |
 
 Binary discovery for Colmap: `COLMAP_PATH` env var > `colmap`/`Colmap` on
 `$PATH` > standard install locations per platform. On macOS, automatically
