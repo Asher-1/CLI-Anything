@@ -1,0 +1,214 @@
+name: Check Upstream Updates
+
+# 定期检查上游仓库是否有新的提交
+# 如果有更新,创建一个 issue 提醒维护者
+
+on:
+  schedule:
+    # 每天 UTC 时间 00:00 运行 (北京时间 08:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/HKUDS/CLI-Anything.git || true
+          git fetch upstream
+      
+      - name: Check for upstream updates
+        id: check_updates
+        run: |
+          # 获取上游和本地的最新提交
+          UPSTREAM_COMMIT=$(git rev-parse upstream/main)
+          LOCAL_COMMIT=$(git rev-parse origin/main)
+          
+          echo "upstream_commit=$UPSTREAM_COMMIT" >> $GITHUB_OUTPUT
+          echo "local_commit=$LOCAL_COMMIT" >> $GITHUB_OUTPUT
+          
+          if [ "$UPSTREAM_COMMIT" != "$LOCAL_COMMIT" ]; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            
+            # 计算差异
+            COMMITS_BEHIND=$(git rev-list --count HEAD..upstream/main)
+            COMMITS_AHEAD=$(git rev-list --count upstream/main..HEAD)
+            
+            echo "commits_behind=$COMMITS_BEHIND" >> $GITHUB_OUTPUT
+            echo "commits_ahead=$COMMITS_AHEAD" >> $GITHUB_OUTPUT
+            
+            # 获取上游新提交的摘要
+            echo "## 上游新提交" > /tmp/upstream_commits.md
+            git log --oneline --no-merges HEAD..upstream/main >> /tmp/upstream_commits.md
+            
+            echo "✅ 发现上游有 $COMMITS_BEHIND 个新提交"
+          else
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "✅ 已与上游同步"
+          fi
+      
+      - name: Check for conflicts
+        id: check_conflicts
+        if: steps.check_updates.outputs.has_updates == 'true'
+        run: |
+          # 尝试 dry-run merge 来检测潜在冲突
+          git merge --no-commit --no-ff upstream/main > /tmp/merge_output.txt 2>&1 || true
+          
+          if git diff --name-only --diff-filter=U > /tmp/conflicts.txt 2>/dev/null; then
+            if [ -s /tmp/conflicts.txt ]; then
+              echo "has_conflicts=true" >> $GITHUB_OUTPUT
+              echo "## 潜在冲突文件" > /tmp/conflict_files.md
+              cat /tmp/conflicts.txt >> /tmp/conflict_files.md
+            else
+              echo "has_conflicts=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "has_conflicts=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # 清理 merge 尝试
+          git merge --abort 2>/dev/null || true
+      
+      - name: Create or update issue
+        if: steps.check_updates.outputs.has_updates == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commitsBehind = ${{ steps.check_updates.outputs.commits_behind }};
+            const commitsAhead = ${{ steps.check_updates.outputs.commits_ahead }};
+            const hasConflicts = ${{ steps.check_conflicts.outputs.has_conflicts == 'true' }};
+            
+            const upstreamCommits = require('fs').readFileSync('/tmp/upstream_commits.md', 'utf8');
+            const conflictFiles = hasConflicts ? 
+              require('fs').readFileSync('/tmp/conflict_files.md', 'utf8') : '';
+            
+            const issueTitle = '🔄 上游仓库有新更新可同步';
+            const issueBody = `
+            # 上游同步提醒
+            
+            上游仓库 [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) 有新的提交可以同步。
+            
+            ## 📊 同步状态
+            
+            - **落后上游**: ${commitsBehind} 个提交
+            - **领先上游**: ${commitsAhead} 个提交
+            - **预测冲突**: ${hasConflicts ? '⚠️ 可能存在冲突' : '✅ 无明显冲突'}
+            
+            ${upstreamCommits}
+            
+            ${hasConflicts ? conflictFiles : ''}
+            
+            ## 🚀 如何同步
+            
+            ### 方法 1: 使用自动化脚本 (推荐)
+            
+            \`\`\`bash
+            # 如果预期有冲突,使用 merge 策略
+            ./sync-upstream.sh --merge
+            
+            # 如果想保留本地修改,使用 ours 策略
+            ./sync-upstream.sh --ours
+            
+            # 默认 rebase 策略 (历史更整洁)
+            ./sync-upstream.sh
+            \`\`\`
+            
+            ### 方法 2: 手动同步
+            
+            \`\`\`bash
+            git fetch upstream
+            git checkout main
+            git merge upstream/main
+            # 或
+            git rebase upstream/main
+            \`\`\`
+            
+            ## 📚 相关文档
+            
+            - [详细同步指南](./SYNC_UPSTREAM.md)
+            - [快速参考](./SYNC_QUICK_REF.md)
+            
+            ## ⚠️ 注意事项
+            
+            ${hasConflicts ? `
+            ### 检测到潜在冲突
+            
+            同步过程可能需要手动解决冲突。建议:
+            
+            1. 先创建备份分支
+            2. 使用 merge 策略而不是 rebase
+            3. 仔细审查冲突文件
+            4. 同步后运行完整测试
+            ` : ''}
+            
+            ---
+            
+            *此 issue 由 GitHub Actions 自动创建。当上游再次有新提交时,此 issue 会被更新。*
+            *上次检查时间: ${new Date().toISOString()}*
+            `;
+            
+            // 查找现有的同步提醒 issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['upstream-sync'],
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title === issueTitle
+            );
+            
+            if (existingIssue) {
+              // 更新现有 issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody,
+              });
+              
+              // 添加评论
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 检测到新的上游更新 (${commitsBehind} 个新提交)`,
+              });
+              
+              console.log(`更新了 issue #${existingIssue.number}`);
+            } else {
+              // 创建新 issue
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['upstream-sync', 'maintenance'],
+              });
+              
+              console.log(`创建了新 issue #${newIssue.data.number}`);
+            }
+      
+      - name: Summary
+        run: |
+          if [ "${{ steps.check_updates.outputs.has_updates }}" == "true" ]; then
+            echo "✅ 检测到上游更新,已创建或更新 issue"
+            echo "   - 落后: ${{ steps.check_updates.outputs.commits_behind }} 个提交"
+            echo "   - 领先: ${{ steps.check_updates.outputs.commits_ahead }} 个提交"
+            echo "   - 冲突: ${{ steps.check_conflicts.outputs.has_conflicts }}"
+          else
+            echo "✅ 已与上游同步,无需操作"
+          fi
