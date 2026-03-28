@@ -1,0 +1,25 @@
+# Git attributes config - for handling specific file merge strategies
+
+# For these files, automatically use our version on conflicts (ours)
+# Applies to custom config files you don't want overwritten by upstream
+*.local merge=ours
+.env* merge=ours
+.vscode/settings.json merge=ours
+.cursor/settings.json merge=ours
+
+# For these files, use special merge driver
+# JSON files - attempt smart merge
+*.json merge=union
+
+# Markdown files - preserve changes from both sides
+*.md merge=union
+
+# Python package files - usually require manual handling
+requirements*.txt merge=union
+setup.py merge=union
+pyproject.toml merge=union
+
+# Test files - preserve tests from both sides
+**/tests/** merge=union
+**/*_test.py merge=union
+**/test_*.py merge=union

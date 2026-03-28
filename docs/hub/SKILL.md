@@ -13,10 +13,10 @@ Agent-native stateful CLI interfaces for 21 applications. All CLIs support `--js
 
 ```bash
 # Install any CLI
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=<name>/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=<name>/agent-harness
 
 # Example: Install GIMP CLI
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=gimp/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness
 ```
 
 ## Available CLIs
@@ -25,28 +25,28 @@ pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=gimp/agen
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **Blender** | 3D modeling, animation, and rendering via blender --background --python | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=blender/agent-harness` |
+| **Blender** | 3D modeling, animation, and rendering via blender --background --python | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=blender/agent-harness` |
 
 ### Ai
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **ComfyUI** | AI image generation workflow management via ComfyUI REST API | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=comfyui/agent-harness` |
-| **NotebookLM** | Experimental NotebookLM harness scaffold wrapping the installed notebooklm CLI for notebook, source, chat, artifact, download, and sharing workflows | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=notebooklm/agent-harness` |
-| **Novita** | Access AI models via Novita's OpenAI-compatible API (DeepSeek, GLM, MiniMax) | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=novita/agent-harness` |
-| **Ollama** | Local LLM inference and model management via Ollama REST API | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=ollama/agent-harness` |
+| **ComfyUI** | AI image generation workflow management via ComfyUI REST API | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=comfyui/agent-harness` |
+| **NotebookLM** | Experimental NotebookLM harness scaffold wrapping the installed notebooklm CLI for notebook, source, chat, artifact, download, and sharing workflows | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=notebooklm/agent-harness` |
+| **Novita** | Access AI models via Novita's OpenAI-compatible API (DeepSeek, GLM, MiniMax) | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=novita/agent-harness` |
+| **Ollama** | Local LLM inference and model management via Ollama REST API | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=ollama/agent-harness` |
 
 ### Audio
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **Audacity** | Audio editing and processing via sox | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=audacity/agent-harness` |
+| **Audacity** | Audio editing and processing via sox | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=audacity/agent-harness` |
 
 ### Communication
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **Zoom** | Meeting management via Zoom REST API (OAuth2) | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=zoom/agent-harness` |
+| **Zoom** | Meeting management via Zoom REST API (OAuth2) | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=zoom/agent-harness` |
 
 ### Design
 
@@ -58,59 +58,59 @@ pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=gimp/agen
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **Draw.io** | Diagram creation and export via draw.io CLI | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=drawio/agent-harness` |
-| **Mermaid** | Mermaid Live Editor state files and renderer URLs | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=mermaid/agent-harness` |
+| **Draw.io** | Diagram creation and export via draw.io CLI | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=drawio/agent-harness` |
+| **Mermaid** | Mermaid Live Editor state files and renderer URLs | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=mermaid/agent-harness` |
 
 ### Generation
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **AnyGen** | Generate docs, slides, websites and more via AnyGen cloud API | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=anygen/agent-harness` |
+| **AnyGen** | Generate docs, slides, websites and more via AnyGen cloud API | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=anygen/agent-harness` |
 
 ### Image
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **GIMP** | Raster image processing via gimp -i -b (batch mode) | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=gimp/agent-harness` |
-| **Inkscape** | SVG vector graphics with export via inkscape --export-filename | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=inkscape/agent-harness` |
+| **GIMP** | Raster image processing via gimp -i -b (batch mode) | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness` |
+| **Inkscape** | SVG vector graphics with export via inkscape --export-filename | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=inkscape/agent-harness` |
 
 ### Music
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **MuseScore** | CLI for music notation — transpose, export PDF/audio/MIDI, extract parts, manage instruments | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=musescore/agent-harness` |
+| **MuseScore** | CLI for music notation — transpose, export PDF/audio/MIDI, extract parts, manage instruments | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=musescore/agent-harness` |
 
 ### Network
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **AdGuardHome** | DNS ad-blocking and network infrastructure management via AdGuardHome REST API | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=adguardhome/agent-harness` |
+| **AdGuardHome** | DNS ad-blocking and network infrastructure management via AdGuardHome REST API | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=adguardhome/agent-harness` |
 
 ### Office
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **LibreOffice** | Create and manipulate ODF documents, export to PDF/DOCX/XLSX/PPTX via headless mode | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=libreoffice/agent-harness` |
-| **Mubu** | Knowledge management and outlining via local Mubu desktop data | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=mubu/agent-harness` |
+| **LibreOffice** | Create and manipulate ODF documents, export to PDF/DOCX/XLSX/PPTX via headless mode | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=libreoffice/agent-harness` |
+| **Mubu** | Knowledge management and outlining via local Mubu desktop data | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=mubu/agent-harness` |
 
 ### Streaming
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **OBS Studio** | Create and manage streaming/recording scenes via command line | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=obs-studio/agent-harness` |
+| **OBS Studio** | Create and manage streaming/recording scenes via command line | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=obs-studio/agent-harness` |
 
 ### Video
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **Kdenlive** | Video editing and rendering via melt | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=kdenlive/agent-harness` |
-| **Shotcut** | Video editing and rendering via melt/ffmpeg | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=shotcut/agent-harness` |
+| **Kdenlive** | Video editing and rendering via melt | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=kdenlive/agent-harness` |
+| **Shotcut** | Video editing and rendering via melt/ffmpeg | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=shotcut/agent-harness` |
 
 ### Web
 
 | Name | Description | Install |
 |------|-------------|---------|
-| **Browser** | Browser automation via DOMShell MCP server. Maps Chrome's Accessibility Tree to a virtual filesystem for agent-native navigation. | `pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=browser/agent-harness` |
+| **Browser** | Browser automation via DOMShell MCP server. Maps Chrome's Accessibility Tree to a virtual filesystem for agent-native navigation. | `pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=browser/agent-harness` |
 
 ## Usage Pattern
 
@@ -136,6 +136,6 @@ cli-anything-<name> --json <group> <command>
 
 ## More Info
 
-- Repository: https://github.com/HKUDS/CLI-Anything
-- Web Hub: https://hkuds.github.io/CLI-Anything/
+- Repository: https://github.com/Asher-1/CLI-Anything
+- Web Hub: https://asher-1.github.io/CLI-Anything/
 - Last Updated: 2026-03-18

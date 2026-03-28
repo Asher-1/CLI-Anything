@@ -6,7 +6,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 </p>
 
 **🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: Browse & install all community CLIs in one place. Have a CLI for a new software? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
-**🌐 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)**: Explore all community-built CLIs and install with one command at the **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)**. Want to add your own? [Open a PR](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
+**🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: Explore all community-built CLIs and install with one command at the **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)**. Want to add your own? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="Quick Start"></a>
@@ -430,7 +430,7 @@ The agent will browse the catalog, install whichever CLI fits the task, and use 
 
 **How it works under the hood:**
 
-1. The meta-skill points to the live catalog at [`https://hkuds.github.io/CLI-Anything/SKILL.txt`](https://hkuds.github.io/CLI-Anything/SKILL.txt)
+1. The meta-skill points to the live catalog at [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
 2. The agent reads 20+ CLIs organized by category with one-line `pip install` commands
 3. The agent installs whichever CLI fits the task, then reads that CLI's own SKILL.md for detailed usage
 

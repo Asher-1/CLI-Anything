@@ -1,0 +1,39 @@
+{
+  "replacements": [
+    {
+      "from": "HKUDS/CLI-Anything",
+      "to": "Asher-1/CLI-Anything",
+      "description": "GitHub repository references"
+    },
+    {
+      "from": "hkuds.github.io/CLI-Anything",
+      "to": "asher-1.github.io/CLI-Anything",
+      "description": "GitHub Pages URLs"
+    }
+  ],
+  "include_patterns": [
+    "README*.md",
+    "registry.json",
+    "docs/**/*.md",
+    "docs/**/*.txt",
+    "docs/**/*.html",
+    "**/SKILL.md",
+    "**/README.md",
+    "**/setup.py",
+    "cli-hub-meta-skill/**/*.md",
+    "*/agent-harness/**/*.md",
+    "*/agent-harness/**/*.py",
+    "*/agent-harness/**/*.txt"
+  ],
+  "exclude_patterns": [
+    "CONTRIBUTING.md",
+    "sync-upstream.sh",
+    ".github/workflows/check-upstream.yml",
+    "SYNC_*.md",
+    "**/test*.py",
+    "**/__pycache__/**"
+  ],
+  "exclude_content": [
+    "based on HKUDS and thanks to \\[HKUDS\\]"
+  ]
+}
