@@ -6,6 +6,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 </p>
 
 **🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: Browse & install all community CLIs in one place. Have a CLI for a new software? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
+**🌐 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)**: Explore all community-built CLIs and install with one command at the **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)**. Want to add your own? [Open a PR](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="Quick Start"></a>
@@ -46,6 +47,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 - **2026-03-23** 🔬 Added [ACloudViewer](https://asher-1.github.io/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 39 tools, 30+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 185 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
 
 - **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-skill/SKILL.md`](cli-hub-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
+- **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
 
 - **2026-03-22** 🎵 **MuseScore CLI** merged with transpose, export, and instrument management. Community contributions continue expanding domain coverage.
 
@@ -405,12 +407,30 @@ Each installed CLI ships with a [`SKILL.md`](#-skillmd-generation) inside the Py
 CLI-Hub lets agents autonomously discover and install the CLIs they need — zero human intervention required.
 
 **Agent-Native Catalog:** [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+We published a **meta-skill** that lets any AI agent freely explore the full catalog of community CLIs and pick the right one for the task.
 
-CLI-Anything ships a **meta-skill** that lets any AI agent browse, pick, and install from the full catalog of community CLIs.
+**Install in one command:**
 
-**How it works:**
+```bash
+# OpenClaw
+openclaw skills install cli-anything-hub
 
 1. Point your agent to the catalog: [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+# nanobot
+nanobot skills install cli-anything-hub
+```
+
+**Then just prompt your agent:**
+
+```
+Find appropriate CLI software in CLI-Hub and complete the task: <your task here>
+```
+
+The agent will browse the catalog, install whichever CLI fits the task, and use it — all autonomously.
+
+**How it works under the hood:**
+
+1. The meta-skill points to the live catalog at [`https://hkuds.github.io/CLI-Anything/SKILL.txt`](https://hkuds.github.io/CLI-Anything/SKILL.txt)
 2. The agent reads 20+ CLIs organized by category with one-line `pip install` commands
 3. The agent installs whichever CLI fits the task, then reads that CLI's own SKILL.md for detailed usage
 
@@ -421,10 +441,12 @@ CLI-Anything ships a **meta-skill** that lets any AI agent browse, pick, and ins
 pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness
 # 3. Agent uses cli-anything-gimp --json for all operations
 ```
+The catalog auto-updates whenever `registry.json` changes — new community CLIs show up automatically.
 
 The meta-skill auto-updates whenever `registry.json` changes — new community CLIs show up automatically.
 
 > **For Claude Code users:** Copy [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md) into your project or skills directory. This meta-skill points to the live catalog at `https://asher-1.github.io/CLI-Anything/SKILL.txt` for automatic CLI discovery.
+> **For Claude Code users:** Copy [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md) into your project or skills directory for the same automatic CLI discovery.
 
 ---
 
@@ -445,13 +467,14 @@ The meta-skill auto-updates whenever `registry.json` changes — new community C
 | **📂 GitHub Repositories** | Transform any open-source project into agent-controllable tools through automatic CLI generation | VSCodium, WordPress, Calibre, Zotero, Joplin, Logseq, Penpot, Super Productivity |
 | **🤖 AI/ML Platforms** | Automate model training, inference pipelines, and hyperparameter tuning through structured commands | Stable Diffusion WebUI, ComfyUI, Ollama, InvokeAI, Text-generation-webui, Open WebUI, Fooocus, Kohya_ss, AnythingLLM, SillyTavern |
 | **📊 Data & Analytics** | Enable programmatic data processing, visualization, and statistical analysis workflows | JupyterLab, Apache Superset, Metabase, Redash, DBeaver, KNIME, Orange, OpenSearch Dashboards, Lightdash |
-| **💻 Development Tools** | Streamline code editing, building, testing, and deployment processes via command interfaces | Jenkins, Gitea, Hoppscotch, Portainer, pgAdmin, SonarQube, ArgoCD, OpenLens, Insomnia, Beekeeper Studio |
+| **💻 Development Tools** | Streamline code editing, building, testing, and deployment processes via command interfaces | Jenkins, Gitea, Hoppscotch, Portainer, pgAdmin, SonarQube, ArgoCD, OpenLens, Insomnia, Beekeeper Studio, **[iTerm2](https://iterm2.com)** |
 | **🎨 Creative & Media** | Control content creation, editing, and rendering workflows programmatically | Blender, GIMP, OBS Studio, Audacity, Krita, Kdenlive, Shotcut, Inkscape, Darktable, LMMS, Ardour |
 | **🔬 Scientific Computing** | Automate research workflows, simulations, and complex calculations | ImageJ, FreeCAD, QGIS, ParaView, Gephi, LibreCAD, Stellarium, KiCad, JASP, Jamovi |
 | **🏢 Enterprise & Office** | Convert business applications and productivity tools into agent-accessible systems | NextCloud, GitLab, Grafana, Mattermost, LibreOffice, AppFlowy, NocoDB, Odoo (Community), Plane, ERPNext |
 | **📞 Communication & Collaboration** | Automate meeting scheduling, participant management, recording retrieval, and reporting through structured CLI | Zoom, Jitsi Meet, BigBlueButton, Mattermost |
 | **📐 Diagramming & Visualization** | Create and manipulate diagrams, flowcharts, architecture diagrams, and visual documentation programmatically | Draw.io (diagrams.net), Mermaid, PlantUML, Excalidraw, yEd |
 | **🌐 Network & Infrastructure** | Manage network services, DNS, ad-blocking, and infrastructure through structured CLI commands | AdGuardHome |
+| **🔬 Graphics & GPU Debugging** | Analyze GPU frame captures, inspect pipeline state, export shaders, and diff rendering state | RenderDoc |
 | **✨ AI Content Generation** | Generate professional deliverables (slides, docs, diagrams, websites, research reports) through AI-powered cloud APIs | [AnyGen](https://www.anygen.io), Gamma, Beautiful.ai, Tome |
 
 ---
@@ -775,8 +798,10 @@ adguardhome    36 passed  ✅   (24 unit + 12 e2e)
 ollama         98 passed  ✅   (87 unit + 11 e2e)
 acloudviewer  185 passed  ✅   (178 unit + 7 e2e)
 sketch         19 passed  ✅   (19 jest, Node.js)
+renderdoc      59 passed  ✅   (45 unit + 14 e2e)
 ──────────────────────────────────────────────────────────────────────────────
 TOTAL        2,043 passed  ✅   100% pass rate
+TOTAL        1,917 passed  ✅   100% pass rate
 ```
 
 ---
@@ -846,6 +871,8 @@ cli-anything/
 ├── 🦙 ollama/agent-harness/             # Ollama CLI (98 tests)
 ├── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (185 tests)
 └── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
+├── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
+└── 🔬 renderdoc/agent-harness/          # RenderDoc CLI (59 tests)
 ```
 
 Each `agent-harness/` contains an installable Python package under `cli_anything.<software>/` with Click CLI, core modules, utils (including `repl_skin.py` and backend wrapper), and comprehensive tests.

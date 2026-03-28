@@ -6,6 +6,7 @@ CLI-Anything: AIエージェントと世界のソフトウェアの架け橋</st
 </p>
 
 **🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: すべてのコミュニティCLIを一か所で閲覧・インストール。新しいソフトウェアのCLIがありますか？[PRを送信](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — Hubは即座に更新されます。
+**🌐 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)**: コミュニティが構築した全CLIを **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)** で探索、ワンコマンドでインストール。自分のCLIを追加したい？[PRを送信](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md) — Hubは即座に更新されます。
 
 <p align="center">
   <a href="#-クイックスタート"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="クイックスタート"></a>
