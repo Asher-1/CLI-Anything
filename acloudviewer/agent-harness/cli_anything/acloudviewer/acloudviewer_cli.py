@@ -1741,6 +1741,67 @@ def sibr_group():
     pass
 
 
+@sibr_group.command("viewer")
+@click.argument("viewer_type", type=click.Choice([
+    "gaussian", "ulr", "ulrv2", "texturedmesh", 
+    "pointbased", "remoteGaussian"
+]))
+@click.option("--path", type=click.Path(exists=True), 
+              help="Dataset directory")
+@click.option("--model-path", type=click.Path(exists=True), 
+              help="Trained model directory (for gaussian viewer)")
+@click.option("--mesh", type=click.Path(exists=True), 
+              help="Mesh file (for texturedmesh viewer)")
+@click.option("--width", type=int, default=1920, 
+              help="Window width")
+@click.option("--height", type=int, default=1080, 
+              help="Window height")
+@click.option("--iteration", type=int, 
+              help="Specific iteration to load (gaussian viewer)")
+@click.option("--device", type=int, default=0, 
+              help="CUDA device ID")
+@click.option("--no-interop", is_flag=True, 
+              help="Disable CUDA-OpenGL interop")
+@click.option("--ip", default="127.0.0.1", 
+              help="IP address for remote connection (remoteGaussian)")
+@click.option("--port", type=int, default=6009, 
+              help="Port for remote connection (remoteGaussian)")
+@handle_error
+def sibr_viewer(viewer_type, path, model_path, mesh, width, height, 
+                iteration, device, no_interop, ip, port):
+    """Launch a SIBR viewer for novel view synthesis visualization.
+    
+    \b
+    Available viewer types:
+      gaussian       - Gaussian Splatting viewer (requires --model-path and --path)
+      ulr            - Unstructured Lumigraph Rendering
+      ulrv2          - ULR version 2
+      texturedmesh   - Textured mesh viewer (requires --mesh and --path)
+      pointbased     - Point-based rendering
+      remoteGaussian - Remote Gaussian viewer (requires --ip and --port)
+    
+    \b
+    Examples:
+      cli-anything-acloudviewer sibr viewer gaussian --model-path ./output/ --path ./dataset/
+      cli-anything-acloudviewer sibr viewer ulr --path ./dataset/
+      cli-anything-acloudviewer sibr viewer remoteGaussian --ip 127.0.0.1 --port 6009
+    """
+    result = get_backend().launch_sibr_viewer(
+        viewer_type,
+        path=path,
+        model_path=model_path,
+        mesh=mesh,
+        width=width,
+        height=height,
+        iteration=iteration,
+        device=device,
+        no_interop=no_interop,
+        ip=ip,
+        port=port
+    )
+    output(result)
+
+
 @sibr_group.command("tool")
 @click.argument("tool_name")
 @click.argument("extra_args", nargs=-1)

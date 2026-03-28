@@ -1506,6 +1506,97 @@ class ACloudViewerBackend:
         args = ["-path", dataset_path] + (extra_args or [])
         return self.sibr_tool("distordCrop", args)
 
+    def launch_sibr_viewer(self, viewer_type: str, **kwargs) -> dict:
+        """Launch a SIBR viewer for novel view synthesis visualization.
+        
+        Args:
+            viewer_type: One of 'gaussian', 'ulr', 'ulrv2', 'texturedmesh',
+                         'pointbased', 'remoteGaussian'
+            **kwargs: Viewer-specific options (path, model_path, mesh, width, height,
+                      iteration, device, no_interop, ip, port)
+        
+        Returns:
+            dict with status and viewer information
+        """
+        valid_viewers = ("gaussian", "ulr", "ulrv2", "texturedmesh", 
+                        "pointbased", "remoteGaussian")
+        if viewer_type not in valid_viewers:
+            raise BackendError(
+                f"Unknown SIBR viewer '{viewer_type}'. "
+                f"Available: {', '.join(valid_viewers)}")
+        
+        # Validate required parameters
+        if viewer_type == "gaussian":
+            if not kwargs.get("model_path"):
+                raise BackendError("--model-path is required for gaussian viewer")
+            if not kwargs.get("path"):
+                raise BackendError("--path is required for gaussian viewer")
+        elif viewer_type == "remoteGaussian":
+            if not kwargs.get("ip"):
+                raise BackendError("--ip is required for remoteGaussian viewer")
+            if not kwargs.get("port"):
+                raise BackendError("--port is required for remoteGaussian viewer")
+        elif viewer_type in ("ulr", "ulrv2", "pointbased"):
+            if not kwargs.get("path"):
+                raise BackendError(f"--path is required for {viewer_type} viewer")
+        elif viewer_type == "texturedmesh":
+            if not kwargs.get("path"):
+                raise BackendError("--path is required for texturedmesh viewer")
+            if not kwargs.get("mesh"):
+                raise BackendError("--mesh is required for texturedmesh viewer")
+        
+        # Build command arguments
+        binary = self._ensure_binary()
+        binary = self._resolve_exe(binary)
+        cmd = [binary, "-SIBR_VIEWER", viewer_type]
+        
+        if kwargs.get("path"):
+            cmd.extend(["--path", str(kwargs["path"])])
+        
+        if kwargs.get("model_path"):
+            cmd.extend(["--model-path", str(kwargs["model_path"])])
+        
+        if kwargs.get("mesh"):
+            cmd.extend(["--mesh", str(kwargs["mesh"])])
+        
+        if kwargs.get("width"):
+            cmd.extend(["--width", str(kwargs["width"])])
+        
+        if kwargs.get("height"):
+            cmd.extend(["--height", str(kwargs["height"])])
+        
+        if kwargs.get("iteration") is not None:
+            cmd.extend(["--iteration", str(kwargs["iteration"])])
+        
+        if kwargs.get("device") is not None:
+            cmd.extend(["--device", str(kwargs["device"])])
+        
+        if kwargs.get("no_interop"):
+            cmd.append("--no-interop")
+        
+        if viewer_type == "remoteGaussian":
+            cmd.extend(["--ip", str(kwargs.get("ip", "127.0.0.1"))])
+            cmd.extend(["--port", str(kwargs.get("port", 6009))])
+        
+        # Launch viewer process (non-blocking)
+        env = self._build_env_for_binary(binary)
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=env
+            )
+            return {
+                "viewer_type": viewer_type,
+                "pid": process.pid,
+                "command": " ".join(cmd),
+                "status": "launched"
+            }
+        except Exception as e:
+            raise BackendError(f"Failed to launch SIBR viewer: {e}")
+
     # ── Cloud scalar-field management (GUI mode) ────────────────────────
 
     def cloud_set_active_sf_gui(self, entity_id: int,
