@@ -49,7 +49,7 @@ The backend finds the ACloudViewer binary through (in priority order):
 1. `ACV_BINARY` environment variable (explicit path)
 2. Platform-appropriate names on `$PATH`:
    - **Linux:** `ACloudViewer.sh`, `ACloudViewer`
-   - **macOS:** `ACloudViewer`, `ACloudViewer.sh`
+   - **macOS:** `ACloudViewer` (standalone or inside .app bundle)
    - **Windows:** `ACloudViewer.bat`, `ACloudViewer.exe`
 3. Standard install directories per OS:
    - **Linux:** `/usr/local/bin`, `/opt/ACloudViewer/bin`, `~/.local/share/ACloudViewer/bin`, `~/ACloudViewer`

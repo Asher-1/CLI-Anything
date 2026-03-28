@@ -28,6 +28,8 @@ from cli_anything.acloudviewer.utils.installer import (
     _detect_nvidia_gpu,
     _find_binary_in_dir,
     _download_with_progress,
+    IS_MACOS,
+    IS_WINDOWS,
     install_wheel,
     install_app,
     HOMEPAGE,
@@ -436,15 +438,32 @@ class TestGetLatestRelease:
 
 class TestFindBinaryInDir:
     def test_finds_script(self, tmp_path):
-        (tmp_path / "ACloudViewer.sh").write_text("#!/bin/sh")
+        # Create platform-appropriate binary file
+        if IS_MACOS:
+            binary_name = "ACloudViewer"
+        elif IS_WINDOWS:
+            binary_name = "ACloudViewer.exe"
+        else:  # Linux
+            binary_name = "ACloudViewer.sh"
+        
+        (tmp_path / binary_name).write_text("#!/bin/sh" if not IS_WINDOWS else "@echo off")
         result = _find_binary_in_dir(tmp_path)
         assert result is not None
-        assert result.name == "ACloudViewer.sh"
+        assert result.name == binary_name
 
     def test_finds_in_subdir(self, tmp_path):
         sub = tmp_path / "bin"
         sub.mkdir()
-        (sub / "ACloudViewer.sh").write_text("#!/bin/sh")
+        
+        # Create platform-appropriate binary file
+        if IS_MACOS:
+            binary_name = "ACloudViewer"
+        elif IS_WINDOWS:
+            binary_name = "ACloudViewer.exe"
+        else:  # Linux
+            binary_name = "ACloudViewer.sh"
+        
+        (sub / binary_name).write_text("#!/bin/sh" if not IS_WINDOWS else "@echo off")
         result = _find_binary_in_dir(tmp_path)
         assert result is not None
 

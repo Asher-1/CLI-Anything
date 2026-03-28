@@ -617,7 +617,7 @@ class TestBinaryDiscovery:
         from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
         names = ACloudViewerBackend._binary_names()
         assert isinstance(names, tuple)
-        assert len(names) >= 2
+        assert len(names) >= 1  # macOS has 1, Linux/Windows have 2+
         assert all(isinstance(n, str) for n in names)
 
     def test_install_dirs_platform(self):
@@ -635,14 +635,44 @@ class TestBinaryDiscovery:
             assert binary != "/nonexistent/ACloudViewer"
 
     def test_build_env_for_binary_sets_offscreen(self):
+        import platform
         from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
         env = ACloudViewerBackend._build_env_for_binary("/usr/bin/ACloudViewer")
-        assert env["QT_QPA_PLATFORM"] == "offscreen"
+        if platform.system() == "Darwin":
+            # macOS: QT_QPA_PLATFORM not set (removed), Qt auto-selects cocoa
+            assert "QT_QPA_PLATFORM" not in env
+        elif platform.system() == "Windows":
+            assert env["QT_QPA_PLATFORM"] == "minimal"
+        else:
+            assert env["QT_QPA_PLATFORM"] == "offscreen"
 
     def test_build_env_skips_ld_for_script(self):
+        import platform
         from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
         env = ACloudViewerBackend._build_env_for_binary("/opt/ACloudViewer/bin/ACloudViewer.sh")
-        assert env["QT_QPA_PLATFORM"] == "offscreen"
+        if platform.system() == "Darwin":
+            # macOS: QT_QPA_PLATFORM not set (removed), Qt auto-selects cocoa
+            assert "QT_QPA_PLATFORM" not in env
+        elif platform.system() == "Windows":
+            assert env["QT_QPA_PLATFORM"] == "minimal"
+        else:
+            assert env["QT_QPA_PLATFORM"] == "offscreen"
+
+    def test_build_env_removes_qt_platform_on_macos(self):
+        """Verify that external QT_QPA_PLATFORM is removed on macOS."""
+        import platform
+        from unittest.mock import patch
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
+        
+        # Simulate external environment with QT_QPA_PLATFORM set
+        with patch.dict(os.environ, {"QT_QPA_PLATFORM": "minimal"}):
+            env = ACloudViewerBackend._build_env_for_binary("/usr/bin/ACloudViewer")
+            if platform.system() == "Darwin":
+                # macOS should remove it
+                assert "QT_QPA_PLATFORM" not in env
+            else:
+                # Other platforms should have their expected values
+                assert "QT_QPA_PLATFORM" in env
 
 
 # ── Colmap Backend Tests ─────────────────────────────────────────

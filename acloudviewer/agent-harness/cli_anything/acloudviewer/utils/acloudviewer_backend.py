@@ -118,7 +118,7 @@ class ACloudViewerBackend:
         if IS_WINDOWS:
             return ("ACloudViewer.exe", "ACloudViewer.bat")
         if IS_MACOS:
-            return ("ACloudViewer", "ACloudViewer.sh")
+            return ("ACloudViewer",)
         return ("ACloudViewer.sh", "ACloudViewer")
 
     @staticmethod
@@ -137,6 +137,8 @@ class ACloudViewerBackend:
             return [
                 Path("/Applications/ACloudViewer.app/Contents/MacOS"),
                 Path.home() / "Applications" / "ACloudViewer.app" / "Contents" / "MacOS",
+                Path.home() / "Applications" / "ACloudViewer" / "ACloudViewer.app" / "Contents" / "MacOS",
+                Path.home() / "Applications" / "ACloudViewer",
                 Path.home() / "ACloudViewer.app" / "Contents" / "MacOS",
                 # Install-prefix layout: ~/ACloudViewer/bin/ACloudViewer.app/Contents/MacOS
                 Path.home() / "ACloudViewer" / "bin" / "ACloudViewer.app" / "Contents" / "MacOS",
@@ -197,13 +199,17 @@ class ACloudViewerBackend:
 
         Platform-specific env setup when invoking the bare binary:
           Linux:   LD_LIBRARY_PATH + QT_QPA_PLATFORM=offscreen
-          macOS:   DYLD_LIBRARY_PATH; QT_QPA_PLATFORM left unset so
-                   main.cpp can probe for offscreen/minimal/cocoa
-          Windows: PATH prepended + QT_QPA_PLATFORM=offscreen
+          macOS:   DYLD_LIBRARY_PATH; QT_QPA_PLATFORM not set (uses cocoa, the
+                   only platform plugin included in macOS .app bundles)
+          Windows: PATH prepended + QT_QPA_PLATFORM=minimal
         """
         env = os.environ.copy()
         if IS_MACOS:
+            # macOS .app bundles only include the 'cocoa' Qt platform plugin.
+            # Remove QT_QPA_PLATFORM if set externally so Qt auto-selects cocoa.
             env.pop("QT_QPA_PLATFORM", None)
+        elif IS_WINDOWS:
+            env["QT_QPA_PLATFORM"] = "minimal"
         else:
             env["QT_QPA_PLATFORM"] = "offscreen"
 
