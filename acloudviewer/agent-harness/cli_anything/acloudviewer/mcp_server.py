@@ -391,6 +391,11 @@ async def list_tools() -> list[Tool]:
                  "make_horiz": {"type": "boolean", "default": False},
                  "keep_loaded": {"type": "boolean", "default": False}},
               "required": ["input_path", "output_path"]}),
+        Tool(name="cross_section", description="Extract cross-section from point cloud or mesh along polyline.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "polyline_file": {"type": "string"}},
+              "required": ["input_path", "output_path", "polyline_file"]}),
         Tool(name="mesh_volume", description="Compute mesh enclosed volume.",
              inputSchema={"type": "object", "properties": {
                  "input_path": {"type": "string"},
@@ -1077,6 +1082,29 @@ async def list_tools() -> list[Tool]:
                 "required": ["dataset_path"],
             },
         ),
+        Tool(
+            name="sibr_viewer",
+            description="Launch a SIBR viewer for novel view synthesis visualization (gaussian, ulr, texturedmesh, etc.).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "viewer_type": {"type": "string", 
+                                   "enum": ["gaussian", "ulr", "ulrv2", "texturedmesh", "pointbased", "remoteGaussian"],
+                                   "description": "Type of SIBR viewer to launch"},
+                    "path": {"type": "string", "description": "Dataset directory path"},
+                    "model_path": {"type": "string", "description": "Trained model directory (for gaussian viewer)"},
+                    "mesh": {"type": "string", "description": "Mesh file path (for texturedmesh viewer)"},
+                    "width": {"type": "integer", "default": 1920, "description": "Window width"},
+                    "height": {"type": "integer", "default": 1080, "description": "Window height"},
+                    "iteration": {"type": "integer", "description": "Specific iteration to load (gaussian viewer)"},
+                    "device": {"type": "integer", "default": 0, "description": "CUDA device ID"},
+                    "no_interop": {"type": "boolean", "default": False, "description": "Disable CUDA-OpenGL interop"},
+                    "ip": {"type": "string", "default": "127.0.0.1", "description": "IP address (remoteGaussian)"},
+                    "port": {"type": "integer", "default": 6009, "description": "Port (remoteGaussian)"},
+                },
+                "required": ["viewer_type"],
+            },
+        ),
         # ── Cloud scalar-field management (GUI) ─────────────────────────
         Tool(
             name="cloud_set_active_sf",
@@ -1446,6 +1474,10 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 arguments["input_path"], arguments["output_path"],
                 make_horiz=arguments.get("make_horiz", False),
                 keep_loaded=arguments.get("keep_loaded", False)))
+        elif name == "cross_section":
+            return _result(backend.cross_section(
+                arguments["input_path"], arguments["output_path"],
+                polyline_file=arguments["polyline_file"]))
         elif name == "mesh_volume":
             return _result(backend.mesh_volume(
                 arguments["input_path"],
@@ -1870,6 +1902,20 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 return _result(backend.sibr_distord_crop(
                     arguments["dataset_path"],
                     extra_args=arguments.get("extra_args")))
+
+            elif name == "sibr_viewer":
+                return _result(backend.launch_sibr_viewer(
+                    arguments["viewer_type"],
+                    path=arguments.get("path"),
+                    model_path=arguments.get("model_path"),
+                    mesh=arguments.get("mesh"),
+                    width=arguments.get("width", 1920),
+                    height=arguments.get("height", 1080),
+                    iteration=arguments.get("iteration"),
+                    device=arguments.get("device", 0),
+                    no_interop=arguments.get("no_interop", False),
+                    ip=arguments.get("ip", "127.0.0.1"),
+                    port=arguments.get("port", 6009)))
 
             else:
                 return _error(f"Unknown SIBR tool: {name}")

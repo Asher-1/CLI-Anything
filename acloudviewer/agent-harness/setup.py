@@ -64,7 +64,7 @@ setup(
         ],
     },
     package_data={
-        "cli_anything.acloudviewer": ["skills/*.md"],
+        "cli_anything.acloudviewer": ["skills/*.md", "openclaw-skill.json"],
     },
     include_package_data=True,
     zip_safe=False,

@@ -69,6 +69,9 @@ Total: 319 tests (318 passed, 1 skipped, 0 failed)
 - **7 E2E tests passed** - Real ACloudViewer binary invoked successfully
 - **1 test skipped** - SIBR subcommand (SIBR plugin not installed)
 - **0 tests failed** - All tests green
-- **File conversion tested**: PLY → PCD, PLY → XYZ, batch conversion
-- **Processing tested**: subsample (100 → 9 points), normals computation
+- **95 MCP tools verified** - Full tool registration and schema validation
+- **48+ RPC methods tested** - Including new SF, normals, mesh, and Colmap GUI operations
+- **File conversion tested**: PLY → PCD, PLY → XYZ, batch conversion (40+ formats supported)
+- **Processing tested**: subsample, normals, SF operations, geometry analysis, mesh operations
+- **Reconstruction tested**: Colmap pipeline (13 tools), SIBR workflows (11 tools)
 - **CLI verified**: info, check, formats, session, all with JSON output

@@ -95,14 +95,26 @@ cli-anything-acloudviewer --mode headless batch-convert ./scans/ ./output/ -f .p
 # Voxel subsample
 cli-anything-acloudviewer --mode headless process subsample input.ply -o sub.ply --voxel-size 0.05
 
-# Compute normals
+# Compute normals (standard k-NN method)
 cli-anything-acloudviewer --mode headless process normals input.ply -o normals.ply
+
+# Compute normals with octree (faster for large clouds)
+cli-anything-acloudviewer --mode headless normals octree input.ply -o normals.ply --radius AUTO
+
+# Orient normals consistently (MST algorithm)
+cli-anything-acloudviewer --mode headless normals orient-mst input.ply -o oriented.ply --knn 6
+
+# Invert all normal directions
+cli-anything-acloudviewer --mode headless normals invert input.ply -o inverted.ply
+
+# Convert normals to scalar fields (Nx, Ny, Nz)
+cli-anything-acloudviewer --mode headless normals to-sfs input.ply -o normals_sf.ply
 
 # ICP registration (align source to target)
 cli-anything-acloudviewer --mode headless process icp source.ply target.ply -o aligned.ply
 
 # Statistical outlier removal
-cli-anything-acloudviewer --mode headless process sor input.ply -o clean.ply --knn 6 --std 1.0
+cli-anything-acloudviewer --mode headless process sor input.ply -o clean.ply --knn 6 --sigma 1.0
 
 # Cloud-to-cloud distance
 cli-anything-acloudviewer --mode headless process c2c-dist compared.ply reference.ply -o dist.ply
@@ -114,10 +126,16 @@ cli-anything-acloudviewer --mode headless process c2m-dist cloud.ply mesh.obj -o
 cli-anything-acloudviewer --mode headless process density input.ply -o density.ply --radius 0.05
 
 # Curvature estimation
-cli-anything-acloudviewer --mode headless process curvature input.ply -o curv.ply
+cli-anything-acloudviewer --mode headless process curvature input.ply -o curv.ply --type MEAN --radius 0.05
 
 # Surface roughness
 cli-anything-acloudviewer --mode headless process roughness input.ply -o rough.ply --radius 0.1
+
+# Geometric features (surface variation, etc.)
+cli-anything-acloudviewer --mode headless process feature input.ply -o features.ply --type SURFACE_VARIATION --kernel-size 0.1
+
+# Extract connected components
+cli-anything-acloudviewer --mode headless process extract-cc input.ply -o components.ply --min-points 100
 
 # Delaunay triangulation
 cli-anything-acloudviewer --mode headless process delaunay input.ply -o mesh.ply
@@ -126,7 +144,44 @@ cli-anything-acloudviewer --mode headless process delaunay input.ply -o mesh.ply
 cli-anything-acloudviewer --mode headless process sample-mesh mesh.obj -o cloud.ply --density 100
 
 # Color banding (height-based coloring)
-cli-anything-acloudviewer --mode headless process color-banding input.ply -o colored.ply
+cli-anything-acloudviewer --mode headless process color-banding input.ply -o colored.ply --axis Z --frequency 10.0
+
+# Extract cross-section along polyline
+cli-anything-acloudviewer --mode headless process cross-section input.ply -o section.ply --polyline path.ply
+```
+
+### Scalar field operations — **Headless**
+
+```bash
+# Create scalar field from coordinate (X, Y, or Z)
+cli-anything-acloudviewer --mode headless sf coord-to-sf input.ply -o height.ply --dimension Z
+
+# Apply arithmetic operation (SQRT, ABS, EXP, LOG, etc.)
+cli-anything-acloudviewer --mode headless sf arithmetic input.ply -o sqrt.ply --sf-index 0 --operation SQRT
+
+# Apply operation with constant (ADD, SUB, MULTIPLY, DIVIDE)
+cli-anything-acloudviewer --mode headless sf operation input.ply -o scaled.ply --sf-index 0 --operation MULTIPLY --value 2.0
+
+# Compute scalar field gradient
+cli-anything-acloudviewer --mode headless sf gradient input.ply -o gradient.ply
+
+# Filter points by scalar field value
+cli-anything-acloudviewer --mode headless sf filter input.ply -o filtered.ply --min 0.0 --max 10.0
+
+# Convert active scalar field to RGB colors
+cli-anything-acloudviewer --mode headless sf convert-to-rgb input.ply -o colored.ply
+
+# Set active scalar field
+cli-anything-acloudviewer --mode headless sf set-active input.ply -o active.ply --sf-index 0
+
+# Rename scalar field
+cli-anything-acloudviewer --mode headless sf rename input.ply -o renamed.ply --sf-index 0 --name "Elevation"
+
+# Remove scalar field
+cli-anything-acloudviewer --mode headless sf remove input.ply -o removed.ply --sf-index 0
+
+# Remove all scalar fields
+cli-anything-acloudviewer --mode headless sf remove-all input.ply -o clean.ply
 ```
 
 ### 3D reconstruction (Colmap) — **Headless**
@@ -214,6 +269,20 @@ cli-anything-acloudviewer sibr distord-crop ./dataset/
 
 # Run any SIBR tool by name with passthrough args
 cli-anything-acloudviewer sibr tool prepareColmap4Sibr -path ./dataset/ -fix_metadata
+
+# Launch SIBR viewers for novel view synthesis visualization
+cli-anything-acloudviewer sibr viewer gaussian --model-path ./output/ --path ./dataset/
+cli-anything-acloudviewer sibr viewer ulr --path ./dataset/
+cli-anything-acloudviewer sibr viewer texturedmesh --mesh ./model.obj --path ./dataset/
+cli-anything-acloudviewer sibr viewer remoteGaussian --ip 127.0.0.1 --port 6009
+```
+
+**Available SIBR viewer types**:
+- `gaussian`: Gaussian Splatting viewer (requires `--model-path` and `--path`)
+- `ulr` / `ulrv2`: Unstructured Lumigraph Rendering viewers
+- `texturedmesh`: Textured mesh viewer (requires `--mesh` and `--path`)
+- `pointbased`: Point-based rendering viewer
+- `remoteGaussian`: Remote Gaussian viewer for network rendering
 ```
 
 ### Full reconstruction pipeline (Colmap + SIBR) — **Headless**
@@ -405,9 +474,9 @@ Key method groups:
 | **Transform** | `transform.apply` |
 | **COLMAP** | `colmap.reconstruct`, `colmap.run` |
 
-## MCP Server (95+ Tools)
+## MCP Server (97+ Tools)
 
-An optional MCP server exposes 95+ tools for integration with AI agents:
+An optional MCP server exposes 97+ tools for integration with AI agents:
 
 ```bash
 pip install -e .

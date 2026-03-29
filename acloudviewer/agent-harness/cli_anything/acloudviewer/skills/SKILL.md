@@ -361,31 +361,51 @@ cli-anything-acloudviewer info
 cli-anything-acloudviewer --json info
 ```
 
-## MCP Server (100+ tools)
+## MCP Server (96 tools)
 
 ```bash
 cli-anything-acloudviewer-mcp --mode auto
 ```
 
-**File I/O:** `open_file`, `convert_format`, `batch_convert`, `list_formats`, `export_entity`
-**Processing:** `subsample`, `compute_normals`, `sor_filter`, `crop`, `density`, `curvature`, `roughness`, `color_banding`
-**Scalar Fields:** `set_active_sf`, `remove_all_sfs`, `remove_sf`, `rename_sf`, `sf_arithmetic`, `sf_operation`, `coord_to_sf`, `sf_gradient`, `filter_sf`, `sf_color_scale`, `sf_convert_to_rgb`
-**Advanced Normals:** `octree_normals`, `orient_normals_mst`, `invert_normals`, `clear_normals`, `normals_to_dip`, `normals_to_sfs`
-**Geometry:** `extract_connected_components`, `approx_density`, `geometric_feature`, `moment`, `best_fit_plane`, `mesh_volume`, `extract_vertices`, `flip_triangles`
-**Merge & Cleanup:** `merge_clouds`, `merge_meshes`, `remove_rgb`, `remove_scan_grids`, `match_centers`, `drop_global_shift`, `closest_point_set`
-**Rasterize:** `rasterize`, `stat_test`
-**Distance:** `c2c_distance`, `c2m_distance`
-**Registration:** `icp_registration`
-**Mesh Headless:** `delaunay`, `sample_mesh`
-**Scene (GUI):** `scene_list`, `scene_info`, `scene_remove`, `scene_set_visible`, `scene_select`, `scene_clear`
-**Entity (GUI):** `entity_rename`, `entity_set_color`
-**Cloud (GUI):** `cloud_get_scalar_fields`, `cloud_paint_uniform`, `cloud_paint_by_height`, `cloud_paint_by_scalar_field`, `cloud_set_active_sf`, `cloud_remove_sf`, `cloud_remove_all_sfs`, `cloud_rename_sf`, `cloud_filter_sf`, `cloud_coord_to_sf`, `cloud_remove_rgb`, `cloud_remove_normals_gui`, `cloud_invert_normals_gui`, `cloud_merge_gui`
-**Mesh (GUI):** `mesh_simplify`, `mesh_smooth`, `mesh_subdivide`, `mesh_sample_points`, `mesh_extract_vertices_gui`, `mesh_flip_triangles_gui`, `mesh_volume_gui`, `mesh_merge_gui`
-**View (GUI):** `screenshot`, `get_camera`, `view_set_orientation`, `view_zoom_fit`, `view_refresh`, `view_set_perspective`, `view_set_point_size`
-**Transform:** `transform_apply`, `transform_apply_file`
-**Reconstruction:** `colmap_auto_reconstruct`, `colmap_extract_features`, `colmap_match_features`, `colmap_sparse_reconstruct`, `colmap_undistort`, `colmap_dense_stereo`, `colmap_stereo_fusion`, `colmap_poisson_mesh`, `colmap_delaunay_mesh`, `colmap_image_texturer`, `colmap_model_converter`, `colmap_analyze_model`, `colmap_run`
-**SIBR:** `sibr_tool`, `sibr_prepare_colmap`, `sibr_texture_mesh`, `sibr_unwrap_mesh`, `sibr_tonemapper`, `sibr_align_meshes`, `sibr_camera_converter`, `sibr_nvm_to_sibr`, `sibr_crop_from_center`, `sibr_clipping_planes`, `sibr_distord_crop`
-**System:** `get_info`, `list_rpc_methods`
+The MCP server provides 96 tools across 19 categories for comprehensive 3D point cloud and mesh processing:
+
+**File I/O (5):** `open_file`, `convert_format`, `batch_convert`, `list_formats`, `export_entity`
+
+**Processing (10):** `subsample`, `compute_normals`, `sor_filter`, `crop`, `density`, `curvature`, `roughness`, `color_banding`, `stat_test`, `rasterize`
+
+**Scalar Fields (18):** `set_active_sf`, `remove_all_sfs`, `remove_sf`, `rename_sf`, `sf_arithmetic`, `sf_operation`, `coord_to_sf`, `sf_gradient`, `filter_sf`, `sf_color_scale`, `sf_convert_to_rgb`, `cloud_get_scalar_fields`, `cloud_set_active_sf`, `cloud_remove_sf`, `cloud_remove_all_sfs`, `cloud_rename_sf`, `cloud_filter_sf`, `cloud_coord_to_sf`
+
+**Normals (8):** `octree_normals`, `orient_normals_mst`, `invert_normals`, `clear_normals`, `normals_to_dip`, `normals_to_sfs`, `cloud_remove_normals_gui`, `cloud_invert_normals_gui`
+
+**Distance (2):** `c2c_distance`, `c2m_distance`
+
+**Registration (1):** `icp_registration`
+
+**Geometry (6):** `extract_connected_components`, `approx_density`, `geometric_feature`, `moment`, `best_fit_plane`, `closest_point_set`
+
+**Mesh Reconstruction (2):** `delaunay`, `sample_mesh`
+
+**Mesh Operations (10):** `mesh_volume`, `extract_vertices`, `flip_triangles`, `mesh_simplify`, `mesh_smooth`, `mesh_subdivide`, `mesh_sample_points`, `mesh_extract_vertices_gui`, `mesh_flip_triangles_gui`, `mesh_volume_gui`
+
+**Merge (4):** `merge_clouds`, `merge_meshes`, `cloud_merge_gui`, `mesh_merge_gui`
+
+**Cleanup (5):** `remove_rgb`, `remove_scan_grids`, `match_centers`, `drop_global_shift`, `cloud_remove_rgb`
+
+**Colmap Reconstruction (13):** `colmap_auto_reconstruct`, `colmap_extract_features`, `colmap_match_features`, `colmap_sparse_reconstruct`, `colmap_dense_stereo`, `colmap_stereo_fusion`, `colmap_poisson_mesh`, `colmap_model_converter`, `colmap_undistort`, `colmap_delaunay_mesh`, `colmap_image_texturer`, `colmap_analyze_model`, `colmap_run`
+
+**SIBR Tools (12):** `sibr_viewer`, `sibr_tool`, `sibr_prepare_colmap`, `sibr_texture_mesh`, `sibr_unwrap_mesh`, `sibr_tonemapper`, `sibr_align_meshes`, `sibr_camera_converter`, `sibr_nvm_to_sibr`, `sibr_crop_from_center`, `sibr_clipping_planes`, `sibr_distord_crop` (launches SIBR viewers: gaussian, ulr, ulrv2, texturedmesh, pointbased, remoteGaussian)
+
+**Scene GUI (6):** `scene_list`, `scene_info`, `scene_remove`, `scene_set_visible`, `scene_select`, `scene_clear`
+
+**Entity GUI (2):** `entity_rename`, `entity_set_color`
+
+**View GUI (7):** `screenshot`, `get_camera`, `view_set_orientation`, `view_zoom_fit`, `view_refresh`, `view_set_perspective`, `view_set_point_size`
+
+**Cloud Painting GUI (3):** `cloud_paint_uniform`, `cloud_paint_by_height`, `cloud_paint_by_scalar_field`
+
+**Transform (2):** `transform_apply`, `transform_apply_file`
+
+**Utility (2):** `get_info`, `list_rpc_methods`
 
 ## For AI Agents
 

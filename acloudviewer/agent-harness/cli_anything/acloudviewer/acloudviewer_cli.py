@@ -889,11 +889,27 @@ def transform_apply_file(input_file, matrix_file, output_file):
     output(result)
 
 
+# ──Scalar Field Group (convenience wrapper for process sf-* commands) ──
+
+@cli.group("sf")
+def sf_group():
+    """Scalar field operations (headless - no GUI needed)."""
+    pass
+
+
+# ── Normals Group (convenience wrapper for process *-normals commands) ──
+
+@cli.group("normals")
+def normals_group():
+    """Normal vector operations (headless - no GUI needed)."""
+    pass
+
+
 # ── Processing (headless) ──
 
 @cli.group("process")
 def process_group():
-    """Point cloud and mesh processing commands (headless — no GUI needed)."""
+    """Point cloud and mesh processing commands (headless - no GUI needed)."""
     pass
 
 
@@ -1497,6 +1513,19 @@ def process_stat_test(input_file, output_file, distribution, p_value, knn):
     output(result)
 
 
+@process_group.command("cross-section")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--polyline", "polyline_file", type=click.Path(exists=True), default="",
+              help="Polyline file defining the cross-section path")
+@handle_error
+def process_cross_section(input_file, output_file, polyline_file):
+    """Extract cross-section from point cloud or mesh."""
+    result = get_backend().cross_section(input_file, output_file,
+                                         polyline_file=polyline_file)
+    output(result)
+
+
 # ── Reconstruct (headless, uses Colmap binary) ──
 
 @cli.group("reconstruct")
@@ -1973,6 +2002,281 @@ def session_history():
     output({"history": history, "length": len(history)})
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# SF Group Commands (convenience wrappers for process sf-* commands)
+# ══════════════════════════════════════════════════════════════════════════
+
+@sf_group.command("coord-to-sf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--dimension", type=click.Choice(["X", "Y", "Z"]), default="Z")
+@handle_error
+def sf_coord_to_sf(input_file, output_file, dimension):
+    """Export a coordinate dimension as a scalar field."""
+    result = get_backend().coord_to_sf(input_file, output_file, dimension=dimension)
+    output(result)
+
+
+@sf_group.command("arithmetic")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default="0", help="Scalar field index or name")
+@click.option("--operation", type=str, default="SQRT",
+              help="SQRT, ABS, INV, EXP, LOG, LOG10, etc.")
+@handle_error
+def sf_arithmetic(input_file, output_file, sf_index, operation):
+    """Apply a unary arithmetic operation to a scalar field."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().sf_arithmetic(input_file, output_file,
+                                         sf_index=sf_idx, operation=operation)
+    output(result)
+
+
+@sf_group.command("operation")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default="0", help="Scalar field index or name")
+@click.option("--operation", type=click.Choice(["ADD", "SUB", "MULTIPLY", "DIVIDE"]),
+              default="ADD")
+@click.option("--value", type=float, required=True)
+@handle_error
+def sf_operation(input_file, output_file, sf_index, operation, value):
+    """Apply an arithmetic operation with a scalar value to a SF."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().sf_operation(input_file, output_file,
+                                        sf_index=sf_idx, operation=operation,
+                                        value=value)
+    output(result)
+
+
+@sf_group.command("gradient")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default=None, help="SF index/name (uses active if not specified)")
+@click.option("--radius", type=float, default=0.1, help="Search radius")
+@click.option("--euclidean", is_flag=True, help="Use Euclidean gradient")
+@handle_error
+def sf_gradient(input_file, output_file, sf_index, radius, euclidean):
+    """Compute scalar field gradient."""
+    # If sf_index specified, set it as active first
+    if sf_index is not None:
+        temp_file = output_file.replace(".ply", "_temp.ply")
+        try:
+            sf_idx = int(sf_index)
+        except ValueError:
+            sf_idx = sf_index
+        get_backend().set_active_sf(input_file, temp_file, sf_index=sf_idx)
+        input_file = temp_file
+    
+    result = get_backend().sf_gradient(input_file, output_file, euclidean=euclidean)
+    output(result)
+
+
+@sf_group.command("filter")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default=None, help="SF index/name (uses active if not specified)")
+@click.option("--min", "min_val", type=str, default="MIN")
+@click.option("--max", "max_val", type=str, default="MAX")
+@handle_error
+def sf_filter(input_file, output_file, sf_index, min_val, max_val):
+    """Filter points by scalar field value range."""
+    # If sf_index specified, set it as active first
+    if sf_index is not None:
+        temp_file = output_file.replace(".ply", "_temp.ply")
+        try:
+            sf_idx = int(sf_index)
+        except ValueError:
+            sf_idx = sf_index
+        get_backend().set_active_sf(input_file, temp_file, sf_index=sf_idx)
+        input_file = temp_file
+    
+    result = get_backend().filter_sf(input_file, output_file,
+                                     min_val=min_val, max_val=max_val)
+    output(result)
+
+
+@sf_group.command("color-scale")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default=None, help="SF index/name (uses active if not specified)")
+@click.option("--scale-file", type=click.Path(exists=True), required=True,
+              help="Color scale XML file path")
+@handle_error
+def sf_color_scale(input_file, output_file, sf_index, scale_file):
+    """Apply a color scale file to a scalar field."""
+    # If sf_index specified, set it as active first
+    if sf_index is not None:
+        temp_file = output_file.replace(".ply", "_temp.ply")
+        try:
+            sf_idx = int(sf_index)
+        except ValueError:
+            sf_idx = sf_index
+        get_backend().set_active_sf(input_file, temp_file, sf_index=sf_idx)
+        input_file = temp_file
+    
+    result = get_backend().sf_color_scale(input_file, output_file,
+                                          scale_file=scale_file)
+    output(result)
+
+
+@sf_group.command("convert-to-rgb")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default=None, help="SF index/name (uses active if not specified)")
+@handle_error
+def sf_convert_to_rgb(input_file, output_file, sf_index):
+    """Convert a scalar field to RGB colors."""
+    # If sf_index specified, set it as active first
+    if sf_index is not None:
+        temp_file = output_file.replace(".ply", "_temp.ply")
+        try:
+            sf_idx = int(sf_index)
+        except ValueError:
+            sf_idx = sf_index
+        get_backend().set_active_sf(input_file, temp_file, sf_index=sf_idx)
+        input_file = temp_file
+    
+    result = get_backend().sf_convert_to_rgb(input_file, output_file)
+    output(result)
+
+
+@sf_group.command("set-active")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default="0", help="Scalar field index or name")
+@handle_error
+def sf_set_active(input_file, output_file, sf_index):
+    """Set the active scalar field."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().set_active_sf(input_file, output_file, sf_index=sf_idx)
+    output(result)
+
+
+@sf_group.command("rename")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--old", "--sf-index", type=str, default="0", help="Current SF index or name to rename")
+@click.option("--new", "--new-name", "new_name", required=True, help="New name for the scalar field")
+@handle_error
+def sf_rename(input_file, output_file, old, new_name):
+    """Rename a scalar field."""
+    try:
+        sf_idx = int(old)
+    except ValueError:
+        sf_idx = old
+    result = get_backend().rename_sf(input_file, output_file,
+                                     sf_index=sf_idx, new_name=new_name)
+    output(result)
+
+
+@sf_group.command("remove")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", "--sf", type=str, default="0", help="Scalar field index or name to remove")
+@handle_error
+def sf_remove(input_file, output_file, sf_index):
+    """Remove a specific scalar field."""
+    try:
+        sf_idx = int(sf_index)
+    except ValueError:
+        sf_idx = sf_index
+    result = get_backend().remove_sf(input_file, output_file, sf_index=sf_idx)
+    output(result)
+
+
+@sf_group.command("remove-all")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def sf_remove_all(input_file, output_file):
+    """Remove all scalar fields."""
+    result = get_backend().remove_all_sfs(input_file, output_file)
+    output(result)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# Normals Group Commands (convenience wrappers for process *-normals commands)
+# ══════════════════════════════════════════════════════════════════════════
+
+@normals_group.command("octree")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--radius", type=str, default="AUTO", help="Radius or AUTO")
+@click.option("--orient", type=str, default="", help="Normal orientation mode")
+@click.option("--model", type=click.Choice(["", "LS", "TRI", "QUADRIC"]), default="")
+@handle_error
+def normals_octree(input_file, output_file, radius, orient, model):
+    """Compute normals using octree method."""
+    try:
+        r = float(radius)
+    except ValueError:
+        r = radius
+    result = get_backend().octree_normals(input_file, output_file,
+                                          radius=r, orient=orient, model=model)
+    output(result)
+
+
+@normals_group.command("orient-mst")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--knn", type=int, default=6)
+@handle_error
+def normals_orient_mst(input_file, output_file, knn):
+    """Orient normals via Minimum Spanning Tree."""
+    result = get_backend().orient_normals_mst(input_file, output_file, knn=knn)
+    output(result)
+
+
+@normals_group.command("invert")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def normals_invert(input_file, output_file):
+    """Invert point cloud normals."""
+    result = get_backend().invert_normals(input_file, output_file)
+    output(result)
+
+
+@normals_group.command("clear")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def normals_clear(input_file, output_file):
+    """Remove all normals from a point cloud."""
+    result = get_backend().clear_normals(input_file, output_file)
+    output(result)
+
+
+@normals_group.command("to-dip")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def normals_to_dip(input_file, output_file):
+    """Convert normals to dip/dip-direction scalar fields."""
+    result = get_backend().normals_to_dip(input_file, output_file)
+    output(result)
+
+
+@normals_group.command("to-sfs")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def normals_to_sfs(input_file, output_file):
+    """Convert normals to Nx/Ny/Nz scalar fields."""
+    result = get_backend().normals_to_sfs(input_file, output_file)
+    output(result)
+
+
 # ── REPL ─────────────────────────────────────────────────────────────────
 
 @cli.command()
@@ -2005,9 +2309,11 @@ def repl(project_path):
         # ── Headless (binary -SILENT mode, no GUI needed) ──
         "convert":       "[headless] convert <in> <out>",
         "batch-convert": "[headless] batch-convert <dir-in> <dir-out> [-f .ply]",
-        "process":       "[headless] subsample|normals|icp|sor|c2c-dist|c2m-dist|density|curvature|roughness|delaunay|sample-mesh|color-banding",
+        "process":       "[headless] subsample|normals|icp|sor|c2c-dist|c2m-dist|density|curvature|roughness|delaunay|sample-mesh|...",
+        "sf":            "[headless] coord-to-sf|arithmetic|operation|gradient|filter|color-scale|convert-to-rgb|set-active|rename|remove|...",
+        "normals":       "[headless] octree|orient-mst|invert|clear|to-dip|to-sfs",
         "reconstruct":   "[headless] mesh|auto|extract-features|match|sparse|undistort|dense-stereo|fuse|poisson|...",
-        "sibr":          "[headless] tool|prepare-colmap|texture-mesh|unwrap-mesh|tonemapper|align-meshes|...",
+        "sibr":          "[headless] viewer|tool|prepare-colmap|texture-mesh|unwrap-mesh|tonemapper|align-meshes|...",
         "transform":     "[headless/GUI] apply|apply-file — transformation",
         # ── GUI (requires running ACloudViewer with JSON-RPC) ──
         "open":          "[GUI] open <file> in ACloudViewer",
