@@ -338,10 +338,11 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "cloud1_path": {"type": "string", "description": "First point cloud"},
                     "cloud2_path": {"type": "string", "description": "Second point cloud"},
+                    "params_file": {"type": "string", "description": "M3C2 parameters file (required)"},
                     "output_path": {"type": "string"},
-                    "params_file": {"type": "string", "description": "M3C2 parameters file (optional)"},
+                    "core_points_path": {"type": "string", "description": "Optional third cloud for core points"},
                 },
-                "required": ["cloud1_path", "cloud2_path"],
+                "required": ["cloud1_path", "cloud2_path", "params_file"],
             },
         ),
         Tool(
@@ -353,6 +354,7 @@ async def list_tools() -> list[Tool]:
                     "input_path": {"type": "string"},
                     "output_path": {"type": "string"},
                     "classifier_file": {"type": "string", "description": "Path to .prm classifier file"},
+                    "use_confidence": {"type": "number", "description": "Confidence threshold (>= 0)"},
                 },
                 "required": ["input_path", "output_path", "classifier_file"],
             },
@@ -645,6 +647,90 @@ async def list_tools() -> list[Tool]:
                  "p_value": {"type": "number", "default": 0.0001},
                  "knn": {"type": "integer", "default": 16}},
               "required": ["input_path", "output_path"]}),
+        # ── Plugin-specific commands (Standard) ──
+        Tool(name="classify_3dmasc", description="3DMASC point cloud classification.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "classifier_file": {"type": "string"},
+                 "cloud_roles": {"type": "string", "description": "e.g. 'PC1=1 PC2=2'"},
+                 "keep_attributes": {"type": "boolean", "default": False},
+                 "only_features": {"type": "boolean", "default": False},
+                 "skip_features": {"type": "string"}},
+              "required": ["input_path", "output_path", "classifier_file", "cloud_roles"]}),
+        Tool(name="animation", description="Configure animation export settings (GUI mode).",
+             inputSchema={"type": "object", "properties": {
+                 "fps": {"type": "integer", "default": 30},
+                 "total_frames": {"type": "integer", "default": 0},
+                 "super_resolution": {"type": "integer", "default": 1},
+                 "output_file": {"type": "string"}}}),
+        Tool(name="cloud_layers", description="Apply ASPRS cloud layer classification.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "sf_index": {"type": "integer", "default": -1},
+                 "config_file": {"type": "string"},
+                 "apply": {"type": "boolean", "default": False}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="color_seg_rgb", description="Filter point cloud by RGB color range.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "r_min": {"type": "integer", "default": 0}, "r_max": {"type": "integer", "default": 255},
+                 "g_min": {"type": "integer", "default": 0}, "g_max": {"type": "integer", "default": 255},
+                 "b_min": {"type": "integer", "default": 0}, "b_max": {"type": "integer", "default": 255}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="color_seg_hsv", description="Filter point cloud by HSV color range.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "h_min": {"type": "number", "default": 0}, "h_max": {"type": "number", "default": 360},
+                 "s_min": {"type": "number", "default": 0}, "s_max": {"type": "number", "default": 100},
+                 "v_min": {"type": "number", "default": 0}, "v_max": {"type": "number", "default": 100}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="color_seg_scalar", description="Filter point cloud by scalar field range.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "scalar_min": {"type": "number"}, "scalar_max": {"type": "number"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="g3point", description="G3Point grain analysis on point cloud.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "max_radius": {"type": "number", "default": 0},
+                 "min_radius": {"type": "number", "default": 0},
+                 "n_neighbors": {"type": "integer", "default": 30},
+                 "export_ellipsoids": {"type": "boolean", "default": False}},
+              "required": ["input_path", "output_path"]}),
+        # ── IO plugin settings ──
+        Tool(name="draco_settings", description="Configure Draco encoding settings.",
+             inputSchema={"type": "object", "properties": {
+                 "quantization": {"type": "integer", "default": 11},
+                 "compression_level": {"type": "integer", "default": 7},
+                 "speed": {"type": "integer", "default": 5}}}),
+        Tool(name="e57_settings", description="Configure E57 import settings.",
+             inputSchema={"type": "object", "properties": {
+                 "ignore_intensity": {"type": "boolean", "default": False},
+                 "ignore_color": {"type": "boolean", "default": False}}}),
+        Tool(name="las_settings", description="Configure LAS/LAZ import/export settings.",
+             inputSchema={"type": "object", "properties": {
+                 "extra_fields": {"type": "boolean", "default": False},
+                 "tile_size": {"type": "number", "default": 0},
+                 "save_laz": {"type": "boolean", "default": False},
+                 "las_version": {"type": "string"}}}),
+        Tool(name="csv_matrix_settings", description="Configure CSV matrix import settings.",
+             inputSchema={"type": "object", "properties": {
+                 "separator": {"type": "string", "default": ","},
+                 "skip_header": {"type": "boolean", "default": False},
+                 "invert_rows": {"type": "boolean", "default": False}}}),
+        Tool(name="photoscan_settings", description="Configure Photoscan/Metashape import settings.",
+             inputSchema={"type": "object", "properties": {
+                 "load_keypoints": {"type": "boolean", "default": False},
+                 "load_cameras": {"type": "boolean", "default": False}}}),
+        Tool(name="mesh_io_settings", description="Configure mesh IO settings (Assimp formats).",
+             inputSchema={"type": "object", "properties": {
+                 "scale": {"type": "number", "default": 1.0},
+                 "up_axis": {"type": "string", "enum": ["X", "Y", "Z"], "default": "Y"},
+                 "merge_nodes": {"type": "boolean", "default": False}}}),
+        Tool(name="core_io_settings", description="Configure core IO settings.",
+             inputSchema={"type": "object", "properties": {
+                 "format": {"type": "string"},
+                 "precision": {"type": "integer", "default": -1}}}),
         # ── Scene / Entity / View (GUI) ──
         Tool(
             name="export_entity",
@@ -1598,14 +1684,16 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         elif name == "m3c2":
             return _result(backend.m3c2(
                 arguments["cloud1_path"], arguments["cloud2_path"],
+                params_file=arguments["params_file"],
                 output_path=arguments.get("output_path"),
-                params_file=arguments.get("params_file"),
+                core_points_path=arguments.get("core_points_path"),
             ))
 
         elif name == "canupo":
             return _result(backend.canupo(
                 arguments["input_path"], arguments["output_path"],
                 classifier_file=arguments["classifier_file"],
+                use_confidence=arguments.get("use_confidence"),
             ))
 
         elif name == "facets":
@@ -1655,6 +1743,100 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 azimuth=arguments.get("azimuth", 0.0),
                 export_meshes=arguments.get("export_meshes", False),
                 loss_gain=arguments.get("loss_gain", False),
+            ))
+
+        # ── Plugin-specific commands (Standard) ──
+        elif name == "classify_3dmasc":
+            return _result(backend.classify_3dmasc(
+                arguments["input_path"], arguments["output_path"],
+                classifier_file=arguments.get("classifier_file"),
+                cloud_roles=arguments.get("cloud_roles"),
+                keep_attributes=arguments.get("keep_attributes", False),
+                only_features=arguments.get("only_features", False),
+                skip_features=arguments.get("skip_features"),
+            ))
+        elif name == "animation":
+            return _result(backend.animation(
+                fps=arguments.get("fps", 30),
+                total_frames=arguments.get("total_frames", 0),
+                super_resolution=arguments.get("super_resolution", 1),
+                output_file=arguments.get("output_file"),
+            ))
+        elif name == "cloud_layers":
+            return _result(backend.cloud_layers(
+                arguments["input_path"], arguments["output_path"],
+                sf_index=arguments.get("sf_index", -1),
+                config_file=arguments.get("config_file"),
+                apply=arguments.get("apply", False),
+            ))
+        elif name == "color_seg_rgb":
+            return _result(backend.color_seg_rgb(
+                arguments["input_path"], arguments["output_path"],
+                r_min=arguments.get("r_min", 0), r_max=arguments.get("r_max", 255),
+                g_min=arguments.get("g_min", 0), g_max=arguments.get("g_max", 255),
+                b_min=arguments.get("b_min", 0), b_max=arguments.get("b_max", 255),
+            ))
+        elif name == "color_seg_hsv":
+            return _result(backend.color_seg_hsv(
+                arguments["input_path"], arguments["output_path"],
+                h_min=arguments.get("h_min", 0), h_max=arguments.get("h_max", 360),
+                s_min=arguments.get("s_min", 0), s_max=arguments.get("s_max", 100),
+                v_min=arguments.get("v_min", 0), v_max=arguments.get("v_max", 100),
+            ))
+        elif name == "color_seg_scalar":
+            return _result(backend.color_seg_scalar(
+                arguments["input_path"], arguments["output_path"],
+                scalar_min=arguments.get("scalar_min"),
+                scalar_max=arguments.get("scalar_max"),
+            ))
+        elif name == "g3point":
+            return _result(backend.g3point(
+                arguments["input_path"], arguments["output_path"],
+                max_radius=arguments.get("max_radius", 0),
+                min_radius=arguments.get("min_radius", 0),
+                n_neighbors=arguments.get("n_neighbors", 30),
+                export_ellipsoids=arguments.get("export_ellipsoids", False),
+            ))
+        # ── IO plugin settings ──
+        elif name == "draco_settings":
+            return _result(backend.draco_settings(
+                quantization=arguments.get("quantization", 11),
+                compression_level=arguments.get("compression_level", 7),
+                speed=arguments.get("speed", 5),
+            ))
+        elif name == "e57_settings":
+            return _result(backend.e57_settings(
+                ignore_intensity=arguments.get("ignore_intensity", False),
+                ignore_color=arguments.get("ignore_color", False),
+            ))
+        elif name == "las_settings":
+            return _result(backend.las_settings(
+                extra_fields=arguments.get("extra_fields", False),
+                tile_size=arguments.get("tile_size", 0),
+                save_laz=arguments.get("save_laz", False),
+                las_version=arguments.get("las_version"),
+            ))
+        elif name == "csv_matrix_settings":
+            return _result(backend.csv_matrix_settings(
+                separator=arguments.get("separator", ","),
+                skip_header=arguments.get("skip_header", False),
+                invert_rows=arguments.get("invert_rows", False),
+            ))
+        elif name == "photoscan_settings":
+            return _result(backend.photoscan_settings(
+                load_keypoints=arguments.get("load_keypoints", False),
+                load_cameras=arguments.get("load_cameras", False),
+            ))
+        elif name == "mesh_io_settings":
+            return _result(backend.mesh_io_settings(
+                scale=arguments.get("scale", 1.0),
+                up_axis=arguments.get("up_axis", "Y"),
+                merge_nodes=arguments.get("merge_nodes", False),
+            ))
+        elif name == "core_io_settings":
+            return _result(backend.core_io_settings(
+                format=arguments.get("format"),
+                precision=arguments.get("precision", -1),
             ))
 
         # ── Scalar field operations ──

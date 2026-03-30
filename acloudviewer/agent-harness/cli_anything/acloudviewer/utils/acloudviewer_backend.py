@@ -869,17 +869,23 @@ class ACloudViewerBackend:
         }
 
     def m3c2(self, cloud1_path: str, cloud2_path: str,
+             params_file: str,
              output_path: str | None = None,
-             params_file: str | None = None) -> dict:
-        """Compute M3C2 distance between two clouds."""
+             core_points_path: str | None = None) -> dict:
+        """Compute M3C2 distance between two clouds.
+
+        Args:
+            params_file: M3C2 parameters file (required by the C++ engine).
+            core_points_path: Optional third cloud used as core points.
+        """
         out = output_path or cloud1_path.rsplit(".", 1)[0] + "_M3C2.ply"
-        args = [
-            "-O", cloud1_path, "-O", cloud2_path,
+        args = ["-O", cloud1_path, "-O", cloud2_path]
+        if core_points_path:
+            args += ["-O", core_points_path]
+        args += [
             "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
-            "-M3C2",
+            "-M3C2", params_file,
         ]
-        if params_file:
-            args += [params_file]
         args += self._save_args(out)
         self._run_cli(args)
         return {
@@ -889,17 +895,27 @@ class ACloudViewerBackend:
         }
 
     def canupo(self, input_path: str, output_path: str,
-               classifier_file: str) -> dict:
-        """Apply CANUPO classification."""
+               classifier_file: str,
+               use_confidence: float | None = None) -> dict:
+        """Apply CANUPO classification.
+
+        Args:
+            classifier_file: Path to a .prm classifier file.
+            use_confidence: If set, confidence threshold (>= 0) for classification.
+        """
         args = [
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
-            "-CANUPO_CLASSIF", classifier_file,
+            "-CANUPO_CLASSIFY",
         ]
+        if use_confidence is not None:
+            args += ["-USE_CONFIDENCE", str(use_confidence)]
+        args.append(classifier_file)
         args += self._save_args(output_path)
         self._run_cli(args)
         return {
             "input": input_path, "output": output_path,
             "classifier": classifier_file,
+            "use_confidence": use_confidence,
             "status": self._check_status(output_path),
         }
 
@@ -1025,6 +1041,236 @@ class ACloudViewerBackend:
             "output": output_path, "voxel_size": voxel_size,
             "azimuth": azimuth, "status": self._check_status(output_path),
         }
+
+    def classify_3dmasc(self, input_path: str, output_path: str,
+                        classifier_file: str | None = None, cloud_roles: str | None = None,
+                        keep_attributes: bool = False, only_features: bool = False,
+                        skip_features: str | None = None) -> dict:
+        """Apply 3DMASC classification."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-3DMASC_CLASSIFY"]
+        if keep_attributes:
+            args.append("-KEEP_ATTRIBUTES")
+        if only_features:
+            args.append("-ONLY_FEATURES")
+        if skip_features:
+            args += ["-SKIP_FEATURES", skip_features]
+        if classifier_file:
+            args.append(classifier_file)
+        if cloud_roles:
+            args.append(cloud_roles)
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "classifier": classifier_file,
+            "status": self._check_status(output_path),
+        }
+
+    def animation(self, fps: int = 30, total_frames: int = 0,
+                  super_resolution: int = 1, output_file: str | None = None) -> dict:
+        """Configure animation export settings."""
+        args = ["-ANIMATION"]
+        if fps != 30:
+            args += ["-FPS", str(fps)]
+        if total_frames > 0:
+            args += ["-TOTAL_FRAMES", str(total_frames)]
+        if super_resolution > 1:
+            args += ["-SUPER_RESOLUTION", str(super_resolution)]
+        if output_file:
+            args += ["-OUTPUT", output_file]
+        self._run_cli(args)
+        return {
+            "fps": fps, "total_frames": total_frames,
+            "super_resolution": super_resolution,
+            "output": output_file,
+        }
+
+    def cloud_layers(self, input_path: str, output_path: str,
+                     sf_index: int = -1, config_file: str | None = None,
+                     apply: bool = False) -> dict:
+        """Apply cloud layer classification."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-CLOUD_LAYERS"]
+        if sf_index >= 0:
+            args += ["-SF_INDEX", str(sf_index)]
+        if config_file:
+            args += ["-CONFIG", config_file]
+        if apply:
+            args.append("-APPLY")
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "sf_index": sf_index,
+            "status": self._check_status(output_path),
+        }
+
+    def color_seg_rgb(self, input_path: str, output_path: str,
+                      r_min: int = 0, r_max: int = 255,
+                      g_min: int = 0, g_max: int = 255,
+                      b_min: int = 0, b_max: int = 255) -> dict:
+        """Filter point cloud by RGB color range."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COLOR_SEG_RGB",
+                "-R_MIN", str(r_min), "-R_MAX", str(r_max),
+                "-G_MIN", str(g_min), "-G_MAX", str(g_max),
+                "-B_MIN", str(b_min), "-B_MAX", str(b_max)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "r_range": [r_min, r_max], "g_range": [g_min, g_max],
+            "b_range": [b_min, b_max],
+            "status": self._check_status(output_path),
+        }
+
+    def color_seg_hsv(self, input_path: str, output_path: str,
+                      h_min: float = 0, h_max: float = 360,
+                      s_min: float = 0, s_max: float = 100,
+                      v_min: float = 0, v_max: float = 100) -> dict:
+        """Filter point cloud by HSV color range."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COLOR_SEG_HSV",
+                "-H_MIN", str(h_min), "-H_MAX", str(h_max),
+                "-S_MIN", str(s_min), "-S_MAX", str(s_max),
+                "-V_MIN", str(v_min), "-V_MAX", str(v_max)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "h_range": [h_min, h_max], "s_range": [s_min, s_max],
+            "v_range": [v_min, v_max],
+            "status": self._check_status(output_path),
+        }
+
+    def color_seg_scalar(self, input_path: str, output_path: str,
+                         scalar_min: float | None = None, scalar_max: float | None = None) -> dict:
+        """Filter point cloud by scalar field value range."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COLOR_SEG_SCALAR"]
+        if scalar_min is not None:
+            args += ["-SCALAR_MIN", str(scalar_min)]
+        if scalar_max is not None:
+            args += ["-SCALAR_MAX", str(scalar_max)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "scalar_range": [scalar_min, scalar_max],
+            "status": self._check_status(output_path),
+        }
+
+    def g3point(self, input_path: str, output_path: str,
+                max_radius: float = 0, min_radius: float = 0,
+                n_neighbors: int = 30,
+                export_ellipsoids: bool = False) -> dict:
+        """G3Point grain analysis."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-G3POINT"]
+        if max_radius > 0:
+            args += ["-MAX_RADIUS", str(max_radius)]
+        if min_radius > 0:
+            args += ["-MIN_RADIUS", str(min_radius)]
+        if n_neighbors != 30:
+            args += ["-N_NEIGHBORS", str(n_neighbors)]
+        if export_ellipsoids:
+            args.append("-EXPORT_ELLIPSOIDS")
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "n_neighbors": n_neighbors,
+            "status": self._check_status(output_path),
+        }
+
+    def draco_settings(self, quantization: int = 11,
+                       compression_level: int = 7, speed: int = 5) -> dict:
+        """Configure Draco encoding settings."""
+        args = ["-DRACO"]
+        if quantization != 11:
+            args += ["-QUANTIZATION", str(quantization)]
+        if compression_level != 7:
+            args += ["-COMPRESSION_LEVEL", str(compression_level)]
+        if speed != 5:
+            args += ["-SPEED", str(speed)]
+        self._run_cli(args)
+        return {"quantization": quantization, "compression_level": compression_level, "speed": speed}
+
+    def e57_settings(self, ignore_intensity: bool = False,
+                     ignore_color: bool = False) -> dict:
+        """Configure E57 import settings."""
+        args = ["-E57"]
+        if ignore_intensity:
+            args.append("-IGNORE_INTENSITY")
+        if ignore_color:
+            args.append("-IGNORE_COLOR")
+        self._run_cli(args)
+        return {"ignore_intensity": ignore_intensity, "ignore_color": ignore_color}
+
+    def las_settings(self, extra_fields: bool = False, tile_size: float = 0,
+                     save_laz: bool = False, las_version: str | None = None) -> dict:
+        """Configure LAS/LAZ settings."""
+        args = ["-LAS"]
+        if extra_fields:
+            args.append("-EXTRA_FIELDS")
+        if tile_size > 0:
+            args += ["-TILE_SIZE", str(tile_size)]
+        if save_laz:
+            args.append("-SAVE_LAZ")
+        if las_version:
+            args += ["-LAS_VERSION", las_version]
+        self._run_cli(args)
+        return {"extra_fields": extra_fields, "tile_size": tile_size,
+                "save_laz": save_laz, "las_version": las_version}
+
+    def csv_matrix_settings(self, separator: str = ",",
+                            skip_header: bool = False,
+                            invert_rows: bool = False) -> dict:
+        """Configure CSV matrix settings."""
+        args = ["-CSV_MATRIX"]
+        if separator != ",":
+            args += ["-SEPARATOR", separator]
+        if skip_header:
+            args.append("-SKIP_HEADER")
+        if invert_rows:
+            args.append("-INVERT_ROWS")
+        self._run_cli(args)
+        return {"separator": separator, "skip_header": skip_header, "invert_rows": invert_rows}
+
+    def photoscan_settings(self, load_keypoints: bool = False,
+                           load_cameras: bool = False) -> dict:
+        """Configure Photoscan import settings."""
+        args = ["-PHOTOSCAN"]
+        if load_keypoints:
+            args.append("-LOAD_KEYPOINTS")
+        if load_cameras:
+            args.append("-LOAD_CAMERAS")
+        self._run_cli(args)
+        return {"load_keypoints": load_keypoints, "load_cameras": load_cameras}
+
+    def mesh_io_settings(self, scale: float = 1.0, up_axis: str = "Y",
+                         merge_nodes: bool = False) -> dict:
+        """Configure mesh IO settings."""
+        args = ["-MESH_IO"]
+        if scale != 1.0:
+            args += ["-SCALE", str(scale)]
+        if up_axis != "Y":
+            args += ["-UP_AXIS", up_axis]
+        if merge_nodes:
+            args.append("-MERGE_NODES")
+        self._run_cli(args)
+        return {"scale": scale, "up_axis": up_axis, "merge_nodes": merge_nodes}
+
+    def core_io_settings(self, format: str | None = None, precision: int = -1) -> dict:
+        """Configure core IO settings."""
+        args = ["-CORE_IO"]
+        if format:
+            args += ["-FORMAT", format]
+        if precision >= 0:
+            args += ["-PRECISION", str(precision)]
+        self._run_cli(args)
+        return {"format": format, "precision": precision}
 
     def icp_registration(self, data_path: str, reference_path: str,
                          output_path: str | None = None,

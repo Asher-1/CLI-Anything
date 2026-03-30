@@ -1165,12 +1165,17 @@ def process_ransac(input_file, output_file, epsilon, bitmap_epsilon, support_poi
 @click.argument("cloud1_file", type=click.Path(exists=True))
 @click.argument("cloud2_file", type=click.Path(exists=True))
 @click.option("--output", "-o", "output_file", type=click.Path())
-@click.option("--params-file", type=click.Path(exists=True), help="M3C2 parameters file")
+@click.option("--params-file", type=click.Path(exists=True), required=True,
+              help="M3C2 parameters file (required)")
+@click.option("--core-points", type=click.Path(exists=True), default=None,
+              help="Optional third cloud used as core points")
 @handle_error
-def process_m3c2(cloud1_file, cloud2_file, output_file, params_file):
+def process_m3c2(cloud1_file, cloud2_file, output_file, params_file, core_points):
     """Compute M3C2 distances between two point clouds."""
     result = get_backend().m3c2(cloud1_file, cloud2_file,
-                                output_path=output_file, params_file=params_file)
+                                params_file=params_file,
+                                output_path=output_file,
+                                core_points_path=core_points)
     get_session().snapshot(f"m3c2 {cloud1_file} ↔ {cloud2_file}")
     output(result)
 
@@ -1180,10 +1185,13 @@ def process_m3c2(cloud1_file, cloud2_file, output_file, params_file):
 @click.option("--output", "-o", "output_file", type=click.Path(), required=True)
 @click.option("--classifier", type=click.Path(exists=True), required=True,
               help="CANUPO classifier file (.prm)")
+@click.option("--use-confidence", type=float, default=None,
+              help="Confidence threshold (>= 0) for classification")
 @handle_error
-def process_canupo(input_file, output_file, classifier):
+def process_canupo(input_file, output_file, classifier, use_confidence):
     """Apply CANUPO classification."""
-    result = get_backend().canupo(input_file, output_file, classifier_file=classifier)
+    result = get_backend().canupo(input_file, output_file, classifier_file=classifier,
+                                  use_confidence=use_confidence)
     get_session().snapshot(f"canupo {input_file}")
     output(result)
 
@@ -1283,6 +1291,224 @@ def process_voxfall(mesh1_file, mesh2_file, output_file, voxel_size, azimuth, ex
                                    voxel_size=voxel_size, azimuth=azimuth,
                                    export_meshes=export_meshes, loss_gain=loss_gain)
     get_session().snapshot(f"voxfall {mesh1_file} ↔ {mesh2_file}")
+    output(result)
+
+
+# ── Plugin-specific commands (Standard) ──
+
+@process_group.command("3dmasc")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--classifier", type=click.Path(exists=True), required=True,
+              help="3DMASC classifier file (.txt)")
+@click.option("--cloud-roles", type=str, required=True,
+              help="Cloud role assignment (e.g. 'PC1=1 PC2=2')")
+@click.option("--keep-attributes", is_flag=True, help="Keep computed attributes")
+@click.option("--only-features", is_flag=True, help="Only compute features, skip classification")
+@click.option("--skip-features", type=click.Path(), default=None,
+              help="Skip feature computation, load from file")
+@handle_error
+def process_3dmasc(input_file, output_file, classifier, cloud_roles,
+                   keep_attributes, only_features, skip_features):
+    """3DMASC point cloud classification."""
+    result = get_backend().classify_3dmasc(
+        input_file, output_file, classifier_file=classifier,
+        cloud_roles=cloud_roles, keep_attributes=keep_attributes,
+        only_features=only_features, skip_features=skip_features)
+    get_session().snapshot(f"3dmasc {input_file}")
+    output(result)
+
+
+@process_group.command("animation")
+@click.option("--fps", type=int, default=30, help="Frames per second")
+@click.option("--total-frames", type=int, default=0, help="Total number of frames")
+@click.option("--super-resolution", type=int, default=1, help="Super resolution factor")
+@click.option("--output", "-o", "output_file", type=click.Path(), help="Output video file path")
+@handle_error
+def process_animation(fps, total_frames, super_resolution, output_file):
+    """Configure animation export settings (GUI mode recommended)."""
+    result = get_backend().animation(
+        fps=fps, total_frames=total_frames,
+        super_resolution=super_resolution, output_file=output_file)
+    get_session().snapshot("animation config")
+    output(result)
+
+
+@process_group.command("cloud-layers")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--sf-index", type=int, default=-1, help="Scalar field index (-1 = current)")
+@click.option("--config", type=click.Path(exists=True), help="Layer configuration file")
+@click.option("--apply", is_flag=True, help="Apply classification")
+@handle_error
+def process_cloud_layers(input_file, output_file, sf_index, config, apply):
+    """Apply ASPRS cloud layer classification."""
+    result = get_backend().cloud_layers(
+        input_file, output_file, sf_index=sf_index,
+        config_file=config, apply=apply)
+    get_session().snapshot(f"cloud-layers {input_file}")
+    output(result)
+
+
+@process_group.command("color-seg-rgb")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--r-min", type=int, default=0, help="Red minimum (0-255)")
+@click.option("--r-max", type=int, default=255, help="Red maximum (0-255)")
+@click.option("--g-min", type=int, default=0, help="Green minimum (0-255)")
+@click.option("--g-max", type=int, default=255, help="Green maximum (0-255)")
+@click.option("--b-min", type=int, default=0, help="Blue minimum (0-255)")
+@click.option("--b-max", type=int, default=255, help="Blue maximum (0-255)")
+@handle_error
+def process_color_seg_rgb(input_file, output_file, r_min, r_max, g_min, g_max, b_min, b_max):
+    """Filter point cloud by RGB color range."""
+    result = get_backend().color_seg_rgb(
+        input_file, output_file, r_min=r_min, r_max=r_max,
+        g_min=g_min, g_max=g_max, b_min=b_min, b_max=b_max)
+    get_session().snapshot(f"color-seg-rgb {input_file}")
+    output(result)
+
+
+@process_group.command("color-seg-hsv")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--h-min", type=float, default=0, help="Hue minimum (0-360)")
+@click.option("--h-max", type=float, default=360, help="Hue maximum (0-360)")
+@click.option("--s-min", type=float, default=0, help="Saturation minimum (0-100)")
+@click.option("--s-max", type=float, default=100, help="Saturation maximum (0-100)")
+@click.option("--v-min", type=float, default=0, help="Value minimum (0-100)")
+@click.option("--v-max", type=float, default=100, help="Value maximum (0-100)")
+@handle_error
+def process_color_seg_hsv(input_file, output_file, h_min, h_max, s_min, s_max, v_min, v_max):
+    """Filter point cloud by HSV color range."""
+    result = get_backend().color_seg_hsv(
+        input_file, output_file, h_min=h_min, h_max=h_max,
+        s_min=s_min, s_max=s_max, v_min=v_min, v_max=v_max)
+    get_session().snapshot(f"color-seg-hsv {input_file}")
+    output(result)
+
+
+@process_group.command("color-seg-scalar")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--scalar-min", type=float, default=None, help="Scalar minimum")
+@click.option("--scalar-max", type=float, default=None, help="Scalar maximum")
+@handle_error
+def process_color_seg_scalar(input_file, output_file, scalar_min, scalar_max):
+    """Filter point cloud by scalar field value range."""
+    result = get_backend().color_seg_scalar(
+        input_file, output_file, scalar_min=scalar_min, scalar_max=scalar_max)
+    get_session().snapshot(f"color-seg-scalar {input_file}")
+    output(result)
+
+
+@process_group.command("g3point")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--max-radius", type=float, default=0, help="Maximum grain radius")
+@click.option("--min-radius", type=float, default=0, help="Minimum grain radius")
+@click.option("--n-neighbors", type=int, default=30, help="Number of neighbors")
+@click.option("--export-ellipsoids", is_flag=True, help="Export fitted ellipsoids")
+@handle_error
+def process_g3point(input_file, output_file, max_radius, min_radius,
+                    n_neighbors, export_ellipsoids):
+    """G3Point grain analysis on point cloud."""
+    result = get_backend().g3point(
+        input_file, output_file, max_radius=max_radius,
+        min_radius=min_radius, n_neighbors=n_neighbors,
+        export_ellipsoids=export_ellipsoids)
+    get_session().snapshot(f"g3point {input_file}")
+    output(result)
+
+
+# ── IO plugin settings commands ──
+
+@process_group.command("draco-settings")
+@click.option("--quantization", type=int, default=11, help="Quantization bits (0-30)")
+@click.option("--compression-level", type=int, default=7, help="Compression level (0-10)")
+@click.option("--speed", type=int, default=5, help="Encoding speed (0-10)")
+@handle_error
+def process_draco_settings(quantization, compression_level, speed):
+    """Configure Draco encoding settings."""
+    result = get_backend().draco_settings(
+        quantization=quantization, compression_level=compression_level, speed=speed)
+    get_session().snapshot("draco-settings")
+    output(result)
+
+
+@process_group.command("e57-settings")
+@click.option("--ignore-intensity", is_flag=True, help="Ignore intensity data")
+@click.option("--ignore-color", is_flag=True, help="Ignore color data")
+@handle_error
+def process_e57_settings(ignore_intensity, ignore_color):
+    """Configure E57 import settings."""
+    result = get_backend().e57_settings(
+        ignore_intensity=ignore_intensity, ignore_color=ignore_color)
+    get_session().snapshot("e57-settings")
+    output(result)
+
+
+@process_group.command("las-settings")
+@click.option("--extra-fields", is_flag=True, help="Enable extra fields")
+@click.option("--tile-size", type=float, default=0, help="Tile size (0=no tiling)")
+@click.option("--save-laz", is_flag=True, help="Save as compressed LAZ")
+@click.option("--version", "las_version", type=str, default=None, help="LAS version (e.g. 1.4)")
+@handle_error
+def process_las_settings(extra_fields, tile_size, save_laz, las_version):
+    """Configure LAS/LAZ import/export settings."""
+    result = get_backend().las_settings(
+        extra_fields=extra_fields, tile_size=tile_size,
+        save_laz=save_laz, las_version=las_version)
+    get_session().snapshot("las-settings")
+    output(result)
+
+
+@process_group.command("csv-matrix-settings")
+@click.option("--separator", type=str, default=",", help="Column separator character")
+@click.option("--skip-header", is_flag=True, help="Skip header row")
+@click.option("--invert-rows", is_flag=True, help="Invert row order")
+@handle_error
+def process_csv_matrix_settings(separator, skip_header, invert_rows):
+    """Configure CSV matrix import settings."""
+    result = get_backend().csv_matrix_settings(
+        separator=separator, skip_header=skip_header, invert_rows=invert_rows)
+    get_session().snapshot("csv-matrix-settings")
+    output(result)
+
+
+@process_group.command("photoscan-settings")
+@click.option("--load-keypoints", is_flag=True, help="Load keypoints")
+@click.option("--load-cameras", is_flag=True, help="Load camera positions")
+@handle_error
+def process_photoscan_settings(load_keypoints, load_cameras):
+    """Configure Photoscan/Metashape import settings."""
+    result = get_backend().photoscan_settings(
+        load_keypoints=load_keypoints, load_cameras=load_cameras)
+    get_session().snapshot("photoscan-settings")
+    output(result)
+
+
+@process_group.command("mesh-io-settings")
+@click.option("--scale", type=float, default=1.0, help="Scale factor")
+@click.option("--up-axis", type=click.Choice(["X", "Y", "Z"]), default="Y", help="Up axis")
+@click.option("--merge-nodes", is_flag=True, help="Merge scene nodes")
+@handle_error
+def process_mesh_io_settings(scale, up_axis, merge_nodes):
+    """Configure mesh IO settings (Assimp-based formats)."""
+    result = get_backend().mesh_io_settings(
+        scale=scale, up_axis=up_axis, merge_nodes=merge_nodes)
+    get_session().snapshot("mesh-io-settings")
+    output(result)
+
+
+@process_group.command("core-io-settings")
+@click.option("--format", "io_format", type=str, default=None, help="Default IO format")
+@click.option("--precision", type=int, default=-1, help="Output precision")
+@handle_error
+def process_core_io_settings(io_format, precision):
+    """Configure core IO settings."""
+    result = get_backend().core_io_settings(format=io_format, precision=precision)
+    get_session().snapshot("core-io-settings")
     output(result)
 
 
@@ -2027,9 +2253,9 @@ def sibr_group():
               help="Trained model directory (for gaussian viewer)")
 @click.option("--mesh", type=click.Path(exists=True), 
               help="Mesh file (for texturedmesh viewer)")
-@click.option("--width", type=int, default=1920, 
-              help="Window width")
-@click.option("--height", type=int, default=1080, 
+@click.option("--width", type=int, default=1280, 
+              help="Window width (C++ default: 1280)")
+@click.option("--height", type=int, default=720, 
               help="Window height")
 @click.option("--iteration", type=int, 
               help="Specific iteration to load (gaussian viewer)")
