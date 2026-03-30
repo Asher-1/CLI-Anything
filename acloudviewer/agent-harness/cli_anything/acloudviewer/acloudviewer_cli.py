@@ -1512,6 +1512,60 @@ def process_core_io_settings(io_format, precision):
     output(result)
 
 
+@process_group.command("python-script")
+@click.argument("script_file", type=click.Path(exists=True))
+@click.argument("script_args", nargs=-1)
+@handle_error
+def process_python_script(script_file, script_args):
+    """Run a Python script in ACloudViewer's embedded Python runtime."""
+    result = get_backend().python_script(script_file, list(script_args) if script_args else None)
+    output(result)
+
+
+@process_group.command("mplane")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--nx", type=float, default=0, help="Plane normal X component")
+@click.option("--ny", type=float, default=0, help="Plane normal Y component")
+@click.option("--nz", type=float, default=1, help="Plane normal Z component")
+@click.option("--d", type=float, default=0, help="Plane distance from origin")
+@handle_error
+def process_mplane(input_file, output_file, nx, ny, nz, d):
+    """Compute plane-to-cloud distance (qMPlane plugin)."""
+    result = get_backend().mplane(input_file, output_file, nx=nx, ny=ny, nz=nz, d=d)
+    output(result)
+
+
+@process_group.command("auto-seg")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--mortar-maps", is_flag=True, help="Generate mortar maps")
+@click.option("--contours", is_flag=True, help="Generate contours")
+@click.option("--profile", "profile_file", type=click.Path(exists=True), help="Profile file")
+@handle_error
+def process_auto_seg(input_file, output_file, mortar_maps, contours, profile_file):
+    """Automatic masonry segmentation (qAutoSeg)."""
+    result = get_backend().auto_seg(input_file, output_file,
+                                    mortar_maps=mortar_maps, contours=contours,
+                                    profile_file=profile_file)
+    output(result)
+
+
+@process_group.command("manual-seg")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--mortar-maps", is_flag=True, help="Generate mortar maps")
+@click.option("--contours", is_flag=True, help="Generate contours")
+@click.option("--profile", "profile_file", type=click.Path(exists=True), help="Profile file")
+@handle_error
+def process_manual_seg(input_file, output_file, mortar_maps, contours, profile_file):
+    """Manual masonry segmentation (qManualSeg)."""
+    result = get_backend().manual_seg(input_file, output_file,
+                                      mortar_maps=mortar_maps, contours=contours,
+                                      profile_file=profile_file)
+    output(result)
+
+
 # ── Scalar field operations ──
 
 @process_group.command("set-active-sf")

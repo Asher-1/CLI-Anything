@@ -776,8 +776,15 @@ class ACloudViewerBackend:
 
     def pcv(self, input_path: str, output_path: str,
             n_rays: int = 256, resolution: int = 1024,
-            mode_180: bool = False, is_closed: bool = False) -> dict:
+            mode_180: bool = False, is_closed: bool = False,
+            entity_id: int | None = None) -> dict:
         """Compute PCV (Portion de Ciel Visible / ambient occlusion)."""
+        if self._mode == "gui" and entity_id is not None:
+            return self._rpc.call("process.pcv", {
+                "entity_id": entity_id, "ray_count": n_rays,
+                "resolution": resolution,
+                "mode_360": not mode_180, "mesh_closed": is_closed,
+            })
         args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP", "-PCV"]
         if n_rays != 256:
             args += ["-N_RAYS", str(n_rays)]
@@ -1271,6 +1278,89 @@ class ACloudViewerBackend:
             args += ["-PRECISION", str(precision)]
         self._run_cli(args)
         return {"format": format, "precision": precision}
+
+    def python_script(self, script_path: str, script_args: list[str] | None = None) -> dict:
+        """Run a Python script in ACloudViewer's embedded Python runtime."""
+        args = ["-PYTHON_SCRIPT", script_path]
+        if script_args:
+            args.extend(script_args)
+        self._run_cli(args)
+        return {"script": script_path, "args": script_args or []}
+
+    def mplane(self, input_path: str, output_path: str,
+               nx: float = 0, ny: float = 0, nz: float = 1, d: float = 0) -> dict:
+        """Compute plane-to-cloud distance using MPlane plugin."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-MPLANE"]
+        if nx != 0:
+            args += ["-NX", str(nx)]
+        if ny != 0:
+            args += ["-NY", str(ny)]
+        if nz != 1:
+            args += ["-NZ", str(nz)]
+        if d != 0:
+            args += ["-D", str(d)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "normal": [nx, ny, nz], "d": d}
+
+    def auto_seg(self, input_path: str, output_path: str,
+                 mortar_maps: bool = False, contours: bool = False,
+                 profile_file: str | None = None) -> dict:
+        """Run automatic masonry segmentation (qAutoSeg)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-AUTO_SEG"]
+        if mortar_maps:
+            args.append("-MORTAR_MAPS")
+        if contours:
+            args.append("-CONTOURS")
+        if profile_file:
+            args += ["-PROFILE", profile_file]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "mortar_maps": mortar_maps, "contours": contours}
+
+    def manual_seg(self, input_path: str, output_path: str,
+                   mortar_maps: bool = False, contours: bool = False,
+                   profile_file: str | None = None) -> dict:
+        """Run manual masonry segmentation (qManualSeg)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-MANUAL_SEG"]
+        if mortar_maps:
+            args.append("-MORTAR_MAPS")
+        if contours:
+            args.append("-CONTOURS")
+        if profile_file:
+            args += ["-PROFILE", profile_file]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "mortar_maps": mortar_maps, "contours": contours}
+
+    def compass_export(self, input_path: str, output_path: str,
+                       fmt: str = "csv") -> dict:
+        """Export Compass measurements (planes/lineations/traces)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COMPASS_EXPORT", "-FORMAT", fmt, "-OUTPUT", output_path]
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "format": fmt,
+                "status": self._check_status(output_path)}
+
+    def sra(self, input_path: str, output_path: str,
+            profile_path: str = "", axis: str = "Z") -> dict:
+        """Compute Surface of Revolution Analysis radial distance."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-SRA", "-PROFILE", profile_path]
+        if axis.upper() != "Z":
+            args += ["-AXIS", axis.upper()]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "profile": profile_path, "axis": axis,
+                "status": self._check_status(output_path)}
 
     def icp_registration(self, data_path: str, reference_path: str,
                          output_path: str | None = None,

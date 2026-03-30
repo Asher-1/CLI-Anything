@@ -286,6 +286,7 @@ async def list_tools() -> list[Tool]:
                     "resolution": {"type": "integer", "default": 1024, "description": "Grid resolution"},
                     "mode_180": {"type": "boolean", "default": False, "description": "Upper hemisphere only"},
                     "is_closed": {"type": "boolean", "default": False, "description": "Treat mesh as closed"},
+                    "entity_id": {"type": "integer", "description": "Entity ID for GUI/RPC mode (optional)"},
                 },
                 "required": ["input_path", "output_path"],
             },
@@ -731,6 +732,46 @@ async def list_tools() -> list[Tool]:
              inputSchema={"type": "object", "properties": {
                  "format": {"type": "string"},
                  "precision": {"type": "integer", "default": -1}}}),
+        Tool(name="python_script", description="Run a Python script in ACloudViewer's embedded Python runtime.",
+             inputSchema={"type": "object", "properties": {
+                 "script_path": {"type": "string", "description": "Path to Python script"},
+                 "script_args": {"type": "array", "items": {"type": "string"}, "description": "Arguments for the script"}},
+              "required": ["script_path"]}),
+        Tool(name="mplane", description="Compute plane-to-cloud distance (MPlane plugin).",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "nx": {"type": "number", "default": 0, "description": "Plane normal X"},
+                 "ny": {"type": "number", "default": 0, "description": "Plane normal Y"},
+                 "nz": {"type": "number", "default": 1, "description": "Plane normal Z"},
+                 "d": {"type": "number", "default": 0, "description": "Plane distance"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="auto_seg", description="Automatic masonry segmentation (qAutoSeg).",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "mortar_maps": {"type": "boolean", "default": False},
+                 "contours": {"type": "boolean", "default": False},
+                 "profile_file": {"type": "string"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="manual_seg", description="Manual masonry segmentation (qManualSeg).",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "mortar_maps": {"type": "boolean", "default": False},
+                 "contours": {"type": "boolean", "default": False},
+                 "profile_file": {"type": "string"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="compass_export", description="Export Compass measurements (planes/lineations/traces) to CSV or XML.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input file with Compass data (e.g. .bin project)"},
+                 "output_path": {"type": "string", "description": "Output file path (base name for CSV, full name for XML)"},
+                 "format": {"type": "string", "default": "csv", "description": "csv or xml"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="sra", description="Compute Surface of Revolution Analysis radial distance.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input point cloud"},
+                 "output_path": {"type": "string", "description": "Output point cloud with radial distance SF"},
+                 "profile_path": {"type": "string", "description": "Revolution profile file"},
+                 "axis": {"type": "string", "default": "Z", "description": "Revolution axis: X, Y, or Z"}},
+              "required": ["input_path", "output_path", "profile_path"]}),
         # ── Scene / Entity / View (GUI) ──
         Tool(
             name="export_entity",
@@ -1656,6 +1697,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 resolution=arguments.get("resolution", 1024),
                 mode_180=arguments.get("mode_180", False),
                 is_closed=arguments.get("is_closed", False),
+                entity_id=arguments.get("entity_id"),
             ))
 
         elif name == "csf":
@@ -1837,6 +1879,46 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return _result(backend.core_io_settings(
                 format=arguments.get("format"),
                 precision=arguments.get("precision", -1),
+            ))
+        elif name == "python_script":
+            return _result(backend.python_script(
+                arguments["script_path"],
+                script_args=arguments.get("script_args"),
+            ))
+        elif name == "mplane":
+            return _result(backend.mplane(
+                arguments["input_path"], arguments["output_path"],
+                nx=arguments.get("nx", 0),
+                ny=arguments.get("ny", 0),
+                nz=arguments.get("nz", 1),
+                d=arguments.get("d", 0),
+            ))
+        elif name == "auto_seg":
+            return _result(backend.auto_seg(
+                arguments["input_path"], arguments["output_path"],
+                mortar_maps=arguments.get("mortar_maps", False),
+                contours=arguments.get("contours", False),
+                profile_file=arguments.get("profile_file"),
+            ))
+        elif name == "manual_seg":
+            return _result(backend.manual_seg(
+                arguments["input_path"], arguments["output_path"],
+                mortar_maps=arguments.get("mortar_maps", False),
+                contours=arguments.get("contours", False),
+                profile_file=arguments.get("profile_file"),
+            ))
+
+        elif name == "compass_export":
+            return _result(backend.compass_export(
+                arguments["input_path"], arguments["output_path"],
+                fmt=arguments.get("format", "csv"),
+            ))
+
+        elif name == "sra":
+            return _result(backend.sra(
+                arguments["input_path"], arguments["output_path"],
+                profile_path=arguments["profile_path"],
+                axis=arguments.get("axis", "Z"),
             ))
 
         # ── Scalar field operations ──
