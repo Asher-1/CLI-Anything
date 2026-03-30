@@ -54,6 +54,7 @@ setup(
         "dev": [
             "pytest>=7",
             "pytest-cov>=4",
+            "pytest-asyncio>=0.21",
         ],
     },
 
@@ -64,7 +65,7 @@ setup(
         ],
     },
     package_data={
-        "cli_anything.acloudviewer": ["skills/*.md", "openclaw-skill.json"],
+        "cli_anything.acloudviewer": ["skills/*.md"],
     },
     include_package_data=True,
     zip_safe=False,

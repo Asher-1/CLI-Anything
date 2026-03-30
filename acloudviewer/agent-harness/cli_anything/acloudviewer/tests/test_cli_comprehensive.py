@@ -122,11 +122,14 @@ class TestInfoCommands:
     def test_methods(self, mock_backend):
         runner = CliRunner()
         backend_mock = Mock()
-        backend_mock.list_rpc_methods.return_value = ["method1", "method2"]
+        backend_mock.mode = "gui"
+        rpc_mock = Mock()
+        rpc_mock.list_methods.return_value = ["method1", "method2"]
+        backend_mock._rpc = rpc_mock
         mock_backend.return_value = backend_mock
-        
+
         result = runner.invoke(cli, ['methods'])
-        assert result.exit_code == 0 or backend_mock.list_rpc_methods.called
+        assert result.exit_code == 0 or rpc_mock.list_methods.called
 
 
 # ============================================================================
@@ -305,7 +308,7 @@ class TestProcessCommands:
         backend_mock.subsample.return_value = str(dst)
         mock_backend.return_value = backend_mock
         
-        result = runner.invoke(cli, ['process', 'subsample', str(src), '-o', str(dst), '--method', 'RANDOM', '--count', '50'])
+        result = runner.invoke(cli, ['process', 'subsample', str(src), '-o', str(dst), '--method', 'RANDOM', '--voxel-size', '0.05'])
         assert backend_mock.subsample.called or result.exit_code == 0
 
     @patch('cli_anything.acloudviewer.acloudviewer_cli.get_backend')
@@ -443,7 +446,7 @@ class TestEntityCommands:
         backend_mock.entity_set_color.return_value = None
         mock_backend.return_value = backend_mock
         
-        result = runner.invoke(cli, ['entity', 'set-color', '123', '--r', '255', '--g', '0', '--b', '0'])
+        result = runner.invoke(cli, ['entity', 'set-color', '123', '255', '0', '0'])
         assert backend_mock.entity_set_color.called or result.exit_code == 0
 
 
