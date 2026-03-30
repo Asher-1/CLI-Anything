@@ -1116,17 +1116,24 @@ def process_pcv(input_file, output_file, n_rays, resolution, mode_180, is_closed
 @process_group.command("csf")
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", "output_file", type=click.Path(), required=True)
-@click.option("--scenes", type=int, default=1,
-              help="Scene type: 0=flat, 1=relief, 2=steep")
-@click.option("--cloth-resolution", type=float, default=0.5)
+@click.option("--scenes", type=click.Choice(["SLOPE", "RELIEF", "FLAT"], case_sensitive=False),
+              default="RELIEF", help="Scene type: SLOPE, RELIEF, or FLAT")
+@click.option("--cloth-resolution", type=float, default=2.0,
+              help="Cloth grid resolution (default: 2.0)")
 @click.option("--max-iteration", type=int, default=500)
 @click.option("--class-threshold", type=float, default=0.5)
+@click.option("--proc-slope", is_flag=True, help="Enable slope post-processing")
+@click.option("--export-ground", is_flag=True, help="Export ground subset")
+@click.option("--export-offground", is_flag=True, help="Export off-ground subset")
 @handle_error
-def process_csf(input_file, output_file, scenes, cloth_resolution, max_iteration, class_threshold):
+def process_csf(input_file, output_file, scenes, cloth_resolution, max_iteration,
+                class_threshold, proc_slope, export_ground, export_offground):
     """CSF ground filtering (Cloth Simulation Filter)."""
     result = get_backend().csf(input_file, output_file,
                                scenes=scenes, cloth_resolution=cloth_resolution,
-                               max_iteration=max_iteration, class_threshold=class_threshold)
+                               max_iteration=max_iteration, class_threshold=class_threshold,
+                               proc_slope=proc_slope, export_ground=export_ground,
+                               export_offground=export_offground)
     get_session().snapshot(f"csf {input_file}")
     output(result)
 
@@ -1139,13 +1146,17 @@ def process_csf(input_file, output_file, scenes, cloth_resolution, max_iteration
 @click.option("--support-points", type=int, default=500)
 @click.option("--max-normal-dev", type=float, default=25.0, help="Max normal deviation (degrees)")
 @click.option("--probability", type=float, default=0.01)
+@click.option("--primitives", type=str, multiple=True,
+              help="Primitives to detect: PLANE, SPHERE, CYLINDER, CONE, TORUS (can repeat)")
 @handle_error
-def process_ransac(input_file, output_file, epsilon, bitmap_epsilon, support_points, max_normal_dev, probability):
+def process_ransac(input_file, output_file, epsilon, bitmap_epsilon, support_points,
+                   max_normal_dev, probability, primitives):
     """RANSAC shape detection."""
     result = get_backend().ransac(input_file, output_file,
                                   epsilon=epsilon, bitmap_epsilon=bitmap_epsilon,
                                   support_points=support_points, max_normal_dev=max_normal_dev,
-                                  probability=probability)
+                                  probability=probability,
+                                  primitives=list(primitives) if primitives else None)
     get_session().snapshot(f"ransac {input_file}")
     output(result)
 

@@ -797,30 +797,56 @@ class ACloudViewerBackend:
         }
 
     def csf(self, input_path: str, output_path: str,
-            scenes: int = 1, cloth_resolution: float = 0.5,
-            max_iteration: int = 500, class_threshold: float = 0.5) -> dict:
-        """Apply CSF ground filtering."""
+            scenes: str = "RELIEF", cloth_resolution: float = 2.0,
+            max_iteration: int = 500, class_threshold: float = 0.5,
+            proc_slope: bool = False,
+            export_ground: bool = False,
+            export_offground: bool = False) -> dict:
+        """Apply CSF ground filtering.
+
+        Args:
+            scenes: Scene type - SLOPE, RELIEF, or FLAT (sets rigidness 1/2/3).
+            cloth_resolution: Cloth grid resolution (C++ default: 2.0).
+            proc_slope: Enable slope post-processing.
+            export_ground: Export ground subset separately.
+            export_offground: Export off-ground subset separately.
+        """
+        scene_val = scenes.upper()
+        if scene_val not in ("SLOPE", "RELIEF", "FLAT"):
+            raise ValueError(f"scenes must be SLOPE, RELIEF, or FLAT, got: {scenes}")
         args = [
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-CSF",
-            "-SCENES", str(scenes),
+            "-SCENES", scene_val,
             "-CLOTH_RESOLUTION", str(cloth_resolution),
             "-MAX_ITERATION", str(max_iteration),
             "-CLASS_THRESHOLD", str(class_threshold),
         ]
+        if proc_slope:
+            args.append("-PROC_SLOPE")
+        if export_ground:
+            args.append("-EXPORT_GROUND")
+        if export_offground:
+            args.append("-EXPORT_OFFGROUND")
         args += self._save_args(output_path)
         self._run_cli(args)
         return {
             "input": input_path, "output": output_path,
-            "scenes": scenes, "cloth_resolution": cloth_resolution,
+            "scenes": scene_val, "cloth_resolution": cloth_resolution,
             "status": self._check_status(output_path),
         }
 
     def ransac(self, input_path: str, output_path: str,
                epsilon: float = 0.005, bitmap_epsilon: float = 0.01,
                support_points: int = 500, max_normal_dev: float = 25.0,
-               probability: float = 0.01) -> dict:
-        """RANSAC shape detection."""
+               probability: float = 0.01,
+               primitives: list[str] | None = None) -> dict:
+        """RANSAC shape detection.
+
+        Args:
+            primitives: List of primitives to detect, e.g. ["PLANE", "SPHERE",
+                        "CYLINDER", "CONE", "TORUS"]. Default: PLANE only.
+        """
         args = [
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-RANSAC",
@@ -830,11 +856,15 @@ class ACloudViewerBackend:
             "-MAX_NORMAL_DEV", str(max_normal_dev),
             "-PROBABILITY", str(probability),
         ]
+        if primitives:
+            for p in primitives:
+                args += ["-ENABLE_PRIMITIVE", p.upper()]
         args += self._save_args(output_path)
         self._run_cli(args)
         return {
             "input": input_path, "output": output_path,
             "epsilon": epsilon, "support_points": support_points,
+            "primitives": primitives or ["PLANE"],
             "status": self._check_status(output_path),
         }
 

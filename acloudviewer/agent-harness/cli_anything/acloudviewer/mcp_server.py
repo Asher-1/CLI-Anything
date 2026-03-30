@@ -298,10 +298,14 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "input_path": {"type": "string"},
                     "output_path": {"type": "string"},
-                    "scenes": {"type": "integer", "default": 1, "description": "Scene type: 0=flat, 1=relief, 2=steep"},
-                    "cloth_resolution": {"type": "number", "default": 0.5},
+                    "scenes": {"type": "string", "default": "RELIEF", "enum": ["SLOPE", "RELIEF", "FLAT"],
+                               "description": "Scene type: SLOPE, RELIEF, or FLAT (sets rigidness 1/2/3)"},
+                    "cloth_resolution": {"type": "number", "default": 2.0, "description": "Cloth grid resolution"},
                     "max_iteration": {"type": "integer", "default": 500},
                     "class_threshold": {"type": "number", "default": 0.5},
+                    "proc_slope": {"type": "boolean", "default": False, "description": "Enable slope post-processing"},
+                    "export_ground": {"type": "boolean", "default": False, "description": "Export ground subset"},
+                    "export_offground": {"type": "boolean", "default": False, "description": "Export off-ground subset"},
                 },
                 "required": ["input_path", "output_path"],
             },
@@ -319,6 +323,9 @@ async def list_tools() -> list[Tool]:
                     "support_points": {"type": "integer", "default": 500},
                     "max_normal_dev": {"type": "number", "default": 25.0, "description": "Max normal deviation in degrees"},
                     "probability": {"type": "number", "default": 0.01},
+                    "primitives": {"type": "array", "items": {"type": "string",
+                                   "enum": ["PLANE", "SPHERE", "CYLINDER", "CONE", "TORUS"]},
+                                   "description": "Primitives to detect (default: PLANE only)"},
                 },
                 "required": ["input_path", "output_path"],
             },
@@ -1568,10 +1575,13 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         elif name == "csf":
             return _result(backend.csf(
                 arguments["input_path"], arguments["output_path"],
-                scenes=arguments.get("scenes", 1),
-                cloth_resolution=arguments.get("cloth_resolution", 0.5),
+                scenes=arguments.get("scenes", "RELIEF"),
+                cloth_resolution=arguments.get("cloth_resolution", 2.0),
                 max_iteration=arguments.get("max_iteration", 500),
                 class_threshold=arguments.get("class_threshold", 0.5),
+                proc_slope=arguments.get("proc_slope", False),
+                export_ground=arguments.get("export_ground", False),
+                export_offground=arguments.get("export_offground", False),
             ))
 
         elif name == "ransac":
@@ -1582,6 +1592,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 support_points=arguments.get("support_points", 500),
                 max_normal_dev=arguments.get("max_normal_dev", 25.0),
                 probability=arguments.get("probability", 0.01),
+                primitives=arguments.get("primitives"),
             ))
 
         elif name == "m3c2":
