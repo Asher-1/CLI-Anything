@@ -1,13 +1,17 @@
 name: Check Upstream Updates
 
 # 定期检查上游仓库是否有新的提交
-# 如果有更新,创建一个 issue 提醒维护者
+# 如果有更新,写入 Job Summary 并发出 warning annotation
 
 on:
   schedule:
     # 每天 UTC 时间 00:00 运行 (北京时间 08:00)
     - cron: '0 0 * * *'
   workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   check-upstream:
@@ -81,131 +85,172 @@ jobs:
           # 清理 merge 尝试
           git merge --abort 2>/dev/null || true
       
-      - name: Create or update issue
+      - name: Write sync report to Job Summary
         if: steps.check_updates.outputs.has_updates == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const commitsBehind = ${{ steps.check_updates.outputs.commits_behind }};
-            const commitsAhead = ${{ steps.check_updates.outputs.commits_ahead }};
-            const hasConflicts = ${{ steps.check_conflicts.outputs.has_conflicts == 'true' }};
-            
-            const upstreamCommits = require('fs').readFileSync('/tmp/upstream_commits.md', 'utf8');
-            const conflictFiles = hasConflicts ? 
-              require('fs').readFileSync('/tmp/conflict_files.md', 'utf8') : '';
-            
-            const issueTitle = '🔄 上游仓库有新更新可同步';
-            const issueBody = `
-            # 上游同步提醒
-            
-            上游仓库 [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) 有新的提交可以同步。
-            
-            ## 📊 同步状态
-            
-            - **落后上游**: ${commitsBehind} 个提交
-            - **领先上游**: ${commitsAhead} 个提交
-            - **预测冲突**: ${hasConflicts ? '⚠️ 可能存在冲突' : '✅ 无明显冲突'}
-            
-            ${upstreamCommits}
-            
-            ${hasConflicts ? conflictFiles : ''}
-            
-            ## 🚀 如何同步
-            
-            ### 方法 1: 使用自动化脚本 (推荐)
-            
-            \`\`\`bash
-            # 如果预期有冲突,使用 merge 策略
-            ./sync-upstream.sh --merge
-            
-            # 如果想保留本地修改,使用 ours 策略
-            ./sync-upstream.sh --ours
-            
-            # 默认 rebase 策略 (历史更整洁)
-            ./sync-upstream.sh
-            \`\`\`
-            
-            ### 方法 2: 手动同步
-            
-            \`\`\`bash
-            git fetch upstream
-            git checkout main
-            git merge upstream/main
-            # 或
-            git rebase upstream/main
-            \`\`\`
-            
-            ## 📚 相关文档
-            
-            - [详细同步指南](./SYNC_UPSTREAM.md)
-            - [快速参考](./SYNC_QUICK_REF.md)
-            
-            ## ⚠️ 注意事项
-            
-            ${hasConflicts ? `
-            ### 检测到潜在冲突
-            
-            同步过程可能需要手动解决冲突。建议:
-            
-            1. 先创建备份分支
-            2. 使用 merge 策略而不是 rebase
-            3. 仔细审查冲突文件
-            4. 同步后运行完整测试
-            ` : ''}
-            
-            ---
-            
-            *此 issue 由 GitHub Actions 自动创建。当上游再次有新提交时,此 issue 会被更新。*
-            *上次检查时间: ${new Date().toISOString()}*
-            `;
-            
-            // 查找现有的同步提醒 issue
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: ['upstream-sync'],
-            });
-            
-            const existingIssue = issues.data.find(issue => 
-              issue.title === issueTitle
-            );
-            
-            if (existingIssue) {
-              // 更新现有 issue
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existingIssue.number,
-                body: issueBody,
-              });
-              
-              // 添加评论
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existingIssue.number,
-                body: `🔄 检测到新的上游更新 (${commitsBehind} 个新提交)`,
-              });
-              
-              console.log(`更新了 issue #${existingIssue.number}`);
-            } else {
-              // 创建新 issue
-              const newIssue = await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: issueTitle,
-                body: issueBody,
-                labels: ['upstream-sync', 'maintenance'],
-              });
-              
-              console.log(`创建了新 issue #${newIssue.data.number}`);
-            }
+        run: |
+          COMMITS_BEHIND="${{ steps.check_updates.outputs.commits_behind }}"
+          COMMITS_AHEAD="${{ steps.check_updates.outputs.commits_ahead }}"
+          HAS_CONFLICTS="${{ steps.check_conflicts.outputs.has_conflicts }}"
+
+          UPSTREAM_COMMITS=$(cat /tmp/upstream_commits.md 2>/dev/null || echo "(none)")
+          CONFLICT_FILES=""
+          if [ "$HAS_CONFLICTS" = "true" ]; then
+            CONFLICT_FILES=$(cat /tmp/conflict_files.md 2>/dev/null || echo "(none)")
+          fi
+
+          if [ "$HAS_CONFLICTS" = "true" ]; then
+            CONFLICT_BADGE="⚠️ 可能存在冲突"
+          else
+            CONFLICT_BADGE="✅ 无明显冲突"
+          fi
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          # 🔄 上游同步提醒
+
+          上游仓库 [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) 有新的提交可以同步。
+
+          ## 📊 同步状态
+
+          | 指标 | 值 |
+          |------|-----|
+          | **落后上游** | ${COMMITS_BEHIND} 个提交 |
+          | **领先上游** | ${COMMITS_AHEAD} 个提交 |
+          | **预测冲突** | ${CONFLICT_BADGE} |
+
+          ${UPSTREAM_COMMITS}
+
+          ${CONFLICT_FILES}
+
+          ## 🚀 如何同步
+
+          ### 方法 1: 使用自动化脚本 (推荐)
+
+          \`\`\`bash
+          ./sync-upstream.sh --merge   # merge 策略 (有冲突时)
+          ./sync-upstream.sh --ours    # ours 策略 (保留本地)
+          ./sync-upstream.sh           # rebase 策略 (默认,历史更整洁)
+          \`\`\`
+
+          ### 方法 2: 手动同步
+
+          \`\`\`bash
+          git fetch upstream
+          git checkout main
+          git merge upstream/main   # 或 git rebase upstream/main
+          \`\`\`
+
+          ## 📚 相关文档
+
+          - [详细同步指南](./SYNC_UPSTREAM.md)
+          - [快速参考](./SYNC_QUICK_REF.md)
+          EOF
+
+          if [ "$HAS_CONFLICTS" = "true" ]; then
+            cat >> "$GITHUB_STEP_SUMMARY" <<'WARN_EOF'
+
+          ## ⚠️ 检测到潜在冲突
+
+          同步过程可能需要手动解决冲突。建议:
+
+          1. 先创建备份分支
+          2. 使用 merge 策略而不是 rebase
+          3. 仔细审查冲突文件
+          4. 同步后运行完整测试
+          WARN_EOF
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo "*此报告由 GitHub Actions 自动生成。上次检查: $(date -u +%Y-%m-%dT%H:%M:%SZ)*" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::warning::上游仓库有 ${COMMITS_BEHIND} 个新提交可同步 (冲突: ${HAS_CONFLICTS})"
       
+      - name: Create or update sync PR
+        if: steps.check_updates.outputs.has_updates == 'true' && steps.check_updates.outputs.commits_behind != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COMMITS_BEHIND="${{ steps.check_updates.outputs.commits_behind }}"
+          HAS_CONFLICTS="${{ steps.check_conflicts.outputs.has_conflicts }}"
+          SYNC_BRANCH="auto/sync-upstream"
+
+          EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
+
+          if [ "$HAS_CONFLICTS" = "true" ]; then
+            echo "⚠️ 存在冲突，跳过自动 merge，仅更新 PR body"
+            if [ -n "$EXISTING_PR" ]; then
+              UPSTREAM_LOG=$(cat /tmp/upstream_commits.md 2>/dev/null || echo "(none)")
+              CONFLICTS=$(cat /tmp/conflict_files.md 2>/dev/null || echo "(none)")
+              gh pr comment "$EXISTING_PR" --body "$(cat <<COMMENT_EOF
+          🔄 上游检测到 ${COMMITS_BEHIND} 个新提交，但存在冲突，请手动解决。
+
+          ${CONFLICTS}
+          COMMENT_EOF
+          )"
+            fi
+            echo "::warning::存在冲突，无法自动创建 sync PR，请手动同步"
+            exit 0
+          fi
+
+          git checkout -B "$SYNC_BRANCH" origin/main
+          git merge upstream/main --no-edit -m "chore: merge upstream/main (${COMMITS_BEHIND} commits)"
+
+          git push -u origin "$SYNC_BRANCH" --force
+
+          UPSTREAM_LOG=$(cat /tmp/upstream_commits.md 2>/dev/null || echo "(none)")
+
+          PR_BODY=$(cat <<'PR_EOF'
+          ## Description
+
+          自动同步上游仓库 [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) 的最新更改。
+
+          ## Type of Change
+
+          - [x] **Other** — upstream sync (auto-generated)
+
+          ---
+
+          PR_EOF
+          )
+
+          PR_BODY="${PR_BODY}
+
+          ### 📊 同步状态
+
+          - **新增上游提交**: ${COMMITS_BEHIND} 个
+          - **预测冲突**: ✅ 无冲突 (已自动 merge)
+
+          ${UPSTREAM_LOG}
+
+          ### General Checklist
+
+          - [x] Code follows existing patterns and conventions
+          - [ ] I have tested my changes locally
+
+          ## Test Results
+
+          > 请在 merge 前本地运行测试确认无回归。
+
+          ---
+          *此 PR 由 GitHub Actions 自动创建/更新。*"
+
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr edit "$EXISTING_PR" --body "$PR_BODY"
+            echo "✅ 更新了 PR #${EXISTING_PR}"
+          else
+            gh pr create \
+              --title "🔄 Sync upstream: ${COMMITS_BEHIND} new commits from HKUDS/CLI-Anything" \
+              --body "$PR_BODY" \
+              --head "$SYNC_BRANCH" \
+              --base main \
+              --label "upstream-sync"
+            echo "✅ 创建了新的 sync PR"
+          fi
+
       - name: Summary
         run: |
           if [ "${{ steps.check_updates.outputs.has_updates }}" == "true" ]; then
-            echo "✅ 检测到上游更新,已创建或更新 issue"
+            echo "✅ 检测到上游更新,已写入 Job Summary 并创建/更新 sync PR"
             echo "   - 落后: ${{ steps.check_updates.outputs.commits_behind }} 个提交"
             echo "   - 领先: ${{ steps.check_updates.outputs.commits_ahead }} 个提交"
             echo "   - 冲突: ${{ steps.check_conflicts.outputs.has_conflicts }}"
