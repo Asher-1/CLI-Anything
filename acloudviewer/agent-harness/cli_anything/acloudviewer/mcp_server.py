@@ -396,6 +396,169 @@ async def list_tools() -> list[Tool]:
                 "required": ["input_path", "output_path"],
             },
         ),
+        # ── qPCL plugin (native -PCL_* flags) ──
+        Tool(
+            name="pcl_sor",
+            description="PCL statistical outlier removal (-PCL_SOR).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "k": {"type": "integer", "default": 6},
+                    "std": {"type": "number", "default": 1.0},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_normal_estimation",
+            description="PCL normal estimation (-PCL_NORMAL_ESTIMATION); use knn or radius.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "knn": {"type": "number", "default": 10.0},
+                    "radius": {"type": "number", "description": "If set, use radius search instead of KNN"},
+                    "curvature": {"type": "boolean", "default": True},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_mls",
+            description="PCL MLS smoothing (-PCL_MLS).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "search_radius": {"type": "number", "default": 0.03},
+                    "order": {"type": "integer", "default": 2},
+                    "compute_normals": {"type": "boolean", "default": False},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_euclidean_cluster",
+            description="PCL Euclidean clustering (-PCL_EUCLIDEAN_CLUSTER); exports all clusters in one file.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "tolerance": {"type": "number", "default": 0.02},
+                    "min_size": {"type": "integer", "default": 100},
+                    "max_size": {"type": "integer", "default": 250000},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_sac_segmentation",
+            description="PCL SAC model segmentation (-PCL_SAC_SEGMENTATION).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "model": {"type": "integer", "default": 0},
+                    "dist_thresh": {"type": "number", "default": 0.01},
+                    "method": {"type": "integer", "default": 0},
+                    "max_iter": {"type": "integer", "default": 100},
+                    "probability": {"type": "number", "default": 0.95},
+                    "normal_dist_weight": {"type": "number", "default": 0.1},
+                    "min_radius": {"type": "number", "default": -10000.0},
+                    "max_radius": {"type": "number", "default": 10000.0},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_region_growing",
+            description="PCL region growing segmentation (-PCL_REGION_GROWING).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "smoothness": {"type": "number", "default": 3.0},
+                    "curvature": {"type": "number", "default": 1.0},
+                    "min_size": {"type": "integer", "default": 50},
+                    "max_size": {"type": "integer", "default": 100000},
+                    "neighbors": {"type": "integer", "default": 30},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_greedy_triangulation",
+            description="PCL greedy triangulation (-PCL_GREEDY_TRIANGULATION); requires point normals.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "search_radius": {"type": "integer", "default": 25},
+                    "max_neighbors": {"type": "integer", "default": 100},
+                    "max_surface_angle": {"type": "integer", "default": 45},
+                    "min_angle": {"type": "integer", "default": 10},
+                    "max_angle": {"type": "integer", "default": 120},
+                    "weighting": {"type": "number", "default": 2.5},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_poisson_recon",
+            description="PCL Poisson mesh reconstruction (-PCL_POISSON_RECON); requires normals (qPCL).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "depth": {"type": "integer", "default": 8},
+                    "scale": {"type": "number", "default": 1.25},
+                    "samples_per_node": {"type": "number", "default": 3.0},
+                    "degree": {"type": "integer", "default": 2},
+                    "iso_divide": {"type": "integer", "default": 8},
+                    "solver_divide": {"type": "integer", "default": 8},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_marching_cubes",
+            description="PCL marching cubes (-PCL_MARCHING_CUBES); requires normals.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "method": {"type": "integer", "default": 0},
+                    "grid_res": {"type": "integer", "default": 50},
+                    "iso_level": {"type": "number", "default": 0.0},
+                    "epsilon": {"type": "number", "default": 0.01},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_convex_hull",
+            description="PCL convex or concave hull (-PCL_CONVEX_HULL); alpha>0 selects concave hull.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "alpha": {"type": "number", "default": 0.0},
+                    "dimension": {"type": "integer", "default": 3},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
         Tool(
             name="poisson_recon",
             description="Reconstruct a triangle mesh from a point cloud with normals using Poisson surface reconstruction.",
@@ -1758,6 +1921,89 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 t=arguments.get("t", 1000),
                 n_phi=arguments.get("n_phi", 15),
                 n_rot=arguments.get("n_rot", 5),
+            ))
+
+        elif name == "pcl_sor":
+            return _result(backend.pcl_sor(
+                arguments["input_path"], arguments["output_path"],
+                k=arguments.get("k", 6),
+                std=arguments.get("std", 1.0),
+            ))
+        elif name == "pcl_normal_estimation":
+            return _result(backend.pcl_normal_estimation(
+                arguments["input_path"], arguments["output_path"],
+                knn=arguments.get("knn", 10.0),
+                radius=arguments.get("radius"),
+                curvature=arguments.get("curvature", True),
+            ))
+        elif name == "pcl_mls":
+            return _result(backend.pcl_mls(
+                arguments["input_path"], arguments["output_path"],
+                search_radius=arguments.get("search_radius", 0.03),
+                order=arguments.get("order", 2),
+                compute_normals=arguments.get("compute_normals", False),
+            ))
+        elif name == "pcl_euclidean_cluster":
+            return _result(backend.pcl_euclidean_cluster(
+                arguments["input_path"], arguments["output_path"],
+                tolerance=arguments.get("tolerance", 0.02),
+                min_size=arguments.get("min_size", 100),
+                max_size=arguments.get("max_size", 250000),
+            ))
+        elif name == "pcl_sac_segmentation":
+            return _result(backend.pcl_sac_segmentation(
+                arguments["input_path"], arguments["output_path"],
+                model=arguments.get("model", 0),
+                dist_thresh=arguments.get("dist_thresh", 0.01),
+                method=arguments.get("method", 0),
+                max_iter=arguments.get("max_iter", 100),
+                probability=arguments.get("probability", 0.95),
+                normal_dist_weight=arguments.get("normal_dist_weight", 0.1),
+                min_radius=arguments.get("min_radius", -10000.0),
+                max_radius=arguments.get("max_radius", 10000.0),
+            ))
+        elif name == "pcl_region_growing":
+            return _result(backend.pcl_region_growing(
+                arguments["input_path"], arguments["output_path"],
+                smoothness=arguments.get("smoothness", 3.0),
+                curvature=arguments.get("curvature", 1.0),
+                min_size=arguments.get("min_size", 50),
+                max_size=arguments.get("max_size", 100000),
+                neighbors=arguments.get("neighbors", 30),
+            ))
+        elif name == "pcl_greedy_triangulation":
+            return _result(backend.pcl_greedy_triangulation(
+                arguments["input_path"], arguments["output_path"],
+                search_radius=arguments.get("search_radius", 25),
+                max_neighbors=arguments.get("max_neighbors", 100),
+                max_surface_angle=arguments.get("max_surface_angle", 45),
+                min_angle=arguments.get("min_angle", 10),
+                max_angle=arguments.get("max_angle", 120),
+                weighting=arguments.get("weighting", 2.5),
+            ))
+        elif name == "pcl_poisson_recon":
+            return _result(backend.pcl_poisson_recon(
+                arguments["input_path"], arguments["output_path"],
+                depth=arguments.get("depth", 8),
+                scale=arguments.get("scale", 1.25),
+                samples_per_node=arguments.get("samples_per_node", 3.0),
+                degree=arguments.get("degree", 2),
+                iso_divide=arguments.get("iso_divide", 8),
+                solver_divide=arguments.get("solver_divide", 8),
+            ))
+        elif name == "pcl_marching_cubes":
+            return _result(backend.pcl_marching_cubes(
+                arguments["input_path"], arguments["output_path"],
+                method=arguments.get("method", 0),
+                grid_res=arguments.get("grid_res", 50),
+                iso_level=arguments.get("iso_level", 0.0),
+                epsilon=arguments.get("epsilon", 0.01),
+            ))
+        elif name == "pcl_convex_hull":
+            return _result(backend.pcl_convex_hull(
+                arguments["input_path"], arguments["output_path"],
+                alpha=arguments.get("alpha", 0.0),
+                dimension=arguments.get("dimension", 3),
             ))
 
         elif name == "poisson_recon":

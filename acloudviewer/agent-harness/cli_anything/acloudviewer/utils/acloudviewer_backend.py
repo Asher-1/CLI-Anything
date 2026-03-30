@@ -1305,6 +1305,230 @@ class ACloudViewerBackend:
         return {"input": input_path, "output": output_path,
                 "normal": [nx, ny, nz], "d": d}
 
+    @staticmethod
+    def _save_clouds_all_at_once(output_path: str) -> list[str]:
+        """Save all loaded clouds into a single file (multi-entity PLY)."""
+        ext = Path(output_path).suffix.lower()
+        fmt = CLOUD_FORMAT_MAP.get(ext, "PLY")
+        return [
+            "-C_EXPORT_FMT", fmt,
+            "-SAVE_CLOUDS", "ALL_AT_ONCE", "FILE", output_path,
+        ]
+
+    def pcl_sor(self, input_path: str, output_path: str,
+                k: int = 6, std: float = 1.0) -> dict:
+        """PCL statistical outlier removal (-PCL_SOR)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_SOR", "-K", str(k), "-STD", str(std),
+        ] + self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "k": k, "std": std, "status": self._check_status(output_path),
+        }
+
+    def pcl_normal_estimation(
+            self, input_path: str, output_path: str,
+            knn: float = 10.0,
+            radius: float | None = None,
+            curvature: bool = True,
+    ) -> dict:
+        """PCL normal estimation (-PCL_NORMAL_ESTIMATION)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP", "-PCL_NORMAL_ESTIMATION"]
+        if radius is not None:
+            args += ["-RADIUS", str(radius)]
+        else:
+            args += ["-KNN", str(knn)]
+        if not curvature:
+            args.append("-NO_CURVATURE")
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "knn": knn, "radius": radius, "curvature": curvature,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_mls(self, input_path: str, output_path: str,
+                search_radius: float = 0.03, order: int = 2,
+                compute_normals: bool = False) -> dict:
+        """PCL MLS smoothing (-PCL_MLS)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_MLS",
+            "-SEARCH_RADIUS", str(search_radius),
+            "-ORDER", str(order),
+        ]
+        if compute_normals:
+            args.append("-COMPUTE_NORMALS")
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "search_radius": search_radius, "order": order,
+            "compute_normals": compute_normals,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_euclidean_cluster(
+            self, input_path: str, output_path: str,
+            tolerance: float = 0.02,
+            min_size: int = 100, max_size: int = 250000,
+    ) -> dict:
+        """PCL Euclidean clustering (-PCL_EUCLIDEAN_CLUSTER); merges clouds to one export."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_EUCLIDEAN_CLUSTER",
+            "-TOLERANCE", str(tolerance),
+            "-MIN_SIZE", str(min_size),
+            "-MAX_SIZE", str(max_size),
+        ] + self._save_clouds_all_at_once(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "tolerance": tolerance, "min_size": min_size, "max_size": max_size,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_sac_segmentation(
+            self, input_path: str, output_path: str,
+            model: int = 0, dist_thresh: float = 0.01,
+            method: int = 0, max_iter: int = 100,
+            probability: float = 0.95, normal_dist_weight: float = 0.1,
+            min_radius: float = -10000.0, max_radius: float = 10000.0,
+    ) -> dict:
+        """PCL SAC segmentation (-PCL_SAC_SEGMENTATION)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_SAC_SEGMENTATION",
+            "-MODEL", str(model),
+            "-METHOD", str(method),
+            "-DIST_THRESH", str(dist_thresh),
+            "-MAX_ITER", str(max_iter),
+            "-PROBABILITY", str(probability),
+            "-NORMAL_DIST_WEIGHT", str(normal_dist_weight),
+            "-MIN_RADIUS", str(min_radius),
+            "-MAX_RADIUS", str(max_radius),
+        ] + self._save_clouds_all_at_once(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "model": model, "dist_thresh": dist_thresh,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_region_growing(
+            self, input_path: str, output_path: str,
+            smoothness: float = 3.0, curvature: float = 1.0,
+            min_size: int = 50, max_size: int = 100000,
+            neighbors: int = 30,
+    ) -> dict:
+        """PCL region growing (-PCL_REGION_GROWING)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_REGION_GROWING",
+            "-SMOOTHNESS", str(smoothness),
+            "-CURVATURE", str(curvature),
+            "-MIN_SIZE", str(min_size),
+            "-MAX_SIZE", str(max_size),
+            "-NEIGHBORS", str(neighbors),
+        ] + self._save_clouds_all_at_once(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "smoothness": smoothness, "curvature": curvature,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_greedy_triangulation(
+            self, input_path: str, output_path: str,
+            search_radius: int = 25,
+            max_neighbors: int = 100, max_surface_angle: int = 45,
+            min_angle: int = 10, max_angle: int = 120,
+            weighting: float = 2.5,
+    ) -> dict:
+        """PCL greedy triangulation (-PCL_GREEDY_TRIANGULATION); requires normals."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_GREEDY_TRIANGULATION",
+            "-SEARCH_RADIUS", str(search_radius),
+            "-MAX_NEIGHBORS", str(max_neighbors),
+            "-MAX_SURFACE_ANGLE", str(max_surface_angle),
+            "-MIN_ANGLE", str(min_angle),
+            "-MAX_ANGLE", str(max_angle),
+            "-WEIGHTING", str(weighting),
+        ] + self._save_args(output_path, entity_type="mesh")
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "search_radius": search_radius,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_poisson_recon(
+            self, input_path: str, output_path: str,
+            depth: int = 8, scale: float = 1.25,
+            samples_per_node: float = 3.0,
+            degree: int = 2, iso_divide: int = 8, solver_divide: int = 8,
+    ) -> dict:
+        """PCL Poisson reconstruction (-PCL_POISSON_RECON); requires normals."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_POISSON_RECON",
+            "-DEPTH", str(depth),
+            "-SCALE", str(scale),
+            "-SAMPLES_PER_NODE", str(samples_per_node),
+            "-DEGREE", str(degree),
+            "-ISO_DIVIDE", str(iso_divide),
+            "-SOLVER_DIVIDE", str(solver_divide),
+        ] + self._save_args(output_path, entity_type="mesh")
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "depth": depth, "scale": scale,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_marching_cubes(
+            self, input_path: str, output_path: str,
+            method: int = 0, grid_res: int = 50,
+            iso_level: float = 0.0, epsilon: float = 0.01,
+    ) -> dict:
+        """PCL marching cubes (-PCL_MARCHING_CUBES); requires normals."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_MARCHING_CUBES",
+            "-METHOD", str(method),
+            "-GRID_RES", str(grid_res),
+            "-ISO_LEVEL", str(iso_level),
+            "-EPSILON", str(epsilon),
+        ] + self._save_args(output_path, entity_type="mesh")
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "method": method, "grid_res": grid_res,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_convex_hull(
+            self, input_path: str, output_path: str,
+            alpha: float = 0.0, dimension: int = 3,
+    ) -> dict:
+        """PCL convex/concave hull (-PCL_CONVEX_HULL). Alpha>0 selects concave hull."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_CONVEX_HULL",
+            "-ALPHA", str(alpha),
+            "-DIMENSION", str(dimension),
+        ] + self._save_args(output_path, entity_type="mesh")
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "alpha": alpha, "dimension": dimension,
+            "status": self._check_status(output_path),
+        }
+
     def auto_seg(self, input_path: str, output_path: str,
                  mortar_maps: bool = False, contours: bool = False,
                  profile_file: str | None = None) -> dict:

@@ -38,7 +38,7 @@ The CLI auto-detects: if a running ACloudViewer instance responds on
 **Headless** (binary `-SILENT` mode; no GUI):
 
 - `convert`, `batch-convert`
-- `process`: `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `crop`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `volume-25d`, `crop-2d`, `rasterize`, `cross-section`, `stat-test`, `approx-density`, `feature`, `best-fit-plane`, `extract-cc`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `sf-arithmetic`, `sf-op`, `octree-normals`, `orient-normals`, `invert-normals`, `clear-normals`, `normals-to-dip`, `normals-to-sfs`, `remove-rgb`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`, `match-centers`, `drop-global-shift`, `closest-point-set`, `remove-scan-grids`
+- `process`: `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `crop`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `volume-25d`, `crop-2d`, `rasterize`, `cross-section`, `stat-test`, `approx-density`, `feature`, `best-fit-plane`, `extract-cc`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `sf-arithmetic`, `sf-op`, `octree-normals`, `orient-normals`, `invert-normals`, `clear-normals`, `normals-to-dip`, `normals-to-sfs`, `remove-rgb`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`, `match-centers`, `drop-global-shift`, `closest-point-set`, `remove-scan-grids`, `pcv`, `compass-export`, `compass-import-fol`, `compass-import-lin`, `compass-refit`, `compass-p21`, `sra`
 - `reconstruct`: `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `simplify-mesh`, `texture-mesh`, `convert-model`, `analyze-model`, `delaunay-mesh`
 - `sibr`: `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop`
 
@@ -154,6 +154,29 @@ cli-anything-acloudviewer --mode headless process volume-25d ground.ply surface.
 
 # Crop by 2D polygon (orthogonal to Z axis)
 cli-anything-acloudviewer --mode headless process crop-2d input.ply -o cropped.ply --dim Z --polygon "0,0;10,0;10,10;0,10"
+```
+
+### Plugin processing — **Headless**
+
+```bash
+# PCV ambient occlusion (ShadeVis)
+cli-anything-acloudviewer --mode headless process pcv input.ply -o ao.ply --n-rays 256 --resolution 1024
+cli-anything-acloudviewer --mode headless process pcv input.ply -o ao.ply --mode-180 --is-closed
+
+# Compass — export measurements to CSV or XML
+cli-anything-acloudviewer --mode headless process compass-export project.bin -o data --format csv
+cli-anything-acloudviewer --mode headless process compass-export project.bin -o data.xml --format xml
+
+# Compass — import foliations / lineations from scalar fields
+cli-anything-acloudviewer --mode headless process compass-import-fol input.ply --dip-sf Dip --dipdir-sf DipDir
+cli-anything-acloudviewer --mode headless process compass-import-lin input.ply --trend-sf Trend --plunge-sf Plunge
+
+# Compass — refit planes & P21 intensity
+cli-anything-acloudviewer --mode headless process compass-refit project.bin
+cli-anything-acloudviewer --mode headless process compass-p21 input.ply --radius 10.0 --subsample 25 -o p21.ply
+
+# SRA radial distance from surface of revolution
+cli-anything-acloudviewer --mode headless process sra input.ply -o output.ply --profile profile.txt --axis Z
 ```
 
 ### Scalar field operations — **Headless**

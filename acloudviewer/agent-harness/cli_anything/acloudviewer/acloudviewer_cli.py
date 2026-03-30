@@ -1238,6 +1238,193 @@ def process_hough_normals(input_file, output_file, k_neighbors, t_accumulators, 
     output(result)
 
 
+# ── qPCL plugin (PCL_* CLI) ──
+
+@process_group.command("pcl-sor")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--k", type=int, default=6, help="Number of neighbors")
+@click.option("--std", type=float, default=1.0, help="Standard deviation multiplier")
+@handle_error
+def process_pcl_sor(input_file, output_file, k, std):
+    """PCL statistical outlier removal (-PCL_SOR)."""
+    result = get_backend().pcl_sor(input_file, output_file, k=k, std=std)
+    get_session().snapshot(f"pcl-sor {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-normal-estimation")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--knn", type=float, default=10.0, help="KNN mode: neighbor count")
+@click.option("--radius", type=float, default=None,
+              help="If set, use radius search instead of KNN")
+@click.option("--no-curvature", is_flag=True, help="Skip curvature scalar field")
+@handle_error
+def process_pcl_normal_estimation(input_file, output_file, knn, radius, no_curvature):
+    """PCL normal estimation (-PCL_NORMAL_ESTIMATION)."""
+    result = get_backend().pcl_normal_estimation(
+        input_file, output_file,
+        knn=knn, radius=radius, curvature=not no_curvature)
+    get_session().snapshot(f"pcl-normal-estimation {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-mls")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--search-radius", type=float, default=0.03)
+@click.option("--order", type=int, default=2, help="Polynomial order")
+@click.option("--compute-normals", is_flag=True)
+@handle_error
+def process_pcl_mls(input_file, output_file, search_radius, order, compute_normals):
+    """PCL MLS smoothing (-PCL_MLS)."""
+    result = get_backend().pcl_mls(
+        input_file, output_file,
+        search_radius=search_radius, order=order,
+        compute_normals=compute_normals)
+    get_session().snapshot(f"pcl-mls {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-euclidean-cluster")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--tolerance", type=float, default=0.02)
+@click.option("--min-size", type=int, default=100)
+@click.option("--max-size", type=int, default=250000)
+@handle_error
+def process_pcl_euclidean_cluster(input_file, output_file, tolerance, min_size, max_size):
+    """PCL Euclidean clustering (-PCL_EUCLIDEAN_CLUSTER)."""
+    result = get_backend().pcl_euclidean_cluster(
+        input_file, output_file,
+        tolerance=tolerance, min_size=min_size, max_size=max_size)
+    get_session().snapshot(f"pcl-euclidean-cluster {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-sac-segmentation")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--model", type=int, default=0)
+@click.option("--dist-thresh", type=float, default=0.01)
+@click.option("--method", type=int, default=0)
+@click.option("--max-iter", type=int, default=100)
+@click.option("--probability", type=float, default=0.95)
+@click.option("--normal-dist-weight", type=float, default=0.1)
+@click.option("--min-radius", type=float, default=-10000.0)
+@click.option("--max-radius", type=float, default=10000.0)
+@handle_error
+def process_pcl_sac_segmentation(input_file, output_file, model, dist_thresh, method,
+                                 max_iter, probability, normal_dist_weight,
+                                 min_radius, max_radius):
+    """PCL SAC segmentation (-PCL_SAC_SEGMENTATION)."""
+    result = get_backend().pcl_sac_segmentation(
+        input_file, output_file,
+        model=model, dist_thresh=dist_thresh, method=method, max_iter=max_iter,
+        probability=probability, normal_dist_weight=normal_dist_weight,
+        min_radius=min_radius, max_radius=max_radius)
+    get_session().snapshot(f"pcl-sac-segmentation {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-region-growing")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--smoothness", type=float, default=3.0)
+@click.option("--curvature", type=float, default=1.0)
+@click.option("--min-size", type=int, default=50)
+@click.option("--max-size", type=int, default=100000)
+@click.option("--neighbors", type=int, default=30)
+@handle_error
+def process_pcl_region_growing(input_file, output_file, smoothness, curvature,
+                               min_size, max_size, neighbors):
+    """PCL region growing (-PCL_REGION_GROWING)."""
+    result = get_backend().pcl_region_growing(
+        input_file, output_file,
+        smoothness=smoothness, curvature=curvature,
+        min_size=min_size, max_size=max_size, neighbors=neighbors)
+    get_session().snapshot(f"pcl-region-growing {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-greedy-triangulation")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--search-radius", type=int, default=25)
+@click.option("--max-neighbors", type=int, default=100)
+@click.option("--max-surface-angle", type=int, default=45)
+@click.option("--min-angle", type=int, default=10)
+@click.option("--max-angle", type=int, default=120)
+@click.option("--weighting", type=float, default=2.5)
+@handle_error
+def process_pcl_greedy_triangulation(input_file, output_file, search_radius,
+                                     max_neighbors, max_surface_angle, min_angle,
+                                     max_angle, weighting):
+    """PCL greedy surface triangulation (-PCL_GREEDY_TRIANGULATION); needs normals."""
+    result = get_backend().pcl_greedy_triangulation(
+        input_file, output_file,
+        search_radius=search_radius, max_neighbors=max_neighbors,
+        max_surface_angle=max_surface_angle, min_angle=min_angle,
+        max_angle=max_angle, weighting=weighting)
+    get_session().snapshot(f"pcl-greedy-triangulation {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-poisson-recon")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--depth", type=int, default=8)
+@click.option("--scale", type=float, default=1.25)
+@click.option("--samples-per-node", type=float, default=3.0)
+@click.option("--degree", type=int, default=2)
+@click.option("--iso-divide", type=int, default=8)
+@click.option("--solver-divide", type=int, default=8)
+@handle_error
+def process_pcl_poisson_recon(input_file, output_file, depth, scale,
+                              samples_per_node, degree, iso_divide, solver_divide):
+    """PCL Poisson surface reconstruction (-PCL_POISSON_RECON); needs normals."""
+    result = get_backend().pcl_poisson_recon(
+        input_file, output_file,
+        depth=depth, scale=scale, samples_per_node=samples_per_node,
+        degree=degree, iso_divide=iso_divide, solver_divide=solver_divide)
+    get_session().snapshot(f"pcl-poisson-recon {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-marching-cubes")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--method", type=int, default=0)
+@click.option("--grid-res", type=int, default=50)
+@click.option("--iso-level", type=float, default=0.0)
+@click.option("--epsilon", type=float, default=0.01)
+@handle_error
+def process_pcl_marching_cubes(input_file, output_file, method, grid_res,
+                               iso_level, epsilon):
+    """PCL marching cubes (-PCL_MARCHING_CUBES); needs normals."""
+    result = get_backend().pcl_marching_cubes(
+        input_file, output_file,
+        method=method, grid_res=grid_res, iso_level=iso_level, epsilon=epsilon)
+    get_session().snapshot(f"pcl-marching-cubes {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-convex-hull")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--alpha", type=float, default=0.0,
+              help="Concave hull if >0; convex hull if 0")
+@click.option("--dimension", type=int, default=3)
+@handle_error
+def process_pcl_convex_hull(input_file, output_file, alpha, dimension):
+    """PCL convex/concave hull (-PCL_CONVEX_HULL)."""
+    result = get_backend().pcl_convex_hull(
+        input_file, output_file, alpha=alpha, dimension=dimension)
+    get_session().snapshot(f"pcl-convex-hull {input_file}")
+    output(result)
+
+
 @process_group.command("poisson-recon")
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", "output_file", type=click.Path(), required=True)
