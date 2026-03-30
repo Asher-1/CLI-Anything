@@ -774,6 +774,228 @@ class ACloudViewerBackend:
             "has_normals": True, "status": self._check_status(output_path),
         }
 
+    def pcv(self, input_path: str, output_path: str,
+            n_rays: int = 256, resolution: int = 1024,
+            mode_180: bool = False, is_closed: bool = False) -> dict:
+        """Compute PCV (Portion de Ciel Visible / ambient occlusion)."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP", "-PCV"]
+        if n_rays != 256:
+            args += ["-N_RAYS", str(n_rays)]
+        if resolution != 1024:
+            args += ["-RESOLUTION", str(resolution)]
+        if mode_180:
+            args += ["-180"]
+        if is_closed:
+            args += ["-IS_CLOSED"]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "n_rays": n_rays, "resolution": resolution,
+            "mode_180": mode_180, "is_closed": is_closed,
+            "status": self._check_status(output_path),
+        }
+
+    def csf(self, input_path: str, output_path: str,
+            scenes: int = 1, cloth_resolution: float = 0.5,
+            max_iteration: int = 500, class_threshold: float = 0.5) -> dict:
+        """Apply CSF ground filtering."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-CSF",
+            "-SCENES", str(scenes),
+            "-CLOTH_RESOLUTION", str(cloth_resolution),
+            "-MAX_ITERATION", str(max_iteration),
+            "-CLASS_THRESHOLD", str(class_threshold),
+        ]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "scenes": scenes, "cloth_resolution": cloth_resolution,
+            "status": self._check_status(output_path),
+        }
+
+    def ransac(self, input_path: str, output_path: str,
+               epsilon: float = 0.005, bitmap_epsilon: float = 0.01,
+               support_points: int = 500, max_normal_dev: float = 25.0,
+               probability: float = 0.01) -> dict:
+        """RANSAC shape detection."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-RANSAC",
+            "-EPSILON_ABSOLUTE", str(epsilon),
+            "-BITMAP_EPSILON_ABSOLUTE", str(bitmap_epsilon),
+            "-SUPPORT_POINTS", str(support_points),
+            "-MAX_NORMAL_DEV", str(max_normal_dev),
+            "-PROBABILITY", str(probability),
+        ]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "epsilon": epsilon, "support_points": support_points,
+            "status": self._check_status(output_path),
+        }
+
+    def m3c2(self, cloud1_path: str, cloud2_path: str,
+             output_path: str | None = None,
+             params_file: str | None = None) -> dict:
+        """Compute M3C2 distance between two clouds."""
+        out = output_path or cloud1_path.rsplit(".", 1)[0] + "_M3C2.ply"
+        args = [
+            "-O", cloud1_path, "-O", cloud2_path,
+            "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-M3C2",
+        ]
+        if params_file:
+            args += [params_file]
+        args += self._save_args(out)
+        self._run_cli(args)
+        return {
+            "cloud1": cloud1_path, "cloud2": cloud2_path,
+            "output": out, "params_file": params_file,
+            "status": self._check_status(out),
+        }
+
+    def canupo(self, input_path: str, output_path: str,
+               classifier_file: str) -> dict:
+        """Apply CANUPO classification."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-CANUPO_CLASSIF", classifier_file,
+        ]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "classifier": classifier_file,
+            "status": self._check_status(output_path),
+        }
+
+    def facets(self, input_path: str, output_path: str,
+               algo: str = "KD_TREE", error_max: float = 0.2,
+               min_points: int = 10, max_edge_length: float = 1.0,
+               octree_level: int = 8,
+               classify: bool = False,
+               classif_angle_step: float = 30.0,
+               classif_max_dist: float = 1.0,
+               export_shp: str | None = None,
+               export_csv: str | None = None) -> dict:
+        """Extract planar facets from a point cloud."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-FACETS", "-EXTRACT_FACETS",
+            "-ALGO", f"ALGO_{algo.upper()}",
+            "-ERROR_MAX_PER_FACET", str(error_max),
+            "-MIN_POINTS_PER_FACET", str(min_points),
+            "-MAX_EDGE_LENGTH", str(max_edge_length),
+        ]
+        if algo.upper() == "FAST_MARCHING":
+            args += ["-OCTREE_LEVEL", str(octree_level)]
+        if classify:
+            args += [
+                "-CLASSIFY_FACETS_BY_ANGLE",
+                "-CLASSIF_ANGLE_STEP", str(classif_angle_step),
+                "-CLASSIF_MAX_DIST", str(classif_max_dist),
+            ]
+        if export_shp:
+            args += ["-EXPORT_FACETS", "-SHAPE_FILENAME", export_shp]
+        if export_csv:
+            args += ["-EXPORT_FACETS_INFO", "-CSV_FILENAME", export_csv]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "algo": algo, "error_max": error_max,
+            "status": self._check_status(output_path),
+        }
+
+    def hough_normals(self, input_path: str, output_path: str,
+                      k: int = 100, t: int = 1000,
+                      n_phi: int = 15, n_rot: int = 5) -> dict:
+        """Compute normals using Hough transform method."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-HOUGH_NORMALS",
+            "-K", str(k), "-T", str(t),
+            "-N_PHI", str(n_phi), "-N_ROT", str(n_rot),
+        ]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "k": k, "t": t,
+            "has_normals": True,
+            "status": self._check_status(output_path),
+        }
+
+    def poisson_recon(self, input_path: str, output_path: str,
+                      depth: int = 8, samples_per_node: float = 1.5,
+                      point_weight: float = 2.0, boundary: str = "NEUMANN",
+                      with_colors: bool = False, density: bool = False) -> dict:
+        """Poisson surface reconstruction (requires normals)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-POISSON_RECON",
+            "-DEPTH", str(depth),
+            "-SAMPLES_PER_NODE", str(samples_per_node),
+            "-POINT_WEIGHT", str(point_weight),
+            "-BOUNDARY", boundary.upper(),
+        ]
+        if with_colors:
+            args.append("-WITH_COLORS")
+        if density:
+            args.append("-DENSITY")
+        args += self._save_args(output_path, entity_type="mesh")
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "depth": depth, "boundary": boundary,
+            "status": self._check_status(output_path),
+        }
+
+    def cork_boolean(self, mesh1_path: str, mesh2_path: str, output_path: str,
+                     operation: str = "UNION", swap: bool = False) -> dict:
+        """Perform mesh boolean (CSG) operation using Cork."""
+        args = [
+            "-O", mesh1_path, "-O", mesh2_path,
+            "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-CORK", "-OPERATION", operation.upper(),
+        ]
+        if swap:
+            args.append("-SWAP")
+        args += self._save_args(output_path, entity_type="mesh")
+        self._run_cli(args)
+        return {
+            "mesh1": mesh1_path, "mesh2": mesh2_path,
+            "output": output_path, "operation": operation,
+            "swap": swap, "status": self._check_status(output_path),
+        }
+
+    def voxfall(self, mesh1_path: str, mesh2_path: str, output_path: str,
+                voxel_size: float = 0.1, azimuth: float = 0.0,
+                export_meshes: bool = False, loss_gain: bool = False) -> dict:
+        """VoxFall voxel-based change detection."""
+        args = [
+            "-O", mesh1_path, "-O", mesh2_path,
+            "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-VOXFALL",
+            "-VOXEL_SIZE", str(voxel_size),
+            "-AZIMUTH", str(azimuth),
+        ]
+        if export_meshes:
+            args.append("-EXPORT_MESHES")
+        if loss_gain:
+            args.append("-LOSS_GAIN")
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "mesh1": mesh1_path, "mesh2": mesh2_path,
+            "output": output_path, "voxel_size": voxel_size,
+            "azimuth": azimuth, "status": self._check_status(output_path),
+        }
+
     def icp_registration(self, data_path: str, reference_path: str,
                          output_path: str | None = None,
                          iterations: int = 100,
@@ -813,7 +1035,7 @@ class ACloudViewerBackend:
                 "min_x": min_x, "min_y": min_y, "min_z": min_z,
                 "max_x": max_x, "max_y": max_y, "max_z": max_z,
             })
-        bbox = f"{min_x}:{max_x}:{min_y}:{max_y}:{min_z}:{max_z}"
+        bbox = f"{min_x}:{min_y}:{min_z}:{max_x}:{max_y}:{max_z}"
         self._run_cli([
             "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
             "-CROP", bbox,

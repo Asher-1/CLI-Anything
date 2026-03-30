@@ -510,7 +510,7 @@ def cmd_formats():
 
 @cli.group("scene")
 def scene_group():
-    """Scene tree operations (GUI mode)."""
+    """[GUI] Scene tree operations."""
     pass
 
 
@@ -582,7 +582,7 @@ def scene_clear():
 
 @cli.group("entity")
 def entity_group():
-    """Entity manipulation (GUI mode)."""
+    """[GUI] Entity manipulation."""
     pass
 
 
@@ -623,12 +623,12 @@ def cmd_export(entity_id, output_file):
     output(result)
 
 
-# ── Clear (top-level alias) ──
+# ── Clear (deprecated alias for `scene clear`) ──
 
-@cli.command("clear")
+@cli.command("clear", deprecated=True)
 @handle_error
 def cmd_clear():
-    """Clear all entities from the scene (GUI mode)."""
+    """Clear all entities — use `scene clear` instead."""
     get_backend().scene_clear()
     get_session().snapshot("clear")
     output({"status": "cleared"})
@@ -651,7 +651,7 @@ def cmd_methods():
 
 @cli.group("view")
 def view_group():
-    """View control (GUI mode)."""
+    """[GUI] View control."""
     pass
 
 
@@ -727,7 +727,7 @@ def view_pointsize(action):
 
 @cli.group("cloud")
 def cloud_group():
-    """Point cloud operations on scene entities (GUI mode)."""
+    """[GUI] Point cloud operations on scene entities."""
     pass
 
 
@@ -794,7 +794,7 @@ def cloud_crop_gui(entity_id, min_x, min_y, min_z, max_x, max_y, max_z):
 
 @cli.group("mesh")
 def mesh_group():
-    """Mesh operations on scene entities (GUI mode)."""
+    """[GUI] Mesh operations on scene entities."""
     pass
 
 
@@ -859,7 +859,7 @@ def mesh_sample_points(entity_id, method, count):
 
 @cli.group("transform")
 def transform_group():
-    """Transformation operations."""
+    """[Mixed] Transformation operations (apply=GUI, apply-file=Headless)."""
     pass
 
 
@@ -893,15 +893,15 @@ def transform_apply_file(input_file, matrix_file, output_file):
 
 @cli.group("sf")
 def sf_group():
-    """Scalar field operations (headless - no GUI needed)."""
+    """Scalar field shortcuts (headless). Aliases for `process sf-*` commands."""
     pass
 
 
-# ── Normals Group (convenience wrapper for process *-normals commands) ──
+# ── Normals Group (convenience aliases for process *-normals commands) ──
 
 @cli.group("normals")
 def normals_group():
-    """Normal vector operations (headless - no GUI needed)."""
+    """Normal vector shortcuts (headless). Aliases for `process *-normals` commands."""
     pass
 
 
@@ -909,7 +909,7 @@ def normals_group():
 
 @cli.group("process")
 def process_group():
-    """Point cloud and mesh processing commands (headless - no GUI needed)."""
+    """[Headless] Point cloud and mesh processing (no GUI needed)."""
     pass
 
 
@@ -999,6 +999,25 @@ def process_c2m_dist(cloud_file, mesh_file, output_file, max_dist):
     output(result)
 
 
+@process_group.command("crop")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--min-x", type=float, required=True)
+@click.option("--min-y", type=float, required=True)
+@click.option("--min-z", type=float, required=True)
+@click.option("--max-x", type=float, required=True)
+@click.option("--max-y", type=float, required=True)
+@click.option("--max-z", type=float, required=True)
+@handle_error
+def process_crop(input_file, output_file, min_x, min_y, min_z, max_x, max_y, max_z):
+    """Crop a point cloud by axis-aligned bounding box (headless)."""
+    result = get_backend().crop(
+        input_file, output_file,
+        min_x, min_y, min_z, max_x, max_y, max_z)
+    get_session().snapshot(f"crop {input_file}")
+    output(result)
+
+
 @process_group.command("density")
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", "output_file", type=click.Path(), required=True)
@@ -1074,6 +1093,185 @@ def process_color_banding(input_file, output_file, axis, frequency):
     result = get_backend().color_banding(input_file, output_file,
                                           axis=axis, frequency=frequency)
     get_session().snapshot(f"color-banding {input_file}")
+    output(result)
+
+
+@process_group.command("pcv")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--n-rays", type=int, default=256, help="Number of rays")
+@click.option("--resolution", type=int, default=1024, help="Grid resolution")
+@click.option("--180", "mode_180", is_flag=True, help="Upper hemisphere only")
+@click.option("--is-closed", is_flag=True, help="Treat mesh as closed")
+@handle_error
+def process_pcv(input_file, output_file, n_rays, resolution, mode_180, is_closed):
+    """Compute PCV (ambient occlusion / sky visibility)."""
+    result = get_backend().pcv(input_file, output_file,
+                               n_rays=n_rays, resolution=resolution,
+                               mode_180=mode_180, is_closed=is_closed)
+    get_session().snapshot(f"pcv {input_file}")
+    output(result)
+
+
+@process_group.command("csf")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--scenes", type=int, default=1,
+              help="Scene type: 0=flat, 1=relief, 2=steep")
+@click.option("--cloth-resolution", type=float, default=0.5)
+@click.option("--max-iteration", type=int, default=500)
+@click.option("--class-threshold", type=float, default=0.5)
+@handle_error
+def process_csf(input_file, output_file, scenes, cloth_resolution, max_iteration, class_threshold):
+    """CSF ground filtering (Cloth Simulation Filter)."""
+    result = get_backend().csf(input_file, output_file,
+                               scenes=scenes, cloth_resolution=cloth_resolution,
+                               max_iteration=max_iteration, class_threshold=class_threshold)
+    get_session().snapshot(f"csf {input_file}")
+    output(result)
+
+
+@process_group.command("ransac")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--epsilon", type=float, default=0.005, help="Absolute epsilon")
+@click.option("--bitmap-epsilon", type=float, default=0.01)
+@click.option("--support-points", type=int, default=500)
+@click.option("--max-normal-dev", type=float, default=25.0, help="Max normal deviation (degrees)")
+@click.option("--probability", type=float, default=0.01)
+@handle_error
+def process_ransac(input_file, output_file, epsilon, bitmap_epsilon, support_points, max_normal_dev, probability):
+    """RANSAC shape detection."""
+    result = get_backend().ransac(input_file, output_file,
+                                  epsilon=epsilon, bitmap_epsilon=bitmap_epsilon,
+                                  support_points=support_points, max_normal_dev=max_normal_dev,
+                                  probability=probability)
+    get_session().snapshot(f"ransac {input_file}")
+    output(result)
+
+
+@process_group.command("m3c2")
+@click.argument("cloud1_file", type=click.Path(exists=True))
+@click.argument("cloud2_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path())
+@click.option("--params-file", type=click.Path(exists=True), help="M3C2 parameters file")
+@handle_error
+def process_m3c2(cloud1_file, cloud2_file, output_file, params_file):
+    """Compute M3C2 distances between two point clouds."""
+    result = get_backend().m3c2(cloud1_file, cloud2_file,
+                                output_path=output_file, params_file=params_file)
+    get_session().snapshot(f"m3c2 {cloud1_file} ↔ {cloud2_file}")
+    output(result)
+
+
+@process_group.command("canupo")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--classifier", type=click.Path(exists=True), required=True,
+              help="CANUPO classifier file (.prm)")
+@handle_error
+def process_canupo(input_file, output_file, classifier):
+    """Apply CANUPO classification."""
+    result = get_backend().canupo(input_file, output_file, classifier_file=classifier)
+    get_session().snapshot(f"canupo {input_file}")
+    output(result)
+
+
+@process_group.command("facets")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--algo", type=click.Choice(["KD_TREE", "FAST_MARCHING"]),
+              default="KD_TREE", help="Extraction algorithm")
+@click.option("--error-max", type=float, default=0.2, help="Max error per facet")
+@click.option("--min-points", type=int, default=10, help="Min points per facet")
+@click.option("--max-edge-length", type=float, default=1.0)
+@click.option("--octree-level", type=int, default=8, help="For fast marching algo")
+@click.option("--classify", is_flag=True, help="Classify facets by orientation")
+@click.option("--export-shp", type=click.Path(), help="Export facets to shapefile")
+@click.option("--export-csv", type=click.Path(), help="Export facets info to CSV")
+@handle_error
+def process_facets(input_file, output_file, algo, error_max, min_points,
+                   max_edge_length, octree_level, classify, export_shp, export_csv):
+    """Extract planar facets from a point cloud."""
+    result = get_backend().facets(
+        input_file, output_file, algo=algo, error_max=error_max,
+        min_points=min_points, max_edge_length=max_edge_length,
+        octree_level=octree_level, classify=classify,
+        export_shp=export_shp, export_csv=export_csv)
+    get_session().snapshot(f"facets {input_file}")
+    output(result)
+
+
+@process_group.command("hough-normals")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--k", "k_neighbors", type=int, default=100, help="Number of neighbors")
+@click.option("--t", "t_accumulators", type=int, default=1000, help="Number of accumulators")
+@click.option("--n-phi", type=int, default=15, help="Number of phi bins")
+@click.option("--n-rot", type=int, default=5, help="Number of rotations")
+@handle_error
+def process_hough_normals(input_file, output_file, k_neighbors, t_accumulators, n_phi, n_rot):
+    """Compute normals using Hough transform method."""
+    result = get_backend().hough_normals(
+        input_file, output_file, k=k_neighbors, t=t_accumulators,
+        n_phi=n_phi, n_rot=n_rot)
+    get_session().snapshot(f"hough-normals {input_file}")
+    output(result)
+
+
+@process_group.command("poisson-recon")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--depth", type=int, default=8, help="Octree depth")
+@click.option("--samples-per-node", type=float, default=1.5)
+@click.option("--point-weight", type=float, default=2.0)
+@click.option("--boundary", type=click.Choice(["FREE", "DIRICHLET", "NEUMANN"]),
+              default="NEUMANN")
+@click.option("--with-colors", is_flag=True, help="Preserve colors")
+@click.option("--density", is_flag=True, help="Compute density scalar field")
+@handle_error
+def process_poisson_recon(input_file, output_file, depth, samples_per_node,
+                          point_weight, boundary, with_colors, density):
+    """Poisson surface reconstruction (requires normals)."""
+    result = get_backend().poisson_recon(
+        input_file, output_file, depth=depth,
+        samples_per_node=samples_per_node, point_weight=point_weight,
+        boundary=boundary, with_colors=with_colors, density=density)
+    get_session().snapshot(f"poisson-recon {input_file}")
+    output(result)
+
+
+@process_group.command("cork-boolean")
+@click.argument("mesh1_file", type=click.Path(exists=True))
+@click.argument("mesh2_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--operation", type=click.Choice(["UNION", "INTERSECT", "DIFF", "SYM_DIFF"]),
+              default="UNION")
+@click.option("--swap", is_flag=True, help="Swap mesh A/B order")
+@handle_error
+def process_cork_boolean(mesh1_file, mesh2_file, output_file, operation, swap):
+    """Mesh boolean (CSG) operation using Cork library."""
+    result = get_backend().cork_boolean(mesh1_file, mesh2_file, output_file,
+                                        operation=operation, swap=swap)
+    get_session().snapshot(f"cork-boolean {mesh1_file} ∩ {mesh2_file}")
+    output(result)
+
+
+@process_group.command("voxfall")
+@click.argument("mesh1_file", type=click.Path(exists=True))
+@click.argument("mesh2_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--voxel-size", type=float, default=0.1)
+@click.option("--azimuth", type=float, default=0.0, help="Slope azimuth in degrees")
+@click.option("--export-meshes", is_flag=True, help="Export per-cluster voxel meshes")
+@click.option("--loss-gain", is_flag=True, help="Compute loss/gain classification")
+@handle_error
+def process_voxfall(mesh1_file, mesh2_file, output_file, voxel_size, azimuth, export_meshes, loss_gain):
+    """VoxFall voxel-based change detection between two meshes."""
+    result = get_backend().voxfall(mesh1_file, mesh2_file, output_file,
+                                   voxel_size=voxel_size, azimuth=azimuth,
+                                   export_meshes=export_meshes, loss_gain=loss_gain)
+    get_session().snapshot(f"voxfall {mesh1_file} ↔ {mesh2_file}")
     output(result)
 
 
@@ -1526,11 +1724,48 @@ def process_cross_section(input_file, output_file, polyline_file):
     output(result)
 
 
+@process_group.command("volume-25d")
+@click.argument("input_files", nargs=-1, type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--grid-step", type=float, default=1.0)
+@click.option("--vert-dir", type=int, default=2, help="0=X, 1=Y, 2=Z")
+@click.option("--const-height", type=float, default=None,
+              help="Constant height for ground (if only one cloud)")
+@handle_error
+def process_volume_25d(input_files, output_file, grid_step, vert_dir, const_height):
+    """[Headless] Compute 2.5D volume between two clouds."""
+    result = get_backend().volume_25d(
+        list(input_files), output_file,
+        grid_step=grid_step, vert_dir=vert_dir, const_height=const_height)
+    output(result)
+
+
+@process_group.command("crop-2d")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--dim", "orthogonal_dim", type=click.Choice(["X", "Y", "Z"]), default="Z",
+              help="Dimension orthogonal to the cropping plane")
+@click.option("--polygon", type=str, default="",
+              help="Polygon vertices as 'x1,y1;x2,y2;...' (semicolon-separated)")
+@handle_error
+def process_crop_2d(input_file, output_file, orthogonal_dim, polygon):
+    """[Headless] Crop by 2D polygon."""
+    pts = []
+    if polygon:
+        for pair in polygon.split(";"):
+            x, y = pair.split(",")
+            pts.append((float(x.strip()), float(y.strip())))
+    result = get_backend().crop_2d(
+        input_file, output_file,
+        orthogonal_dim=orthogonal_dim, polygon=pts)
+    output(result)
+
+
 # ── Reconstruct (headless, uses Colmap binary) ──
 
 @cli.group("reconstruct")
 def reconstruct_group():
-    """3D reconstruction commands (headless, uses Colmap binary for SfM/MVS)."""
+    """[Headless] 3D reconstruction (Colmap SfM/MVS pipeline)."""
     pass
 
 
@@ -1766,7 +2001,7 @@ def reconstruct_analyze_model(input_path):
 
 @cli.group("sibr")
 def sibr_group():
-    """SIBR dataset preprocessing tools (headless, requires SIBR plugin)."""
+    """[Headless] SIBR dataset preprocessing (requires SIBR plugin)."""
     pass
 
 
@@ -2309,7 +2544,7 @@ def repl(project_path):
         # ── Headless (binary -SILENT mode, no GUI needed) ──
         "convert":       "[headless] convert <in> <out>",
         "batch-convert": "[headless] batch-convert <dir-in> <dir-out> [-f .ply]",
-        "process":       "[headless] subsample|normals|icp|sor|c2c-dist|c2m-dist|density|curvature|roughness|delaunay|sample-mesh|...",
+        "process":       "[headless] subsample|normals|icp|sor|c2c-dist|c2m-dist|crop|density|curvature|roughness|delaunay|sample-mesh|...",
         "sf":            "[headless] coord-to-sf|arithmetic|operation|gradient|filter|color-scale|convert-to-rgb|set-active|rename|remove|...",
         "normals":       "[headless] octree|orient-mst|invert|clear|to-dip|to-sfs",
         "reconstruct":   "[headless] mesh|auto|extract-features|match|sparse|undistort|dense-stereo|fuse|poisson|...",

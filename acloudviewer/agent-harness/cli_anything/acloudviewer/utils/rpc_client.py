@@ -306,7 +306,7 @@ class ACloudViewerRPCClient:
         return self.call("cloud.filterSf", params)
 
     def cloud_coord_to_sf(self, entity_id: int, dimension: str = "z") -> dict:
-        return self.call("cloud.coordToSf",
+        return self.call("cloud.coordToSF",
                          {"entity_id": entity_id, "dimension": dimension})
 
     # ── Cloud geometry ──────────────────────────────────────────────────
@@ -322,6 +322,95 @@ class ACloudViewerRPCClient:
 
     def cloud_merge(self, entity_ids: list[int]) -> dict:
         return self.call("cloud.merge", {"entity_ids": entity_ids})
+
+    # ── Cloud analysis (GUI RPC) ─────────────────────────────────────
+
+    def cloud_density(self, entity_id: int, radius: float = 0.05) -> dict:
+        return self.call("cloud.density",
+                         {"entity_id": entity_id, "radius": radius})
+
+    def cloud_curvature(self, entity_id: int, curvature_type: str = "MEAN",
+                        radius: float = 0.05) -> dict:
+        return self.call("cloud.curvature",
+                         {"entity_id": entity_id, "type": curvature_type,
+                          "radius": radius})
+
+    def cloud_roughness(self, entity_id: int, radius: float = 0.1) -> dict:
+        return self.call("cloud.roughness",
+                         {"entity_id": entity_id, "radius": radius})
+
+    def cloud_geometric_feature(self, entity_id: int,
+                                feature_type: str = "SURFACE_VARIATION",
+                                kernel_size: float = 0.1) -> dict:
+        return self.call("cloud.geometricFeature",
+                         {"entity_id": entity_id, "type": feature_type,
+                          "kernel_size": kernel_size})
+
+    def cloud_approx_density(self, entity_id: int,
+                             density_type: str = "PRECISE") -> dict:
+        return self.call("cloud.approxDensity",
+                         {"entity_id": entity_id, "density_type": density_type})
+
+    def cloud_color_banding(self, entity_id: int, axis: str = "Z",
+                            frequency: float = 10.0) -> dict:
+        return self.call("cloud.colorBanding",
+                         {"entity_id": entity_id, "axis": axis,
+                          "frequency": frequency})
+
+    def cloud_sor_filter(self, entity_id: int, knn: int = 6,
+                         sigma: float = 1.0) -> dict:
+        return self.call("cloud.sorFilter",
+                         {"entity_id": entity_id, "knn": knn, "sigma": sigma})
+
+    def cloud_sf_arithmetic(self, entity_id: int, sf_index: int = 0,
+                            operation: str = "SQRT") -> dict:
+        return self.call("cloud.sfArithmetic",
+                         {"entity_id": entity_id, "sf_index": sf_index,
+                          "operation": operation})
+
+    def cloud_sf_operation(self, entity_id: int, sf_index: int = 0,
+                           operation: str = "ADD", value: float = 0.0) -> dict:
+        return self.call("cloud.sfOperation",
+                         {"entity_id": entity_id, "sf_index": sf_index,
+                          "operation": operation, "value": value})
+
+    def cloud_sf_gradient(self, entity_id: int) -> dict:
+        return self.call("cloud.sfGradient", {"entity_id": entity_id})
+
+    def cloud_sf_convert_to_rgb(self, entity_id: int) -> dict:
+        return self.call("cloud.sfConvertToRGB", {"entity_id": entity_id})
+
+    def cloud_octree_normals(self, entity_id: int,
+                             radius: str = "AUTO") -> dict:
+        return self.call("cloud.octreeNormals",
+                         {"entity_id": entity_id, "radius": radius})
+
+    def cloud_orient_normals_mst(self, entity_id: int, knn: int = 6) -> dict:
+        return self.call("cloud.orientNormalsMST",
+                         {"entity_id": entity_id, "knn": knn})
+
+    def cloud_clear_normals(self, entity_id: int) -> dict:
+        return self.call("cloud.clearNormals", {"entity_id": entity_id})
+
+    def cloud_normals_to_sfs(self, entity_id: int) -> dict:
+        return self.call("cloud.normalsToSFs", {"entity_id": entity_id})
+
+    def cloud_normals_to_dip(self, entity_id: int) -> dict:
+        return self.call("cloud.normalsToDip", {"entity_id": entity_id})
+
+    def cloud_extract_cc(self, entity_id: int, min_points: int = 10,
+                         octree_level: int = 6) -> dict:
+        return self.call("cloud.extractConnectedComponents",
+                         {"entity_id": entity_id, "min_points": min_points,
+                          "octree_level": octree_level})
+
+    def cloud_best_fit_plane(self, entity_id: int,
+                             make_horiz: bool = False) -> dict:
+        return self.call("cloud.bestFitPlane",
+                         {"entity_id": entity_id, "make_horiz": make_horiz})
+
+    def cloud_delaunay(self, entity_id: int) -> dict:
+        return self.call("cloud.delaunay", {"entity_id": entity_id})
 
     # ── Mesh extended ──────────────────────────────────────────────────
 

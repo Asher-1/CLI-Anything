@@ -8,7 +8,7 @@ This is the **canonical version** of the ACloudViewer OpenClaw skill manifest. I
 
 ### Purpose
 
-The skill manifest enables OpenClaw (and other AI agent platforms) to discover and use the ACloudViewer MCP server with all 95+ tools for 3D point cloud and mesh processing.
+The skill manifest enables OpenClaw (and other AI agent platforms) to discover and use the ACloudViewer MCP server with all 121 tools for 3D point cloud and mesh processing.
 
 ### Usage in OpenClaw
 
@@ -31,7 +31,7 @@ Users can configure OpenClaw to use this skill in two ways:
          "command": "cli-anything-acloudviewer-mcp",
          "args": ["--mode", "auto"],
          "type": "mcp",
-         "description": "3D point cloud and mesh processing with ACloudViewer (95+ tools)"
+         "description": "3D point cloud and mesh processing with ACloudViewer (121 tools)"
        }
      }
    }

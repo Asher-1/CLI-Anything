@@ -2,10 +2,13 @@
 
 ## Test Architecture
 
-| Layer | What it tests | File |
-|-------|--------------|------|
-| **Unit tests** | Session, format sets, binary discovery, backend static methods | `test_core.py` |
-| **CLI structure** | `--help` output, subcommand availability, JSON mode | `test_cli.py` |
+| Layer | What it tests | File(s) |
+|-------|--------------|---------|
+| **Unit tests** | Session, format sets, binary discovery, backend static methods, format conversion dispatch, version detection | `test_core.py` |
+| **Backend mocks** | RPC client, backend methods, convert, batch-convert, processing, SIBR, Colmap | `test_utils.py`, `test_backend.py` |
+| **CLI structure** | `--help` output, subcommand availability, JSON mode, comprehensive CLI coverage | `test_cli.py`, `test_cli_comprehensive.py` |
+| **Installer** | Platform detection, asset matching, download, Qt IFW install | `test_installer.py` |
+| **MCP server** | Tool registration, schema validation, tool dispatch | `test_mcp.py` |
 | **E2E tests** | Real ACloudViewer binary invocation with sample data | `test_e2e.py` |
 
 ## Running Tests
@@ -24,54 +27,38 @@ python -m pytest cli_anything/acloudviewer/tests/test_e2e.py -v
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
 
-## Test Coverage (319 tests)
+## Test Coverage (592 tests)
 
-| File | Test Classes | Count |
-|------|-------------|-------|
-| `test_core.py` | Session, Scene, Formats, FormatConversion, VersionDetection, BinaryDiscovery, ColmapBackend, RPCClient, BackendMode | ~85 |
-| `test_utils.py` | RPCClientCall, RPCClientConvenience, RPCClientNewWrappers, BackendOpenFile, BackendExportFile, BackendSceneOps, BackendGUIOnly (incl. new SF/mesh/colmap methods), BackendRunCLI, BackendConvertFormat, BackendBatchConvert, BackendProcessing, BackendSIBR, ColmapRun, ColmapBinaryDiscovery, ColmapArgConstruction, ReplSkin | ~141 |
-| `test_cli.py` | CLIHelp, SubcommandHelp, ProcessSubcommands, SessionHistory, HeadlessMode | ~70 |
-| `test_installer.py` | Platform detection, asset matching, binary discovery, installer workflow | ~61 |
-| `test_e2e.py` | E2E with real ACloudViewer binary (skipped if not installed) | ~9 |
-
-### New tests added for extended RPC capabilities
-
-- `TestRPCClientNewWrappers`: 15 tests for new RPC convenience methods (cloud SF management, cloud geometry, mesh operations, colmap.run)
-- `TestBackendGUIOnly` (extended): 15 new tests verifying all new GUI-only methods correctly raise `BackendError` in headless mode
-- `test_call_raises_on_error_with_data`: Verifies RPCError includes structured `data` field from error responses
+| File | What it covers | Count |
+|------|---------------|-------|
+| `test_utils.py` | RPC client, backend methods, convert, batch-convert, processing, SIBR, Colmap, ReplSkin | 171 |
+| `test_mcp.py` | MCP tool registration, schema validation, 121 tool dispatch | 144 |
+| `test_cli_comprehensive.py` | Comprehensive CLI subcommand coverage, JSON mode, help text | 141 |
+| `test_core.py` | Session, Scene, Formats, FormatConversion, VersionDetection, BinaryDiscovery, ColmapBackend, RPCClient, BackendMode | 96 |
+| `test_installer.py` | Platform detection, asset matching, download, Qt IFW, --from-file | 81 |
+| `test_backend.py` | Backend open/export/scene/GUI-only methods | 39 |
+| `test_cli.py` | CLI help, subcommands, process, session, headless mode | 38 |
+| `test_e2e.py` | E2E with real ACloudViewer binary (skipped if not installed) | 16 |
 
 ---
 
-## Latest Test Results (2026-03-28)
+## Latest Test Results (2026-03-30)
 
 ```
 $ python -m pytest cli_anything/acloudviewer/tests/ -v --tb=short
 
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.13, pytest-9.0.2, pluggy-1.6.0
+platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 
-cli_anything/acloudviewer/tests/test_core.py ............... 80 passed
-cli_anything/acloudviewer/tests/test_cli.py ................. 29 passed, 1 skipped
-cli_anything/acloudviewer/tests/test_utils.py ............... 141 passed
-cli_anything/acloudviewer/tests/test_installer.py ........... 61 passed
-cli_anything/acloudviewer/tests/test_e2e.py ................. 7 passed
-
-=========================== short test summary ================================
-SKIPPED: 1 SIBR test (SIBR plugin not available)
-PASSED: 318 tests
-
-Total: 319 tests (318 passed, 1 skipped, 0 failed)
+592 passed in 10.36s
 ```
 
 ### Notes
 
-- **318 tests passed** - All core functionality fully tested ✅
-- **7 E2E tests passed** - Real ACloudViewer binary invoked successfully
-- **1 test skipped** - SIBR subcommand (SIBR plugin not installed)
-- **0 tests failed** - All tests green
-- **95 MCP tools verified** - Full tool registration and schema validation
-- **48+ RPC methods tested** - Including new SF, normals, mesh, and Colmap GUI operations
-- **File conversion tested**: PLY → PCD, PLY → XYZ, batch conversion (40+ formats supported)
-- **Processing tested**: subsample, normals, SF operations, geometry analysis, mesh operations
-- **Reconstruction tested**: Colmap pipeline (13 tools), SIBR workflows (11 tools)
-- **CLI verified**: info, check, formats, session, all with JSON output
+- **592 tests passed** — all core functionality fully tested
+- **121 MCP tools verified** — full tool registration and schema validation
+- **Format conversion**: ASC mapping, alias extension lookup, VTK dual-format, cross-type (cloud↔mesh)
+- **Version detection**: maintenancetool, .desktop, CHANGELOG, --version fallback chain
+- **Installer**: Platform detection, Qt IFW headless install, --from-file, curl/wget download
+- **Reconstruction**: Colmap pipeline (13 tools), SIBR workflows (12 tools)
+- **CLI**: info, check, formats, session, all with JSON output

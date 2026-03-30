@@ -274,6 +274,168 @@ async def list_tools() -> list[Tool]:
                 "required": ["input_path", "output_path"],
             },
         ),
+        Tool(
+            name="pcv",
+            description="Compute PCV (Portion de Ciel Visible) ambient occlusion on a point cloud or mesh.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string", "description": "Input point cloud or mesh"},
+                    "output_path": {"type": "string", "description": "Output file path"},
+                    "n_rays": {"type": "integer", "default": 256, "description": "Number of rays"},
+                    "resolution": {"type": "integer", "default": 1024, "description": "Grid resolution"},
+                    "mode_180": {"type": "boolean", "default": False, "description": "Upper hemisphere only"},
+                    "is_closed": {"type": "boolean", "default": False, "description": "Treat mesh as closed"},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="csf",
+            description="Apply Cloth Simulation Filter (CSF) for ground/non-ground classification.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "scenes": {"type": "integer", "default": 1, "description": "Scene type: 0=flat, 1=relief, 2=steep"},
+                    "cloth_resolution": {"type": "number", "default": 0.5},
+                    "max_iteration": {"type": "integer", "default": 500},
+                    "class_threshold": {"type": "number", "default": 0.5},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="ransac",
+            description="Detect geometric shapes (planes, spheres, cylinders, etc.) in a point cloud using RANSAC.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "epsilon": {"type": "number", "default": 0.005, "description": "Absolute epsilon"},
+                    "bitmap_epsilon": {"type": "number", "default": 0.01},
+                    "support_points": {"type": "integer", "default": 500},
+                    "max_normal_dev": {"type": "number", "default": 25.0, "description": "Max normal deviation in degrees"},
+                    "probability": {"type": "number", "default": 0.01},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="m3c2",
+            description="Compute M3C2 (Multiscale Model to Model Cloud Comparison) distances between two point clouds.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cloud1_path": {"type": "string", "description": "First point cloud"},
+                    "cloud2_path": {"type": "string", "description": "Second point cloud"},
+                    "output_path": {"type": "string"},
+                    "params_file": {"type": "string", "description": "M3C2 parameters file (optional)"},
+                },
+                "required": ["cloud1_path", "cloud2_path"],
+            },
+        ),
+        Tool(
+            name="canupo",
+            description="Classify a point cloud using a trained CANUPO classifier.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "classifier_file": {"type": "string", "description": "Path to .prm classifier file"},
+                },
+                "required": ["input_path", "output_path", "classifier_file"],
+            },
+        ),
+        Tool(
+            name="facets",
+            description="Extract planar facets from a point cloud using Kd-tree or Fast Marching algorithm.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "algo": {"type": "string", "enum": ["KD_TREE", "FAST_MARCHING"], "default": "KD_TREE"},
+                    "error_max": {"type": "number", "default": 0.2, "description": "Max error per facet"},
+                    "min_points": {"type": "integer", "default": 10},
+                    "max_edge_length": {"type": "number", "default": 1.0},
+                    "octree_level": {"type": "integer", "default": 8, "description": "For fast marching"},
+                    "classify": {"type": "boolean", "default": False, "description": "Classify facets by orientation"},
+                    "export_shp": {"type": "string", "description": "Export facets to shapefile (optional)"},
+                    "export_csv": {"type": "string", "description": "Export facets info to CSV (optional)"},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="hough_normals",
+            description="Compute normals using the Hough transform method (robust for noisy/sparse data).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "k": {"type": "integer", "default": 100, "description": "Number of neighbors"},
+                    "t": {"type": "integer", "default": 1000, "description": "Number of accumulators"},
+                    "n_phi": {"type": "integer", "default": 15},
+                    "n_rot": {"type": "integer", "default": 5},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="poisson_recon",
+            description="Reconstruct a triangle mesh from a point cloud with normals using Poisson surface reconstruction.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string", "description": "Input point cloud (must have normals)"},
+                    "output_path": {"type": "string", "description": "Output mesh file"},
+                    "depth": {"type": "integer", "default": 8, "description": "Octree depth"},
+                    "samples_per_node": {"type": "number", "default": 1.5},
+                    "point_weight": {"type": "number", "default": 2.0},
+                    "boundary": {"type": "string", "enum": ["FREE", "DIRICHLET", "NEUMANN"], "default": "NEUMANN"},
+                    "with_colors": {"type": "boolean", "default": False},
+                    "density": {"type": "boolean", "default": False, "description": "Compute density scalar field"},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="cork_boolean",
+            description="Perform boolean (CSG) operations on two meshes: union, intersection, difference, or symmetric difference.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mesh1_path": {"type": "string", "description": "First mesh"},
+                    "mesh2_path": {"type": "string", "description": "Second mesh"},
+                    "output_path": {"type": "string"},
+                    "operation": {"type": "string", "enum": ["UNION", "INTERSECT", "DIFF", "SYM_DIFF"], "default": "UNION"},
+                    "swap": {"type": "boolean", "default": False, "description": "Swap mesh order for DIFF"},
+                },
+                "required": ["mesh1_path", "mesh2_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="voxfall",
+            description="Voxel-based volumetric change detection between two meshes (VoxFall algorithm for rockfall analysis).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mesh1_path": {"type": "string", "description": "Reference mesh"},
+                    "mesh2_path": {"type": "string", "description": "Comparison mesh"},
+                    "output_path": {"type": "string"},
+                    "voxel_size": {"type": "number", "default": 0.1},
+                    "azimuth": {"type": "number", "default": 0.0, "description": "Slope azimuth in degrees"},
+                    "export_meshes": {"type": "boolean", "default": False},
+                    "loss_gain": {"type": "boolean", "default": False},
+                },
+                "required": ["mesh1_path", "mesh2_path", "output_path"],
+            },
+        ),
         # ── Scalar field operations ──
         Tool(name="set_active_sf", description="Set active scalar field (headless).",
              inputSchema={"type": "object", "properties": {
@@ -396,6 +558,21 @@ async def list_tools() -> list[Tool]:
                  "input_path": {"type": "string"}, "output_path": {"type": "string"},
                  "polyline_file": {"type": "string"}},
               "required": ["input_path", "output_path", "polyline_file"]}),
+        Tool(name="volume_25d", description="Compute 2.5D volume between two point clouds.",
+             inputSchema={"type": "object", "properties": {
+                 "input_paths": {"type": "array", "items": {"type": "string"}},
+                 "output_path": {"type": "string"},
+                 "grid_step": {"type": "number", "default": 1.0},
+                 "vert_dir": {"type": "integer", "default": 2, "description": "0=X, 1=Y, 2=Z"},
+                 "const_height": {"type": "number", "description": "Constant height for single-cloud mode"}},
+              "required": ["input_paths", "output_path"]}),
+        Tool(name="crop_2d", description="Crop point cloud by 2D polygon.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string"}, "output_path": {"type": "string"},
+                 "orthogonal_dim": {"type": "string", "default": "Z", "description": "X, Y, or Z"},
+                 "polygon": {"type": "array", "items": {"type": "array", "items": {"type": "number"}},
+                            "description": "List of [x, y] polygon vertices"}},
+              "required": ["input_path", "output_path"]}),
         Tool(name="mesh_volume", description="Compute mesh enclosed volume.",
              inputSchema={"type": "object", "properties": {
                  "input_path": {"type": "string"},
@@ -822,6 +999,8 @@ async def list_tools() -> list[Tool]:
                     "database_path": {"type": "string"},
                     "method": {"type": "string", "default": "exhaustive",
                               "description": "exhaustive, sequential, vocab_tree, or spatial"},
+                    "vocab_tree_path": {"type": "string", "default": "",
+                                       "description": "Path to vocab tree (required for vocab_tree method)"},
                     "use_gpu": {"type": "boolean", "default": True},
                 },
                 "required": ["database_path"],
@@ -1377,6 +1556,96 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 axis=arguments.get("axis", "Z"),
                 frequency=arguments.get("frequency", 10.0)))
 
+        elif name == "pcv":
+            return _result(backend.pcv(
+                arguments["input_path"], arguments["output_path"],
+                n_rays=arguments.get("n_rays", 256),
+                resolution=arguments.get("resolution", 1024),
+                mode_180=arguments.get("mode_180", False),
+                is_closed=arguments.get("is_closed", False),
+            ))
+
+        elif name == "csf":
+            return _result(backend.csf(
+                arguments["input_path"], arguments["output_path"],
+                scenes=arguments.get("scenes", 1),
+                cloth_resolution=arguments.get("cloth_resolution", 0.5),
+                max_iteration=arguments.get("max_iteration", 500),
+                class_threshold=arguments.get("class_threshold", 0.5),
+            ))
+
+        elif name == "ransac":
+            return _result(backend.ransac(
+                arguments["input_path"], arguments["output_path"],
+                epsilon=arguments.get("epsilon", 0.005),
+                bitmap_epsilon=arguments.get("bitmap_epsilon", 0.01),
+                support_points=arguments.get("support_points", 500),
+                max_normal_dev=arguments.get("max_normal_dev", 25.0),
+                probability=arguments.get("probability", 0.01),
+            ))
+
+        elif name == "m3c2":
+            return _result(backend.m3c2(
+                arguments["cloud1_path"], arguments["cloud2_path"],
+                output_path=arguments.get("output_path"),
+                params_file=arguments.get("params_file"),
+            ))
+
+        elif name == "canupo":
+            return _result(backend.canupo(
+                arguments["input_path"], arguments["output_path"],
+                classifier_file=arguments["classifier_file"],
+            ))
+
+        elif name == "facets":
+            return _result(backend.facets(
+                arguments["input_path"], arguments["output_path"],
+                algo=arguments.get("algo", "KD_TREE"),
+                error_max=arguments.get("error_max", 0.2),
+                min_points=arguments.get("min_points", 10),
+                max_edge_length=arguments.get("max_edge_length", 1.0),
+                octree_level=arguments.get("octree_level", 8),
+                classify=arguments.get("classify", False),
+                export_shp=arguments.get("export_shp"),
+                export_csv=arguments.get("export_csv"),
+            ))
+
+        elif name == "hough_normals":
+            return _result(backend.hough_normals(
+                arguments["input_path"], arguments["output_path"],
+                k=arguments.get("k", 100),
+                t=arguments.get("t", 1000),
+                n_phi=arguments.get("n_phi", 15),
+                n_rot=arguments.get("n_rot", 5),
+            ))
+
+        elif name == "poisson_recon":
+            return _result(backend.poisson_recon(
+                arguments["input_path"], arguments["output_path"],
+                depth=arguments.get("depth", 8),
+                samples_per_node=arguments.get("samples_per_node", 1.5),
+                point_weight=arguments.get("point_weight", 2.0),
+                boundary=arguments.get("boundary", "NEUMANN"),
+                with_colors=arguments.get("with_colors", False),
+                density=arguments.get("density", False),
+            ))
+
+        elif name == "cork_boolean":
+            return _result(backend.cork_boolean(
+                arguments["mesh1_path"], arguments["mesh2_path"], arguments["output_path"],
+                operation=arguments.get("operation", "UNION"),
+                swap=arguments.get("swap", False),
+            ))
+
+        elif name == "voxfall":
+            return _result(backend.voxfall(
+                arguments["mesh1_path"], arguments["mesh2_path"], arguments["output_path"],
+                voxel_size=arguments.get("voxel_size", 0.1),
+                azimuth=arguments.get("azimuth", 0.0),
+                export_meshes=arguments.get("export_meshes", False),
+                loss_gain=arguments.get("loss_gain", False),
+            ))
+
         # ── Scalar field operations ──
         elif name == "set_active_sf":
             return _result(backend.set_active_sf(
@@ -1478,6 +1747,19 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return _result(backend.cross_section(
                 arguments["input_path"], arguments["output_path"],
                 polyline_file=arguments["polyline_file"]))
+        elif name == "volume_25d":
+            return _result(backend.volume_25d(
+                arguments["input_paths"], arguments["output_path"],
+                grid_step=arguments.get("grid_step", 1.0),
+                vert_dir=arguments.get("vert_dir", 2),
+                const_height=arguments.get("const_height")))
+        elif name == "crop_2d":
+            polygon = arguments.get("polygon", [])
+            pts = [(p[0], p[1]) for p in polygon] if polygon else []
+            return _result(backend.crop_2d(
+                arguments["input_path"], arguments["output_path"],
+                orthogonal_dim=arguments.get("orthogonal_dim", "Z"),
+                polygon=pts))
         elif name == "mesh_volume":
             return _result(backend.mesh_volume(
                 arguments["input_path"],
@@ -1585,9 +1867,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 axis=arguments.get("axis", "z")))
 
         elif name == "cloud_paint_by_scalar_field":
-            return _result(backend.cloud_paint_by_scalar_field_gui(
-                arguments["entity_id"],
-                field_name=str(arguments.get("field_index", 0))))
+            field_idx = arguments.get("field_index", 0)
+            return _result(backend._rpc.call("cloud.paintByScalarField", {
+                "entity_id": arguments["entity_id"],
+                "field_index": field_idx,
+            }))
 
         elif name == "mesh_simplify":
             return _result(backend.mesh_simplify_gui(
@@ -1665,6 +1949,15 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 return _error("Only available in GUI mode")
             return _result(backend._rpc.list_methods())
 
+        # ── COLMAP generic executor (must precede startswith("colmap_")) ─
+        elif name == "colmap_run":
+            return _result(backend.colmap_run_gui(
+                arguments["command"],
+                args=arguments.get("args"),
+                kwargs_=arguments.get("kwargs"),
+                colmap_binary=arguments.get("colmap_binary", "colmap"),
+                timeout_ms=arguments.get("timeout_ms", 3600000)))
+
         # ── Colmap Reconstruction Handlers ────────────────────────────
         elif name.startswith("colmap_"):
             from cli_anything.acloudviewer.utils.colmap_backend import ColmapBackend, ColmapError
@@ -1718,6 +2011,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 elif method == "spatial":
                     return _result(colmap.spatial_matcher(
                         arguments["database_path"], use_gpu=use_gpu))
+                elif method == "vocab_tree":
+                    vocab_path = arguments.get("vocab_tree_path", "")
+                    return _result(colmap.vocab_tree_matcher(
+                        arguments["database_path"],
+                        vocab_tree_path=vocab_path, use_gpu=use_gpu))
                 else:
                     return _error(f"Unknown matcher method: {method}")
 
@@ -1837,15 +2135,6 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         elif name == "mesh_merge_gui":
             return _result(backend.mesh_merge_gui(
                 arguments["entity_ids"]))
-
-        # ── COLMAP generic executor ─────────────────────────────────────
-        elif name == "colmap_run":
-            return _result(backend.colmap_run_gui(
-                arguments["command"],
-                args=arguments.get("args"),
-                kwargs_=arguments.get("kwargs"),
-                colmap_binary=arguments.get("colmap_binary", "colmap"),
-                timeout_ms=arguments.get("timeout_ms", 3600000)))
 
         elif name.startswith("sibr_"):
             if name == "sibr_tool":

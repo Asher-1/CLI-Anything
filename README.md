@@ -44,7 +44,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 > Thanks to all invaluable efforts from the community! More updates continuously on the way everyday..
 
-- **2026-03-23** 🔬 Added [ACloudViewer](https://asher-1.github.io/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 39 tools, 30+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 185 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
+- **2026-03-23** 🔬 Added [ACloudViewer](https://asher-1.github.io/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 121 tools, 40+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 592 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
 
 - **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-skill/SKILL.md`](cli-hub-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
 - **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
@@ -747,7 +747,7 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td>3D Point Cloud & Mesh Processing</td>
 <td><code>cli-anything-acloudviewer</code></td>
 <td>ACloudViewer binary CLI + JSON-RPC</td>
-<td align="center">✅ 185</td>
+<td align="center">✅ 592</td>
 </tr>
 <tr>
 <td align="center"><strong>🎨 Sketch</strong></td>
@@ -796,7 +796,7 @@ notebooklm     21 passed  ✅   (21 unit + 0 e2e)
 comfyui        70 passed  ✅   (60 unit + 10 e2e)
 adguardhome    36 passed  ✅   (24 unit + 12 e2e)
 ollama         98 passed  ✅   (87 unit + 11 e2e)
-acloudviewer  185 passed  ✅   (178 unit + 7 e2e)
+acloudviewer  592 passed  ✅   (583 unit + 9 e2e)
 sketch         19 passed  ✅   (19 jest, Node.js)
 renderdoc      59 passed  ✅   (45 unit + 14 e2e)
 ──────────────────────────────────────────────────────────────────────────────
@@ -869,7 +869,7 @@ cli-anything/
 ├── 🧠 notebooklm/agent-harness/         # NotebookLM CLI (experimental, 21 tests)
 ├── 🛡️ adguardhome/agent-harness/       # AdGuard Home CLI (36 tests)
 ├── 🦙 ollama/agent-harness/             # Ollama CLI (98 tests)
-├── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (185 tests)
+├── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (592 tests)
 └── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
 ├── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
 └── 🔬 renderdoc/agent-harness/          # RenderDoc CLI (59 tests)

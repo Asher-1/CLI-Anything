@@ -251,7 +251,7 @@ class TestRPCClientNewWrappers:
         c = self._make_client()
         c.cloud_coord_to_sf(10, dimension="z")
         sent = json.loads(c._ws.send.call_args[0][0])
-        assert sent["method"] == "cloud.coordToSf"
+        assert sent["method"] == "cloud.coordToSF"
         assert sent["params"]["dimension"] == "z"
 
     def test_cloud_remove_rgb(self):
@@ -789,7 +789,7 @@ class TestBackendProcessing:
                min_x=-1, min_y=-1, min_z=-1, max_x=1, max_y=1, max_z=1)
         cmd = mock_run.call_args[0][0]
         assert "-CROP" in cmd
-        assert "-1:1:-1:1:-1:1" in cmd
+        assert "-1:-1:-1:1:1:1" in cmd
 
     @patch("subprocess.run")
     def test_color_banding_args(self, mock_run):

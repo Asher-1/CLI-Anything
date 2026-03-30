@@ -104,6 +104,58 @@ arch, Python version, glibc version, and NVIDIA GPU presence.
 **Download strategy**: Prefers `curl` (with retry/progress) > `wget` > `urllib`
 fallback, to handle slow or unreliable GitHub CDN connections.
 
+### Version Detection (`get_version()`)
+
+The backend resolves the installed ACloudViewer version through multiple
+strategies (in priority order):
+
+```
+Binary found ──→ --version / -v flag ──→ Parse "X.Y.Z" from stdout
+                        │ (fails)
+                        ├─→ maintenancetool li ──→ Parse version="X.Y.Z" from XML
+                        │ (not found)
+                        ├─→ ACloudViewer.desktop ──→ Parse Version= line
+                        │ (not found)
+                        ├─→ CHANGELOG.txt / .md ──→ Regex first "X.Y.Z" in header
+                        │ (not found)
+                        └─→ None
+```
+
+The `check` command uses this to report installed version in both text and
+JSON output (e.g. `"version": "3.9.5"`).
+
+### Format Conversion Internals (`convert_format()`)
+
+**CLI export format tokens**: ACloudViewer CLI uses `-C_EXPORT_FMT` tokens
+that differ from file extensions. Key mapping (`CLOUD_FORMAT_MAP`):
+
+| Extension | CLI Token | Note |
+|-----------|-----------|------|
+| `.ply` | `PLY` | |
+| `.pcd` | `PCD` | |
+| `.las`/`.laz` | `LAS` | |
+| `.e57` | `E57` | |
+| `.vtk` | `VTK` | Also in `MESH_FORMAT_MAP` — dual-format |
+| `.asc` | `ASC` | **Not** `ASCII` (ACloudViewer rejects `ASCII`) |
+| `.xyz`/`.csv`/`.txt`/`.pts` | `ASC` | All map to `ASC`; output renamed via alias lookup |
+
+**Alias extension lookup** (`_FORMAT_ALIAS_EXTS`): When the CLI writes
+`.asc` but the user requested `.xyz`, the post-convert step searches for
+alias extensions and renames the output file.
+
+**Cross-type automatic conversion**: The `convert` command handles all four
+input/output type combinations transparently:
+
+| Input → Output | Mechanism | CLI Flags |
+|---------------|-----------|-----------|
+| cloud → cloud | Direct export | `-C_EXPORT_FMT <fmt> -SAVE_CLOUDS` |
+| mesh → mesh | Direct export | `-M_EXPORT_FMT <fmt> -SAVE_MESHES` |
+| cloud → mesh | Auto Delaunay | `-DELAUNAY -M_EXPORT_FMT <fmt> -SAVE_MESHES` |
+| mesh → cloud | Auto sampling | `-SAMPLE_MESH POINTS <n> -C_EXPORT_FMT <fmt> -SAVE_CLOUDS` |
+
+Dispatch priority for dual-format extensions (e.g. `.ply`, `.vtk`):
+cloud→cloud > cloud→mesh > mesh→cloud > mesh→mesh.
+
 ## Core Domains
 
 | Domain | Module | Key Operations |
@@ -206,8 +258,8 @@ CloudCompare-compatible CLI flags:
 
 ### Supported Formats (40+)
 
-**Point Cloud:** `.ply` `.pcd` `.xyz` `.xyzrgb` `.pts` `.txt` `.asc`
-`.csv` `.las` `.laz` `.e57` `.ptx` `.bin` `.sbf`
+**Point Cloud:** `.ply` `.pcd` `.xyz` `.xyzn` `.xyzrgb` `.pts` `.txt`
+`.asc` `.neu` `.csv` `.las` `.laz` `.e57` `.ptx` `.bin` `.sbf` `.drc` `.vtk`
 
 **Mesh:** `.obj` `.stl` `.off` `.gltf` `.glb` `.fbx` `.dae` `.3ds`
 `.dxf` `.vtk` `.ply`
@@ -298,9 +350,9 @@ reconstructions for novel view synthesis and rendering:
 **Note**: SIBR tools are not available on macOS. Requires ACloudViewer built with
 `-DPLUGIN_STANDARD_QSIBR=ON` CMake flag.
 
-### MCP Server (96 tools)
+### MCP Server (121 tools)
 
-The MCP server exposes 96 tools for AI agent frameworks (OpenClaw, Cursor,
+The MCP server exposes 121 tools for AI agent frameworks (OpenClaw, Cursor,
 Claude Code):
 
 | Category | Count | Tools |
@@ -325,7 +377,7 @@ Claude Code):
 | **Transform** | 2 | `transform_apply`, `transform_apply_file` |
 | **Utility** | 2 | `get_info`, `list_rpc_methods` |
 
-**Total**: 96 tools supporting both headless CLI and GUI RPC modes.
+**Total**: 121 tools supporting both headless CLI and GUI RPC modes.
 
 ## RPC Robustness: Automatic Fallback
 

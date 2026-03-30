@@ -38,7 +38,7 @@ The CLI auto-detects: if a running ACloudViewer instance responds on
 **Headless** (binary `-SILENT` mode; no GUI):
 
 - `convert`, `batch-convert`
-- `process`: `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`
+- `process`: `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `crop`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `volume-25d`, `crop-2d`, `rasterize`, `cross-section`, `stat-test`, `approx-density`, `feature`, `best-fit-plane`, `extract-cc`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `sf-arithmetic`, `sf-op`, `octree-normals`, `orient-normals`, `invert-normals`, `clear-normals`, `normals-to-dip`, `normals-to-sfs`, `remove-rgb`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`, `match-centers`, `drop-global-shift`, `closest-point-set`, `remove-scan-grids`
 - `reconstruct`: `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `simplify-mesh`, `texture-mesh`, `convert-model`, `analyze-model`, `delaunay-mesh`
 - `sibr`: `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop`
 
@@ -148,6 +148,12 @@ cli-anything-acloudviewer --mode headless process color-banding input.ply -o col
 
 # Extract cross-section along polyline
 cli-anything-acloudviewer --mode headless process cross-section input.ply -o section.ply --polyline path.ply
+
+# Compute 2.5D volume between two clouds
+cli-anything-acloudviewer --mode headless process volume-25d ground.ply surface.ply -o volume_mesh.ply --grid-step 0.5
+
+# Crop by 2D polygon (orthogonal to Z axis)
+cli-anything-acloudviewer --mode headless process crop-2d input.ply -o cropped.ply --dim Z --polygon "0,0;10,0;10,10;0,10"
 ```
 
 ### Scalar field operations — **Headless**
@@ -441,12 +447,12 @@ cli-anything-acloudviewer --json --mode headless process subsample input.ply -o 
 | **General** | `repl` | — | Interactive REPL session |
 | **Headless** | `convert` | — | Convert between 30+ 3D file formats |
 | **Headless** | `batch-convert` | — | Batch convert all files in a directory |
-| **Headless** | `process` | `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes` | Point cloud and mesh processing (28 operations) |
+| **Headless** | `process` | `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `crop`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`, `volume-25d`, `crop-2d`, `rasterize`, `cross-section`, `stat-test`, … | Point cloud and mesh processing (35+ operations) |
 | **Headless** | `reconstruct` | `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `simplify-mesh`, `texture-mesh`, `convert-model`, `analyze-model`, `delaunay-mesh` | 3D reconstruction (Colmap SfM/MVS) |
 | **Headless** | `sibr` | `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop` | SIBR dataset preprocessing (11 tools) |
 | **GUI** | `open` | — | Open a file in the running ACloudViewer |
 | **GUI** | `clear` | — | Clear all entities from the scene |
-| **GUI** | `scene` | `list`, `info`, `remove`, `set-visible` | Scene tree operations |
+| **GUI** | `scene` | `list`, `info`, `remove`, `set-visible`, `select`, `clear` | Scene tree operations |
 | **GUI** | `entity` | `rename`, `set-color` | Entity property management |
 | **GUI** | `view` | `screenshot`, `camera`, `orientation`, `zoom-fit`, `refresh`, `perspective`, `point-size` | Viewport control (7 operations) |
 | **GUI** | `cloud` | `compute-normals`, `subsample`, `crop`, `scalar-fields`, `paint-uniform`, `paint-by-height`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `remove-rgb`, `remove-normals`, `invert-normals`, `merge` | Point cloud operations (16 operations) |
@@ -456,7 +462,7 @@ cli-anything-acloudviewer --json --mode headless process subsample input.ply -o 
 | **GUI** | `methods` | `list` | List available RPC methods (dynamic discovery) |
 | **GUI** | `colmap` | `reconstruct`, `run` | COLMAP reconstruction via RPC |
 
-## JSON-RPC API (48+ Methods)
+## JSON-RPC API (67 Methods)
 
 When running in GUI mode, the harness communicates via JSON-RPC 2.0 over WebSocket. The method registry is dynamic — use `methods.list` to discover all available methods at runtime.
 
@@ -469,14 +475,14 @@ Key method groups:
 | **Scene** | `scene.list`, `scene.info`, `scene.remove`, `scene.setVisible` |
 | **Entity** | `entity.rename`, `entity.setColor` |
 | **View** | `view.screenshot`, `view.setOrientation`, `view.zoomFit`, `view.refresh`, `view.setPerspective`, `view.setPointSize`, `view.getCamera` |
-| **Cloud** | `cloud.computeNormals`, `cloud.subsample`, `cloud.crop`, `cloud.getScalarFields`, `cloud.paintUniform`, `cloud.paintByHeight`, `cloud.setActiveSf`, `cloud.removeSf`, `cloud.removeAllSfs`, `cloud.renameSf`, `cloud.filterSf`, `cloud.coordToSf`, `cloud.removeRgb`, `cloud.removeNormals`, `cloud.invertNormals`, `cloud.merge` |
+| **Cloud** | `cloud.computeNormals`, `cloud.subsample`, `cloud.crop`, `cloud.getScalarFields`, `cloud.paintUniform`, `cloud.paintByHeight`, `cloud.paintByScalarField`, `cloud.setActiveSf`, `cloud.removeSf`, `cloud.removeAllSfs`, `cloud.renameSf`, `cloud.filterSf`, `cloud.coordToSF`, `cloud.removeRgb`, `cloud.removeNormals`, `cloud.invertNormals`, `cloud.merge`, `cloud.density`, `cloud.curvature`, `cloud.roughness`, `cloud.geometricFeature`, `cloud.approxDensity`, `cloud.colorBanding`, `cloud.sorFilter`, `cloud.sfArithmetic`, `cloud.sfOperation`, `cloud.sfGradient`, `cloud.sfConvertToRGB`, `cloud.octreeNormals`, `cloud.orientNormalsMST`, `cloud.clearNormals`, `cloud.normalsToSFs`, `cloud.normalsToDip`, `cloud.extractConnectedComponents`, `cloud.bestFitPlane`, `cloud.delaunay` |
 | **Mesh** | `mesh.simplify`, `mesh.smooth`, `mesh.samplePoints`, `mesh.extractVertices`, `mesh.flipTriangles`, `mesh.volume`, `mesh.merge` |
 | **Transform** | `transform.apply` |
 | **COLMAP** | `colmap.reconstruct`, `colmap.run` |
 
-## MCP Server (97+ Tools)
+## MCP Server (121 Tools)
 
-An optional MCP server exposes 97+ tools for integration with AI agents:
+An optional MCP server exposes 121 tools for integration with AI agents:
 
 ```bash
 pip install -e .
@@ -540,7 +546,7 @@ pip install -e ".[dev]"
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
 
-Test suite: ~320 tests covering CLI structure, format maps, backend logic, RPC client wrappers, MCP tool registration, and session management.
+Test suite: ~592 tests covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (121 tools), and session management.
 
 ## Methodology
 

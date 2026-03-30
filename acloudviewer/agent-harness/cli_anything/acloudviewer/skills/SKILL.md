@@ -91,7 +91,7 @@ Installation diagnostics and auto-install commands.
 
 | Command | Description |
 |---------|-------------|
-| `check` | Check installation status and suggest fixes |
+| `check` | Check installation status, detect version, suggest fixes |
 | `install app` | Download and install ACloudViewer desktop binary |
 | `install app --from-file` | Install from a local .run/.dmg/.exe file |
 | `install wheel` | Download and install cloudViewer Python wheel |
@@ -313,6 +313,23 @@ Session management commands.
 cli-anything-acloudviewer convert input.ply output.pcd
 ```
 
+The `convert` command handles cross-type conversion automatically:
+
+```bash
+# Cloud → Cloud (direct)
+cli-anything-acloudviewer convert cloud.ply cloud.las
+
+# Cloud → Mesh (auto Delaunay triangulation)
+cli-anything-acloudviewer convert cloud.ply mesh.obj
+
+# Mesh → Cloud (auto sampling 100K points)
+cli-anything-acloudviewer convert mesh.obj sampled.pcd
+```
+
+Supported cloud export formats use the `ASC` token internally for
+`.xyz`, `.csv`, `.txt`, `.pts` (not `ASCII`). The CLI auto-renames
+output files when the extension differs from ACloudViewer's default.
+
 ### Subsample and Compute Normals
 
 ```bash
@@ -361,13 +378,13 @@ cli-anything-acloudviewer info
 cli-anything-acloudviewer --json info
 ```
 
-## MCP Server (96 tools)
+## MCP Server (121 tools)
 
 ```bash
 cli-anything-acloudviewer-mcp --mode auto
 ```
 
-The MCP server provides 96 tools across 19 categories for comprehensive 3D point cloud and mesh processing:
+The MCP server provides 121 tools across 19 categories for comprehensive 3D point cloud and mesh processing:
 
 **File I/O (5):** `open_file`, `convert_format`, `batch_convert`, `list_formats`, `export_entity`
 
@@ -422,6 +439,12 @@ When using this CLI programmatically:
 - Full documentation: See README.md in the package
 - Test coverage: See TEST.md in the package
 - Methodology: See HARNESS.md in the cli-anything-plugin
+
+## Version Detection
+
+The `check` command detects the installed version via multiple strategies:
+`--version` flag → Qt IFW `maintenancetool li` → `.desktop` file → `CHANGELOG`.
+Reported in both text and JSON output (`"version": "3.9.5"`).
 
 ## Version
 
