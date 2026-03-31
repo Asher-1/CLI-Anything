@@ -560,6 +560,156 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="pcl_don_segmentation",
+            description="PCL Difference of Normals segmentation (-PCL_DON_SEGMENTATION).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "small_scale": {"type": "number", "default": 5.0},
+                    "large_scale": {"type": "number", "default": 10.0},
+                    "min_don": {"type": "number", "default": 0.3},
+                    "max_don": {"type": "number", "default": 1.3},
+                    "field": {"type": "string", "default": "curvature"},
+                    "cluster_tol": {"type": "number", "default": 0.02},
+                    "min_size": {"type": "integer", "default": 100},
+                    "max_size": {"type": "integer", "default": 25000},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_mincut_segmentation",
+            description="PCL Min-Cut segmentation (-PCL_MINCUT_SEGMENTATION); requires foreground seed point.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "fx": {"type": "number", "description": "Foreground seed X"},
+                    "fy": {"type": "number", "description": "Foreground seed Y"},
+                    "fz": {"type": "number", "description": "Foreground seed Z"},
+                    "neighbors": {"type": "integer", "default": 14},
+                    "sigma": {"type": "number", "default": 0.25},
+                    "back_radius": {"type": "number", "default": 0.8},
+                    "fore_weight": {"type": "number", "default": 0.5},
+                },
+                "required": ["input_path", "output_path", "fx", "fy", "fz"],
+            },
+        ),
+        Tool(
+            name="pcl_fast_global_registration",
+            description="PCL Fast Global Registration (-PCL_FAST_GLOBAL_REGISTRATION); both clouds need normals.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string", "description": "Cloud to align"},
+                    "reference_path": {"type": "string", "description": "Reference cloud"},
+                    "output_path": {"type": "string"},
+                    "feature_radius": {"type": "number", "description": "FPFH feature radius"},
+                },
+                "required": ["input_path", "reference_path", "output_path", "feature_radius"],
+            },
+        ),
+        Tool(
+            name="pcl_extract_sift",
+            description="PCL SIFT keypoint extraction (-PCL_EXTRACT_SIFT).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "mode": {"type": "string", "enum": ["RGB", "SF"]},
+                    "octaves": {"type": "integer"},
+                    "min_scale": {"type": "number"},
+                    "scales_per_octave": {"type": "integer"},
+                    "field": {"type": "string", "description": "SF name (required for SF mode)"},
+                    "min_contrast": {"type": "number"},
+                },
+                "required": ["input_path", "output_path", "mode", "octaves", "min_scale", "scales_per_octave"],
+            },
+        ),
+        Tool(
+            name="pcl_projection_filter",
+            description="PCL project points onto plane Ax+By+Cz+D=0 (-PCL_PROJECTION_FILTER).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "a": {"type": "number", "default": 0.0},
+                    "b": {"type": "number", "default": 0.0},
+                    "c": {"type": "number", "default": 1.0},
+                    "d": {"type": "number", "default": 0.0},
+                },
+                "required": ["input_path", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_general_filters",
+            description="PCL general filters: PassThrough or VoxelGrid (-PCL_GENERAL_FILTERS).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "input_path": {"type": "string"},
+                    "output_path": {"type": "string"},
+                    "mode": {"type": "string", "enum": ["PASS", "VOXEL"]},
+                    "field": {"type": "string", "default": "z"},
+                    "min_val": {"type": "number", "default": 0.1},
+                    "max_val": {"type": "number", "default": 1.1},
+                    "leaf": {"type": "number", "description": "Uniform voxel leaf size"},
+                    "leaf_x": {"type": "number"},
+                    "leaf_y": {"type": "number"},
+                    "leaf_z": {"type": "number"},
+                },
+                "required": ["input_path", "output_path", "mode"],
+            },
+        ),
+        Tool(
+            name="pcl_template_alignment",
+            description="PCL template alignment (SAC-IA + FPFH) (-PCL_TEMPLATE_ALIGNMENT).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target_path": {"type": "string", "description": "Target cloud to align templates against"},
+                    "template_paths": {"type": "array", "items": {"type": "string"}, "description": "Template cloud paths"},
+                    "output_path": {"type": "string"},
+                    "normal_radius": {"type": "number", "default": 0.02},
+                    "feature_radius": {"type": "number", "default": 0.02},
+                    "max_iterations": {"type": "integer", "default": 500},
+                    "min_sample_dist": {"type": "number", "default": 0.05},
+                    "max_corr_dist": {"type": "number", "default": 0.01},
+                    "voxel_leaf": {"type": "number"},
+                },
+                "required": ["target_path", "template_paths", "output_path"],
+            },
+        ),
+        Tool(
+            name="pcl_correspondence_matching",
+            description="PCL correspondence matching (GC or Hough3D) (-PCL_CORRESPONDENCE_MATCHING).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "scene_path": {"type": "string", "description": "Scene cloud"},
+                    "model_paths": {"type": "array", "items": {"type": "string"}, "description": "Model cloud paths"},
+                    "output_path": {"type": "string"},
+                    "model_radius": {"type": "number", "default": 0.02},
+                    "scene_radius": {"type": "number", "default": 0.03},
+                    "shot_radius": {"type": "number", "default": 0.03},
+                    "normal_k": {"type": "number", "default": 10.0},
+                    "gc_mode": {"type": "boolean", "default": True},
+                    "gc_resolution": {"type": "number", "default": 0.01},
+                    "gc_min_cluster": {"type": "number", "default": 20.0},
+                    "hough_bin": {"type": "number", "default": 0.01},
+                    "hough_threshold": {"type": "number", "default": 5.0},
+                    "hough_lrf": {"type": "number", "default": 0.015},
+                    "voxel_leaf": {"type": "number"},
+                },
+                "required": ["scene_path", "model_paths", "output_path"],
+            },
+        ),
+        Tool(
             name="poisson_recon",
             description="Reconstruct a triangle mesh from a point cloud with normals using Poisson surface reconstruction.",
             inputSchema={
@@ -2004,6 +2154,93 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 arguments["input_path"], arguments["output_path"],
                 alpha=arguments.get("alpha", 0.0),
                 dimension=arguments.get("dimension", 3),
+            ))
+        elif name == "pcl_don_segmentation":
+            return _result(backend.pcl_don_segmentation(
+                arguments["input_path"], arguments["output_path"],
+                small_scale=arguments.get("small_scale", 5.0),
+                large_scale=arguments.get("large_scale", 10.0),
+                min_don=arguments.get("min_don", 0.3),
+                max_don=arguments.get("max_don", 1.3),
+                field=arguments.get("field", "curvature"),
+                cluster_tol=arguments.get("cluster_tol", 0.02),
+                min_size=arguments.get("min_size", 100),
+                max_size=arguments.get("max_size", 25000),
+            ))
+        elif name == "pcl_mincut_segmentation":
+            return _result(backend.pcl_mincut_segmentation(
+                arguments["input_path"], arguments["output_path"],
+                fx=arguments["fx"], fy=arguments["fy"], fz=arguments["fz"],
+                neighbors=arguments.get("neighbors", 14),
+                sigma=arguments.get("sigma", 0.25),
+                back_radius=arguments.get("back_radius", 0.8),
+                fore_weight=arguments.get("fore_weight", 0.5),
+            ))
+        elif name == "pcl_fast_global_registration":
+            return _result(backend.pcl_fast_global_registration(
+                arguments["input_path"], arguments["reference_path"],
+                arguments["output_path"],
+                feature_radius=arguments["feature_radius"],
+            ))
+        elif name == "pcl_extract_sift":
+            return _result(backend.pcl_extract_sift(
+                arguments["input_path"], arguments["output_path"],
+                mode=arguments["mode"],
+                octaves=arguments["octaves"],
+                min_scale=arguments["min_scale"],
+                scales_per_octave=arguments["scales_per_octave"],
+                field=arguments.get("field"),
+                min_contrast=arguments.get("min_contrast"),
+            ))
+        elif name == "pcl_projection_filter":
+            return _result(backend.pcl_projection_filter(
+                arguments["input_path"], arguments["output_path"],
+                a=arguments.get("a", 0.0),
+                b=arguments.get("b", 0.0),
+                c=arguments.get("c", 1.0),
+                d=arguments.get("d", 0.0),
+            ))
+        elif name == "pcl_general_filters":
+            return _result(backend.pcl_general_filters(
+                arguments["input_path"], arguments["output_path"],
+                mode=arguments["mode"],
+                field=arguments.get("field", "z"),
+                min_val=arguments.get("min_val", 0.1),
+                max_val=arguments.get("max_val", 1.1),
+                leaf=arguments.get("leaf"),
+                leaf_x=arguments.get("leaf_x"),
+                leaf_y=arguments.get("leaf_y"),
+                leaf_z=arguments.get("leaf_z"),
+            ))
+
+        elif name == "pcl_template_alignment":
+            return _result(backend.pcl_template_alignment(
+                arguments["target_path"],
+                arguments["template_paths"],
+                arguments["output_path"],
+                normal_radius=arguments.get("normal_radius", 0.02),
+                feature_radius=arguments.get("feature_radius", 0.02),
+                max_iterations=arguments.get("max_iterations", 500),
+                min_sample_dist=arguments.get("min_sample_dist", 0.05),
+                max_corr_dist=arguments.get("max_corr_dist", 0.01),
+                voxel_leaf=arguments.get("voxel_leaf"),
+            ))
+        elif name == "pcl_correspondence_matching":
+            return _result(backend.pcl_correspondence_matching(
+                arguments["scene_path"],
+                arguments["model_paths"],
+                arguments["output_path"],
+                model_radius=arguments.get("model_radius", 0.02),
+                scene_radius=arguments.get("scene_radius", 0.03),
+                shot_radius=arguments.get("shot_radius", 0.03),
+                normal_k=arguments.get("normal_k", 10.0),
+                gc_mode=arguments.get("gc_mode", True),
+                gc_resolution=arguments.get("gc_resolution", 0.01),
+                gc_min_cluster=arguments.get("gc_min_cluster", 20.0),
+                hough_bin=arguments.get("hough_bin", 0.01),
+                hough_threshold=arguments.get("hough_threshold", 5.0),
+                hough_lrf=arguments.get("hough_lrf", 0.015),
+                voxel_leaf=arguments.get("voxel_leaf"),
             ))
 
         elif name == "poisson_recon":

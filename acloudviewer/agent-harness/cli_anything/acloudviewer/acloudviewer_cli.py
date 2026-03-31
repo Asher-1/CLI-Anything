@@ -1425,6 +1425,187 @@ def process_pcl_convex_hull(input_file, output_file, alpha, dimension):
     output(result)
 
 
+@process_group.command("pcl-don-segmentation")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--small-scale", type=float, default=5.0, help="Small normal scale multiplier")
+@click.option("--large-scale", type=float, default=10.0, help="Large normal scale multiplier")
+@click.option("--min-don", type=float, default=0.3, help="Min DoN magnitude")
+@click.option("--max-don", type=float, default=1.3, help="Max DoN magnitude")
+@click.option("--field", type=str, default="curvature", help="Filter field name")
+@click.option("--cluster-tol", type=float, default=0.02, help="Cluster tolerance multiplier")
+@click.option("--min-size", type=int, default=100, help="Min cluster size")
+@click.option("--max-size", type=int, default=25000, help="Max cluster size")
+@handle_error
+def process_pcl_don(input_file, output_file, small_scale, large_scale,
+                    min_don, max_don, field, cluster_tol, min_size, max_size):
+    """PCL Difference of Normals segmentation."""
+    result = get_backend().pcl_don_segmentation(
+        input_file, output_file, small_scale=small_scale,
+        large_scale=large_scale, min_don=min_don, max_don=max_don,
+        field=field, cluster_tol=cluster_tol, min_size=min_size, max_size=max_size)
+    get_session().snapshot(f"pcl-don-segmentation {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-mincut-segmentation")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--fx", type=float, required=True, help="Foreground seed X")
+@click.option("--fy", type=float, required=True, help="Foreground seed Y")
+@click.option("--fz", type=float, required=True, help="Foreground seed Z")
+@click.option("--neighbors", type=int, default=14, help="Number of neighbors")
+@click.option("--sigma", type=float, default=0.25, help="Sigma for smooth cost")
+@click.option("--back-radius", type=float, default=0.8, help="Background penalty radius")
+@click.option("--fore-weight", type=float, default=0.5, help="Foreground penalty weight")
+@handle_error
+def process_pcl_mincut(input_file, output_file, fx, fy, fz,
+                       neighbors, sigma, back_radius, fore_weight):
+    """PCL Min-Cut segmentation (requires foreground seed point)."""
+    result = get_backend().pcl_mincut_segmentation(
+        input_file, output_file, fx=fx, fy=fy, fz=fz,
+        neighbors=neighbors, sigma=sigma,
+        back_radius=back_radius, fore_weight=fore_weight)
+    get_session().snapshot(f"pcl-mincut-segmentation {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-fast-global-registration")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.argument("reference_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--feature-radius", type=float, required=True,
+              help="FPFH feature radius")
+@handle_error
+def process_pcl_fgr(input_file, reference_file, output_file, feature_radius):
+    """PCL Fast Global Registration (both clouds need normals)."""
+    result = get_backend().pcl_fast_global_registration(
+        input_file, reference_file, output_file,
+        feature_radius=feature_radius)
+    get_session().snapshot(f"pcl-fast-global-registration {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-extract-sift")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--mode", type=click.Choice(["RGB", "SF"]), required=True,
+              help="SIFT mode: RGB or scalar field")
+@click.option("--octaves", type=int, required=True, help="Number of octaves")
+@click.option("--min-scale", type=float, required=True, help="Minimum scale")
+@click.option("--scales-per-octave", type=int, required=True,
+              help="Number of scales per octave")
+@click.option("--field", type=str, default=None, help="SF name (required for SF mode)")
+@click.option("--min-contrast", type=float, default=None, help="Min contrast threshold")
+@handle_error
+def process_pcl_sift(input_file, output_file, mode, octaves, min_scale,
+                     scales_per_octave, field, min_contrast):
+    """PCL SIFT keypoint extraction."""
+    result = get_backend().pcl_extract_sift(
+        input_file, output_file, mode=mode, octaves=octaves,
+        min_scale=min_scale, scales_per_octave=scales_per_octave,
+        field=field, min_contrast=min_contrast)
+    get_session().snapshot(f"pcl-extract-sift {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-projection-filter")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--a", "plane_a", type=float, default=0.0, help="Plane coefficient A")
+@click.option("--b", "plane_b", type=float, default=0.0, help="Plane coefficient B")
+@click.option("--c", "plane_c", type=float, default=1.0, help="Plane coefficient C")
+@click.option("--d", "plane_d", type=float, default=0.0, help="Plane coefficient D")
+@handle_error
+def process_pcl_proj(input_file, output_file, plane_a, plane_b, plane_c, plane_d):
+    """PCL project points onto plane Ax+By+Cz+D=0."""
+    result = get_backend().pcl_projection_filter(
+        input_file, output_file, a=plane_a, b=plane_b, c=plane_c, d=plane_d)
+    get_session().snapshot(f"pcl-projection-filter {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-general-filters")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--mode", type=click.Choice(["PASS", "VOXEL"]), required=True,
+              help="Filter mode: PASS (passthrough) or VOXEL (voxel grid)")
+@click.option("--field", type=str, default="z", help="PassThrough field name")
+@click.option("--min-val", type=float, default=0.1, help="PassThrough min value")
+@click.option("--max-val", type=float, default=1.1, help="PassThrough max value")
+@click.option("--leaf", type=float, default=None, help="VoxelGrid uniform leaf size")
+@click.option("--leaf-x", type=float, default=None, help="VoxelGrid leaf X")
+@click.option("--leaf-y", type=float, default=None, help="VoxelGrid leaf Y")
+@click.option("--leaf-z", type=float, default=None, help="VoxelGrid leaf Z")
+@handle_error
+def process_pcl_genfilt(input_file, output_file, mode, field, min_val, max_val,
+                        leaf, leaf_x, leaf_y, leaf_z):
+    """PCL general filters: PassThrough or VoxelGrid."""
+    result = get_backend().pcl_general_filters(
+        input_file, output_file, mode=mode, field=field,
+        min_val=min_val, max_val=max_val,
+        leaf=leaf, leaf_x=leaf_x, leaf_y=leaf_y, leaf_z=leaf_z)
+    get_session().snapshot(f"pcl-general-filters {input_file}")
+    output(result)
+
+
+@process_group.command("pcl-template-alignment")
+@click.argument("target_file", type=click.Path(exists=True))
+@click.argument("template_files", nargs=-1, type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--normal-radius", type=float, default=0.02, help="Normal estimation radius")
+@click.option("--feature-radius", type=float, default=0.02, help="FPFH feature radius")
+@click.option("--max-iterations", type=int, default=500, help="SAC-IA max iterations")
+@click.option("--min-sample-dist", type=float, default=0.05, help="Min sample distance")
+@click.option("--max-corr-dist", type=float, default=0.01, help="Max correspondence distance")
+@click.option("--voxel-leaf", type=float, default=None, help="Voxel grid leaf size")
+@handle_error
+def process_pcl_template_align(target_file, template_files, output_file,
+                               normal_radius, feature_radius, max_iterations,
+                               min_sample_dist, max_corr_dist, voxel_leaf):
+    """PCL template alignment (SAC-IA with FPFH features)."""
+    result = get_backend().pcl_template_alignment(
+        target_file, list(template_files), output_file,
+        normal_radius=normal_radius, feature_radius=feature_radius,
+        max_iterations=max_iterations, min_sample_dist=min_sample_dist,
+        max_corr_dist=max_corr_dist, voxel_leaf=voxel_leaf)
+    get_session().snapshot(f"pcl-template-alignment {target_file}")
+    output(result)
+
+
+@process_group.command("pcl-correspondence-matching")
+@click.argument("scene_file", type=click.Path(exists=True))
+@click.argument("model_files", nargs=-1, type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--model-radius", type=float, default=0.02, help="Model uniform sampling radius")
+@click.option("--scene-radius", type=float, default=0.03, help="Scene uniform sampling radius")
+@click.option("--shot-radius", type=float, default=0.03, help="SHOT descriptor radius")
+@click.option("--normal-k", type=float, default=10.0, help="Normal K-search")
+@click.option("--gc/--hough", "gc_mode", default=True, help="GC or Hough3D grouping")
+@click.option("--gc-resolution", type=float, default=0.01, help="GC consensus resolution")
+@click.option("--gc-min-cluster", type=float, default=20.0, help="GC min cluster size")
+@click.option("--hough-bin", type=float, default=0.01, help="Hough bin size")
+@click.option("--hough-threshold", type=float, default=5.0, help="Hough threshold")
+@click.option("--hough-lrf", type=float, default=0.015, help="Hough LRF radius")
+@click.option("--voxel-leaf", type=float, default=None, help="Voxel grid leaf size")
+@handle_error
+def process_pcl_corr_match(scene_file, model_files, output_file,
+                           model_radius, scene_radius, shot_radius, normal_k,
+                           gc_mode, gc_resolution, gc_min_cluster,
+                           hough_bin, hough_threshold, hough_lrf, voxel_leaf):
+    """PCL correspondence matching (GC or Hough3D grouping)."""
+    result = get_backend().pcl_correspondence_matching(
+        scene_file, list(model_files), output_file,
+        model_radius=model_radius, scene_radius=scene_radius,
+        shot_radius=shot_radius, normal_k=normal_k,
+        gc_mode=gc_mode, gc_resolution=gc_resolution,
+        gc_min_cluster=gc_min_cluster, hough_bin=hough_bin,
+        hough_threshold=hough_threshold, hough_lrf=hough_lrf,
+        voxel_leaf=voxel_leaf)
+    get_session().snapshot(f"pcl-correspondence-matching {scene_file}")
+    output(result)
+
+
 @process_group.command("poisson-recon")
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", "output_file", type=click.Path(), required=True)

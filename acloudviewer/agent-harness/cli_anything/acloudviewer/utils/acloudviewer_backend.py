@@ -1529,6 +1529,219 @@ class ACloudViewerBackend:
             "status": self._check_status(output_path),
         }
 
+    def pcl_don_segmentation(
+            self, input_path: str, output_path: str,
+            small_scale: float = 5.0, large_scale: float = 10.0,
+            min_don: float = 0.3, max_don: float = 1.3,
+            field: str = "curvature", cluster_tol: float = 0.02,
+            min_size: int = 100, max_size: int = 25000,
+    ) -> dict:
+        """PCL Difference of Normals segmentation (-PCL_DON_SEGMENTATION)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_DON_SEGMENTATION",
+            "-SMALL_SCALE", str(small_scale),
+            "-LARGE_SCALE", str(large_scale),
+            "-MIN_DON", str(min_don),
+            "-MAX_DON", str(max_don),
+            "-FIELD", field,
+            "-CLUSTER_TOL", str(cluster_tol),
+            "-MIN_SIZE", str(min_size),
+            "-MAX_SIZE", str(max_size),
+        ] + self._save_clouds_all_at_once(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "small_scale": small_scale, "large_scale": large_scale,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_mincut_segmentation(
+            self, input_path: str, output_path: str,
+            fx: float = 0.0, fy: float = 0.0, fz: float = 0.0,
+            neighbors: int = 14, sigma: float = 0.25,
+            back_radius: float = 0.8, fore_weight: float = 0.5,
+    ) -> dict:
+        """PCL Min-Cut segmentation (-PCL_MINCUT_SEGMENTATION)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_MINCUT_SEGMENTATION",
+            "-FX", str(fx), "-FY", str(fy), "-FZ", str(fz),
+            "-NEIGHBORS", str(neighbors),
+            "-SIGMA", str(sigma),
+            "-BACK_RADIUS", str(back_radius),
+            "-FORE_WEIGHT", str(fore_weight),
+        ] + self._save_clouds_all_at_once(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_fast_global_registration(
+            self, input_path: str, reference_path: str, output_path: str,
+            feature_radius: float = 0.05,
+    ) -> dict:
+        """PCL Fast Global Registration (-PCL_FAST_GLOBAL_REGISTRATION). Needs normals on both clouds."""
+        args = [
+            "-O", reference_path, "-O", input_path,
+            "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_FAST_GLOBAL_REGISTRATION",
+            "-FEATURE_RADIUS", str(feature_radius),
+            "-REF_INDEX", "0",
+        ] + self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "reference": reference_path,
+            "output": output_path, "feature_radius": feature_radius,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_extract_sift(
+            self, input_path: str, output_path: str,
+            mode: str = "RGB", octaves: int = 4,
+            min_scale: float = 0.01, scales_per_octave: int = 6,
+            field: str | None = None, min_contrast: float | None = None,
+    ) -> dict:
+        """PCL SIFT keypoint extraction (-PCL_EXTRACT_SIFT)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_EXTRACT_SIFT",
+            "-MODE", mode,
+            "-OCTAVES", str(octaves),
+            "-MIN_SCALE", str(min_scale),
+            "-SCALES_PER_OCTAVE", str(scales_per_octave),
+        ]
+        if field:
+            args += ["-FIELD", field]
+        if min_contrast is not None:
+            args += ["-MIN_CONTRAST", str(min_contrast)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "mode": mode, "octaves": octaves,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_projection_filter(
+            self, input_path: str, output_path: str,
+            a: float = 0.0, b: float = 0.0, c: float = 1.0, d: float = 0.0,
+    ) -> dict:
+        """PCL project points onto plane Ax+By+Cz+D=0 (-PCL_PROJECTION_FILTER)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_PROJECTION_FILTER",
+            "-A", str(a), "-B", str(b), "-C", str(c), "-D", str(d),
+        ] + self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "plane": [a, b, c, d],
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_general_filters(
+            self, input_path: str, output_path: str,
+            mode: str = "PASS", field: str = "z",
+            min_val: float = 0.1, max_val: float = 1.1,
+            leaf: float | None = None,
+            leaf_x: float | None = None,
+            leaf_y: float | None = None,
+            leaf_z: float | None = None,
+    ) -> dict:
+        """PCL general filters: PassThrough or VoxelGrid (-PCL_GENERAL_FILTERS)."""
+        args = [
+            "-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+            "-PCL_GENERAL_FILTERS",
+            "-MODE", mode,
+        ]
+        if mode.upper() == "PASS":
+            args += ["-FIELD", field, "-MIN", str(min_val), "-MAX", str(max_val)]
+        elif mode.upper() == "VOXEL":
+            if leaf is not None:
+                args += ["-LEAF", str(leaf)]
+            else:
+                if leaf_x is not None:
+                    args += ["-LEAF_X", str(leaf_x)]
+                if leaf_y is not None:
+                    args += ["-LEAF_Y", str(leaf_y)]
+                if leaf_z is not None:
+                    args += ["-LEAF_Z", str(leaf_z)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "input": input_path, "output": output_path,
+            "mode": mode,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_template_alignment(
+            self, target_path: str, template_paths: list[str],
+            output_path: str,
+            normal_radius: float = 0.02, feature_radius: float = 0.02,
+            max_iterations: int = 500, min_sample_dist: float = 0.05,
+            max_corr_dist: float = 0.01, voxel_leaf: float | None = None,
+    ) -> dict:
+        """PCL template alignment (-PCL_TEMPLATE_ALIGNMENT). Last -O cloud = target."""
+        args = []
+        for tp in template_paths:
+            args += ["-O", tp]
+        args += ["-O", target_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                 "-PCL_TEMPLATE_ALIGNMENT",
+                 "-NORMAL_RADIUS", str(normal_radius),
+                 "-FEATURE_RADIUS", str(feature_radius),
+                 "-MAX_ITERATIONS", str(max_iterations),
+                 "-MIN_SAMPLE_DIST", str(min_sample_dist),
+                 "-MAX_CORR_DIST", str(max_corr_dist)]
+        if voxel_leaf is not None:
+            args += ["-VOXEL_LEAF", str(voxel_leaf)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {
+            "target": target_path, "templates": template_paths,
+            "output": output_path,
+            "status": self._check_status(output_path),
+        }
+
+    def pcl_correspondence_matching(
+            self, scene_path: str, model_paths: list[str],
+            output_path: str,
+            model_radius: float = 0.02, scene_radius: float = 0.03,
+            shot_radius: float = 0.03, normal_k: float = 10.0,
+            gc_mode: bool = True, gc_resolution: float = 0.01,
+            gc_min_cluster: float = 20.0, hough_bin: float = 0.01,
+            hough_threshold: float = 5.0, hough_lrf: float = 0.015,
+            voxel_leaf: float | None = None,
+    ) -> dict:
+        """PCL correspondence matching (-PCL_CORRESPONDENCE_MATCHING). Last -O cloud = scene."""
+        args = []
+        for mp in model_paths:
+            args += ["-O", mp]
+        args += ["-O", scene_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                 "-PCL_CORRESPONDENCE_MATCHING",
+                 "-MODEL_RADIUS", str(model_radius),
+                 "-SCENE_RADIUS", str(scene_radius),
+                 "-SHOT_RADIUS", str(shot_radius),
+                 "-NORMAL_K", str(normal_k)]
+        args.append("-GC" if gc_mode else "-HOUGH")
+        if gc_mode:
+            args += ["-GC_RESOLUTION", str(gc_resolution),
+                     "-GC_MIN_CLUSTER", str(gc_min_cluster)]
+        else:
+            args += ["-HOUGH_BIN", str(hough_bin),
+                     "-HOUGH_THRESHOLD", str(hough_threshold),
+                     "-HOUGH_LRF", str(hough_lrf)]
+        if voxel_leaf is not None:
+            args += ["-VOXEL_LEAF", str(voxel_leaf)]
+        args += self._save_clouds_all_at_once(output_path)
+        self._run_cli(args)
+        return {
+            "scene": scene_path, "models": model_paths,
+            "output": output_path,
+            "status": self._check_status(output_path),
+        }
+
     def auto_seg(self, input_path: str, output_path: str,
                  mortar_maps: bool = False, contours: bool = False,
                  profile_file: str | None = None) -> dict:
