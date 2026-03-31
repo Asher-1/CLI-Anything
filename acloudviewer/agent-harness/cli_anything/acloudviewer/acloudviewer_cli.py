@@ -1934,6 +1934,163 @@ def process_manual_seg(input_file, output_file, mortar_maps, contours, profile_f
     output(result)
 
 
+@process_group.command("compass-export")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--format", "fmt", type=click.Choice(["csv", "xml"]), default="csv",
+              help="Export format")
+@handle_error
+def process_compass_export(input_file, output_file, fmt):
+    """Export Compass measurements to CSV or XML."""
+    result = get_backend().compass_export(input_file, output_file, fmt=fmt)
+    output(result)
+
+
+@process_group.command("compass-import-fol")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--dip-sf", default="Dip", help="Scalar field name for dip")
+@click.option("--dipdir-sf", default="DipDir", help="Scalar field name for dip direction")
+@click.option("--plane-size", type=float, default=2.0, help="Foliation plane size")
+@handle_error
+def process_compass_import_fol(input_file, output_file, dip_sf, dipdir_sf, plane_size):
+    """Import foliations from scalar fields (qCompass)."""
+    result = get_backend().compass_import_fol(input_file, output_file,
+                                              dip_sf=dip_sf, dipdir_sf=dipdir_sf,
+                                              plane_size=plane_size)
+    output(result)
+
+
+@process_group.command("compass-import-lin")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--trend-sf", default="Trend", help="Scalar field name for trend")
+@click.option("--plunge-sf", default="Plunge", help="Scalar field name for plunge")
+@click.option("--length", type=float, default=2.0, help="Lineation display length")
+@handle_error
+def process_compass_import_lin(input_file, output_file, trend_sf, plunge_sf, length):
+    """Import lineations from scalar fields (qCompass)."""
+    result = get_backend().compass_import_lin(input_file, output_file,
+                                              trend_sf=trend_sf, plunge_sf=plunge_sf,
+                                              length=length)
+    output(result)
+
+
+@process_group.command("compass-refit")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@handle_error
+def process_compass_refit(input_file, output_file):
+    """Refit Compass trace planes."""
+    result = get_backend().compass_refit(input_file, output_file)
+    output(result)
+
+
+@process_group.command("compass-p21")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--radius", type=float, default=10.0, help="Search radius")
+@click.option("--subsample", type=int, default=25, help="Subsample rate")
+@handle_error
+def process_compass_p21(input_file, output_file, radius, subsample):
+    """Estimate P21 fracture intensity (qCompass)."""
+    result = get_backend().compass_p21(input_file, output_file,
+                                       radius=radius, subsample=subsample)
+    output(result)
+
+
+@process_group.command("sra")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--profile", "profile_path", type=click.Path(exists=True), required=True,
+              help="Revolution profile file")
+@click.option("--axis", type=click.Choice(["X", "Y", "Z"]), default="Z",
+              help="Revolution axis")
+@handle_error
+def process_sra(input_file, output_file, profile_path, axis):
+    """Compute SRA radial distance from surface of revolution."""
+    result = get_backend().sra(input_file, output_file,
+                               profile_path=profile_path, axis=axis)
+    output(result)
+
+
+@process_group.command("treeiso")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--lambda1", type=float, default=1.0, help="Initial seg regularization strength")
+@click.option("--k1", type=int, default=5, help="Initial seg min neighbors")
+@click.option("--decimate-res1", type=float, default=0.05, help="Initial seg decimation resolution")
+@click.option("--lambda2", type=int, default=20, help="Intermediate seg regularization strength")
+@click.option("--k2", type=int, default=20, help="Intermediate seg min neighbors")
+@click.option("--max-gap", type=float, default=2.0, help="Max gap between segments")
+@click.option("--decimate-res2", type=float, default=0.1, help="Intermediate seg decimation resolution")
+@click.option("--rho", type=float, default=0.5, help="Relative height-to-length ratio")
+@click.option("--vertical-weight", type=float, default=0.5, help="Vertical overlap weight")
+@handle_error
+def process_treeiso(input_file, output_file, lambda1, k1, decimate_res1,
+                    lambda2, k2, max_gap, decimate_res2, rho, vertical_weight):
+    """Individual tree segmentation (qTreeIso)."""
+    result = get_backend().tree_iso(
+        input_file, output_file,
+        lambda1=lambda1, k1=k1, decimate_res1=decimate_res1,
+        lambda2=lambda2, k2=k2, max_gap=max_gap, decimate_res2=decimate_res2,
+        rho=rho, vertical_weight=vertical_weight)
+    output(result)
+
+
+@process_group.command("fbx-settings")
+@click.option("--export-format", default="FBX", help="FBX export format string")
+@handle_error
+def process_fbx_settings(export_format):
+    """Configure FBX IO export format."""
+    result = get_backend().fbx_settings(export_format=export_format)
+    output(result)
+
+
+@process_group.command("lasfwf-load")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--global-shift", default="AUTO",
+              help="Global shift mode: AUTO, FIRST, NONE, or 'X Y Z'")
+@handle_error
+def process_lasfwf_load(input_file, output_file, global_shift):
+    """Load a Full Waveform LAS file (qLASFWFIO)."""
+    result = get_backend().lasfwf_load(input_file, output_file, global_shift=global_shift)
+    output(result)
+
+
+@process_group.command("lasfwf-save")
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--compressed", is_flag=True, help="Save as compressed LAZ")
+@click.option("--all-at-once", is_flag=True, help="Save all clouds in one file")
+@handle_error
+def process_lasfwf_save(input_file, output_file, compressed, all_at_once):
+    """Save clouds as Full Waveform LAS (qLASFWFIO)."""
+    result = get_backend().lasfwf_save(input_file, output_file,
+                                       compressed=compressed, all_at_once=all_at_once)
+    output(result)
+
+
+@process_group.command("bundler-import")
+@click.argument("bundler_file", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_file", type=click.Path(), required=True)
+@click.option("--alt-keypoints", default="", help="Alternative keypoints file")
+@click.option("--scale-factor", type=float, default=1.0, help="Scale factor")
+@click.option("--undistort", is_flag=True, help="Undistort images")
+@click.option("--color-dtm-vertices", type=int, default=0,
+              help="Generate colored DTM with N vertices (0=disabled)")
+@handle_error
+def process_bundler_import(bundler_file, output_file, alt_keypoints,
+                           scale_factor, undistort, color_dtm_vertices):
+    """Import a Bundler reconstruction file (qAdditionalIO)."""
+    result = get_backend().bundler_import(
+        bundler_file, output_file,
+        alt_keypoints=alt_keypoints, scale_factor=scale_factor,
+        undistort=undistort, color_dtm_vertices=color_dtm_vertices)
+    output(result)
+
+
 # ── Scalar field operations ──
 
 @process_group.command("set-active-sf")

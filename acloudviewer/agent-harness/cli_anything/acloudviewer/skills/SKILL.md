@@ -378,13 +378,13 @@ cli-anything-acloudviewer info
 cli-anything-acloudviewer --json info
 ```
 
-## MCP Server (121 tools)
+## MCP Server (178 tools)
 
 ```bash
 cli-anything-acloudviewer-mcp --mode auto
 ```
 
-The MCP server provides 121 tools across 19 categories for comprehensive 3D point cloud and mesh processing:
+The MCP server provides 178 tools across 21 categories for comprehensive 3D point cloud and mesh processing:
 
 **File I/O (5):** `open_file`, `convert_format`, `batch_convert`, `list_formats`, `export_entity`
 
@@ -408,9 +408,19 @@ The MCP server provides 121 tools across 19 categories for comprehensive 3D poin
 
 **Cleanup (5):** `remove_rgb`, `remove_scan_grids`, `match_centers`, `drop_global_shift`, `cloud_remove_rgb`
 
+**Plugin Processing (24):** `pcv`, `compass_export`, `compass_import_fol`, `compass_import_lin`, `compass_p21`, `compass_refit`, `sra`, `csf`, `ransac`, `m3c2`, `canupo`, `facets`, `hough_normals`, `poisson_recon`, `cork_boolean`, `voxfall`, `classify_3dmasc`, `treeiso`, `cloud_layers`, `animation`, `mplane`, `auto_seg`, `manual_seg`, `python_script`
+
+**IO Settings (8):** `draco_settings`, `e57_settings`, `las_settings`, `csv_matrix_settings`, `photoscan_settings`, `mesh_io_settings`, `core_io_settings`, `fbx_settings`
+
+**Colorimetric Segmentation (3):** `color_seg_rgb`, `color_seg_hsv`, `color_seg_scalar`
+
+**PCL Processing (18):** `pcl_sor`, `pcl_normal_estimation`, `pcl_mls`, `pcl_euclidean_cluster`, `pcl_sac_segmentation`, `pcl_region_growing`, `pcl_marching_cubes`, `pcl_greedy_triangulation`, `pcl_poisson_recon`, `pcl_convex_hull`, `pcl_don_segmentation`, `pcl_mincut_segmentation`, `pcl_fast_global_registration`, `pcl_extract_sift`, `pcl_projection_filter`, `pcl_general_filters`, `pcl_template_alignment`, `pcl_correspondence_matching`
+
+**Misc (4):** `g3point`, `volume_25d`, `crop_2d`, `bundler_import`
+
 **Colmap Reconstruction (13):** `colmap_auto_reconstruct`, `colmap_extract_features`, `colmap_match_features`, `colmap_sparse_reconstruct`, `colmap_dense_stereo`, `colmap_stereo_fusion`, `colmap_poisson_mesh`, `colmap_model_converter`, `colmap_undistort`, `colmap_delaunay_mesh`, `colmap_image_texturer`, `colmap_analyze_model`, `colmap_run`
 
-**SIBR Tools (12):** `sibr_viewer`, `sibr_tool`, `sibr_prepare_colmap`, `sibr_texture_mesh`, `sibr_unwrap_mesh`, `sibr_tonemapper`, `sibr_align_meshes`, `sibr_camera_converter`, `sibr_nvm_to_sibr`, `sibr_crop_from_center`, `sibr_clipping_planes`, `sibr_distord_crop` (launches SIBR viewers: gaussian, ulr, ulrv2, texturedmesh, pointbased, remoteGaussian)
+**SIBR Tools (12):** `sibr_viewer`, `sibr_tool`, `sibr_prepare_colmap`, `sibr_texture_mesh`, `sibr_unwrap_mesh`, `sibr_tonemapper`, `sibr_align_meshes`, `sibr_camera_converter`, `sibr_nvm_to_sibr`, `sibr_crop_from_center`, `sibr_clipping_planes`, `sibr_distord_crop`
 
 **Scene GUI (6):** `scene_list`, `scene_info`, `scene_remove`, `scene_set_visible`, `scene_select`, `scene_clear`
 

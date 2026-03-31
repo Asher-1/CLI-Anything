@@ -350,9 +350,9 @@ reconstructions for novel view synthesis and rendering:
 **Note**: SIBR tools are not available on macOS. Requires ACloudViewer built with
 `-DPLUGIN_STANDARD_QSIBR=ON` CMake flag.
 
-### MCP Server (121 tools)
+### MCP Server (178 tools)
 
-The MCP server exposes 121 tools for AI agent frameworks (OpenClaw, Cursor,
+The MCP server exposes 178 tools for AI agent frameworks (OpenClaw, Cursor,
 Claude Code):
 
 | Category | Count | Tools |
@@ -368,8 +368,13 @@ Claude Code):
 | **Mesh Operations** | 10 | `mesh_volume`, `extract_vertices`, `flip_triangles`, `mesh_simplify`, `mesh_smooth`, `mesh_subdivide`, `mesh_sample_points`, `mesh_extract_vertices_gui`, `mesh_flip_triangles_gui`, `mesh_volume_gui` |
 | **Merge** | 4 | `merge_clouds`, `merge_meshes`, `cloud_merge_gui`, `mesh_merge_gui` |
 | **Cleanup** | 5 | `remove_rgb`, `remove_scan_grids`, `match_centers`, `drop_global_shift`, `cloud_remove_rgb` |
+| **Plugin Processing** | 24 | `pcv`, `compass_export`, `compass_import_fol`, `compass_import_lin`, `compass_p21`, `compass_refit`, `sra`, `csf`, `ransac`, `m3c2`, `canupo`, `facets`, `hough_normals`, `poisson_recon`, `cork_boolean`, `voxfall`, `classify_3dmasc`, `treeiso`, `cloud_layers`, `animation`, `mplane`, `auto_seg`, `manual_seg`, `python_script` |
+| **IO Settings** | 8 | `draco_settings`, `e57_settings`, `las_settings`, `csv_matrix_settings`, `photoscan_settings`, `mesh_io_settings`, `core_io_settings`, `fbx_settings` |
+| **Colorimetric Seg** | 3 | `color_seg_rgb`, `color_seg_hsv`, `color_seg_scalar` |
+| **PCL Processing** | 18 | `pcl_sor`, `pcl_normal_estimation`, `pcl_mls`, `pcl_euclidean_cluster`, `pcl_sac_segmentation`, `pcl_region_growing`, `pcl_marching_cubes`, `pcl_greedy_triangulation`, `pcl_poisson_recon`, `pcl_convex_hull`, `pcl_don_segmentation`, `pcl_mincut_segmentation`, `pcl_fast_global_registration`, `pcl_extract_sift`, `pcl_projection_filter`, `pcl_general_filters`, `pcl_template_alignment`, `pcl_correspondence_matching` |
+| **Misc** | 4 | `g3point`, `volume_25d`, `crop_2d`, `bundler_import` |
 | **Colmap Reconstruction** | 13 | `colmap_auto_reconstruct`, `colmap_extract_features`, `colmap_match_features`, `colmap_sparse_reconstruct`, `colmap_dense_stereo`, `colmap_stereo_fusion`, `colmap_poisson_mesh`, `colmap_model_converter`, `colmap_undistort`, `colmap_delaunay_mesh`, `colmap_image_texturer`, `colmap_analyze_model`, `colmap_run` |
-| **SIBR Tools** | 12 | `sibr_viewer`, `sibr_tool`, `sibr_prepare_colmap`, `sibr_texture_mesh`, `sibr_unwrap_mesh`, `sibr_tonemapper`, `sibr_align_meshes`, `sibr_camera_converter`, `sibr_nvm_to_sibr`, `sibr_crop_from_center`, `sibr_clipping_planes`, `sibr_distord_crop`  |
+| **SIBR Tools** | 12 | `sibr_viewer`, `sibr_tool`, `sibr_prepare_colmap`, `sibr_texture_mesh`, `sibr_unwrap_mesh`, `sibr_tonemapper`, `sibr_align_meshes`, `sibr_camera_converter`, `sibr_nvm_to_sibr`, `sibr_crop_from_center`, `sibr_clipping_planes`, `sibr_distord_crop` |
 | **Scene (GUI)** | 6 | `scene_list`, `scene_info`, `scene_remove`, `scene_set_visible`, `scene_select`, `scene_clear` |
 | **Entity (GUI)** | 2 | `entity_rename`, `entity_set_color` |
 | **View (GUI)** | 7 | `screenshot`, `get_camera`, `view_set_orientation`, `view_zoom_fit`, `view_refresh`, `view_set_perspective`, `view_set_point_size` |
@@ -377,7 +382,7 @@ Claude Code):
 | **Transform** | 2 | `transform_apply`, `transform_apply_file` |
 | **Utility** | 2 | `get_info`, `list_rpc_methods` |
 
-**Total**: 121 tools supporting both headless CLI and GUI RPC modes.
+**Total**: 178 tools supporting both headless CLI and GUI RPC modes.
 
 ## RPC Robustness: Automatic Fallback
 

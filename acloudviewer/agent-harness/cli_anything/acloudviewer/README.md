@@ -312,7 +312,6 @@ cli-anything-acloudviewer sibr viewer remoteGaussian --ip 127.0.0.1 --port 6009
 - `texturedmesh`: Textured mesh viewer (requires `--mesh` and `--path`)
 - `pointbased`: Point-based rendering viewer
 - `remoteGaussian`: Remote Gaussian viewer for network rendering
-```
 
 ### Full reconstruction pipeline (Colmap + SIBR) — **Headless**
 
@@ -485,7 +484,7 @@ cli-anything-acloudviewer --json --mode headless process subsample input.ply -o 
 | **GUI** | `methods` | `list` | List available RPC methods (dynamic discovery) |
 | **GUI** | `colmap` | `reconstruct`, `run` | COLMAP reconstruction via RPC |
 
-## JSON-RPC API (67 Methods)
+## JSON-RPC API (72 Methods)
 
 When running in GUI mode, the harness communicates via JSON-RPC 2.0 over WebSocket. The method registry is dynamic — use `methods.list` to discover all available methods at runtime.
 
@@ -503,16 +502,16 @@ Key method groups:
 | **Transform** | `transform.apply` |
 | **COLMAP** | `colmap.reconstruct`, `colmap.run` |
 
-## MCP Server (121 Tools)
+## MCP Server (178 Tools)
 
-An optional MCP server exposes 121 tools for integration with AI agents:
+An optional MCP server exposes 178 tools for integration with AI agents:
 
 ```bash
 pip install -e .
 cli-anything-acloudviewer-mcp --mode auto
 ```
 
-MCP tool categories mirror the JSON-RPC methods above, plus additional CLI-only tools for headless processing, file conversion, batch operations, SIBR, and session management.
+MCP tool categories mirror the JSON-RPC methods above, plus additional CLI-only tools for headless processing, file conversion, batch operations, SIBR, plugin processing (PCV, Compass, SRA, CSF, RANSAC, etc.), and session management.
 
 ## Supported File Formats
 
@@ -569,7 +568,7 @@ pip install -e ".[dev]"
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
 
-Test suite: ~592 tests covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (121 tools), and session management.
+Test suite: ~592 tests covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (178 tools), and session management.
 
 ## Methodology
 

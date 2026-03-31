@@ -1799,6 +1799,137 @@ class ACloudViewerBackend:
                 "profile": profile_path, "axis": axis,
                 "status": self._check_status(output_path)}
 
+    def compass_import_fol(self, input_path: str, output_path: str,
+                           dip_sf: str = "Dip", dipdir_sf: str = "DipDir",
+                           plane_size: float = 2.0) -> dict:
+        """Import foliations from scalar fields into Compass planes."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COMPASS_IMPORT_FOL",
+                "-DIP_SF", dip_sf, "-DIPDIR_SF", dipdir_sf,
+                "-PLANE_SIZE", str(plane_size)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "dip_sf": dip_sf, "dipdir_sf": dipdir_sf,
+                "plane_size": plane_size,
+                "status": self._check_status(output_path)}
+
+    def compass_import_lin(self, input_path: str, output_path: str,
+                           trend_sf: str = "Trend", plunge_sf: str = "Plunge",
+                           length: float = 2.0) -> dict:
+        """Import lineations from scalar fields into Compass lineations."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COMPASS_IMPORT_LIN",
+                "-TREND_SF", trend_sf, "-PLUNGE_SF", plunge_sf,
+                "-LENGTH", str(length)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "trend_sf": trend_sf, "plunge_sf": plunge_sf,
+                "length": length,
+                "status": self._check_status(output_path)}
+
+    def compass_refit(self, input_path: str, output_path: str) -> dict:
+        """Refit Compass trace planes."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COMPASS_REFIT"]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "status": self._check_status(output_path)}
+
+    def compass_p21(self, input_path: str, output_path: str,
+                    radius: float = 10.0, subsample: int = 25) -> dict:
+        """Estimate P21 fracture intensity using Compass traces."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-COMPASS_P21",
+                "-RADIUS", str(radius), "-SUBSAMPLE", str(subsample)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "radius": radius, "subsample": subsample,
+                "status": self._check_status(output_path)}
+
+    def tree_iso(self, input_path: str, output_path: str,
+                 lambda1: float = 1.0, k1: int = 5,
+                 decimate_res1: float = 0.05,
+                 lambda2: int = 20, k2: int = 20,
+                 max_gap: float = 2.0, decimate_res2: float = 0.1,
+                 rho: float = 0.5, vertical_weight: float = 0.5) -> dict:
+        """Run TreeIso individual tree segmentation."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-TREEISO",
+                "-LAMBDA1", str(lambda1), "-K1", str(k1),
+                "-DECIMATE_RESOLUTION1", str(decimate_res1),
+                "-LAMBDA2", str(lambda2), "-K2", str(k2),
+                "-MAX_GAP", str(max_gap),
+                "-DECIMATE_RESOLUTION2", str(decimate_res2),
+                "-RHO", str(rho),
+                "-VERTICAL_OVERLAP_WEIGHT", str(vertical_weight)]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "lambda1": lambda1, "k1": k1,
+                "lambda2": lambda2, "k2": k2,
+                "max_gap": max_gap, "rho": rho,
+                "status": self._check_status(output_path)}
+
+    def fbx_settings(self, export_format: str = "FBX") -> dict:
+        """Set FBX export format setting."""
+        args = ["-FBX", "-EXPORT_FMT", export_format]
+        self._run_cli(args)
+        return {"export_format": export_format, "status": "ok"}
+
+    def lasfwf_load(self, input_path: str, output_path: str,
+                    global_shift: str = "AUTO") -> dict:
+        """Load a Full Waveform LAS file."""
+        args = ["-FWF_O"]
+        if global_shift.upper() != "NONE":
+            args += ["-GLOBAL_SHIFT", global_shift.upper()]
+        args += [input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "global_shift": global_shift,
+                "status": self._check_status(output_path)}
+
+    def lasfwf_save(self, input_path: str, output_path: str,
+                    compressed: bool = False,
+                    all_at_once: bool = False) -> dict:
+        """Save loaded clouds as Full Waveform LAS."""
+        args = ["-O", input_path, "-AUTO_SAVE", "OFF", "-NO_TIMESTAMP",
+                "-FWF_SAVE_CLOUDS"]
+        if all_at_once:
+            args.append("ALL_AT_ONCE")
+        if compressed:
+            args.append("COMPRESSED")
+        self._run_cli(args)
+        return {"input": input_path, "output": output_path,
+                "compressed": compressed, "all_at_once": all_at_once,
+                "status": "ok"}
+
+    def bundler_import(self, bundler_file: str, output_path: str,
+                       alt_keypoints: str = "",
+                       scale_factor: float = 1.0,
+                       undistort: bool = False,
+                       color_dtm_vertices: int = 0) -> dict:
+        """Import a Bundler reconstruction file."""
+        args = ["-BUNDLER_IMPORT", bundler_file]
+        if alt_keypoints:
+            args += ["-ALT_KEYPOINTS", alt_keypoints]
+        if scale_factor != 1.0:
+            args += ["-SCALE_FACTOR", str(scale_factor)]
+        if undistort:
+            args.append("-UNDISTORT")
+        if color_dtm_vertices > 0:
+            args += ["-COLOR_DTM", str(color_dtm_vertices)]
+        args += ["-AUTO_SAVE", "OFF", "-NO_TIMESTAMP"]
+        args += self._save_args(output_path)
+        self._run_cli(args)
+        return {"bundler_file": bundler_file, "output": output_path,
+                "scale_factor": scale_factor, "undistort": undistort,
+                "status": self._check_status(output_path)}
+
     def icp_registration(self, data_path: str, reference_path: str,
                          output_path: str | None = None,
                          iterations: int = 100,

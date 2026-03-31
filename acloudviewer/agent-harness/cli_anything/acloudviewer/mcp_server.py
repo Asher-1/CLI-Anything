@@ -1085,6 +1085,74 @@ async def list_tools() -> list[Tool]:
                  "profile_path": {"type": "string", "description": "Revolution profile file"},
                  "axis": {"type": "string", "default": "Z", "description": "Revolution axis: X, Y, or Z"}},
               "required": ["input_path", "output_path", "profile_path"]}),
+        Tool(name="compass_import_fol", description="Import foliations from dip/dipdir scalar fields into Compass planes.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input point cloud with dip/dipdir SFs"},
+                 "output_path": {"type": "string", "description": "Output file with imported foliations"},
+                 "dip_sf": {"type": "string", "default": "Dip", "description": "Dip scalar field name"},
+                 "dipdir_sf": {"type": "string", "default": "DipDir", "description": "Dip direction scalar field name"},
+                 "plane_size": {"type": "number", "default": 2.0, "description": "Foliation plane display size"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="compass_import_lin", description="Import lineations from trend/plunge scalar fields.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input point cloud with trend/plunge SFs"},
+                 "output_path": {"type": "string", "description": "Output file with imported lineations"},
+                 "trend_sf": {"type": "string", "default": "Trend", "description": "Trend scalar field name"},
+                 "plunge_sf": {"type": "string", "default": "Plunge", "description": "Plunge scalar field name"},
+                 "length": {"type": "number", "default": 2.0, "description": "Lineation display length"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="compass_refit", description="Refit Compass trace planes from trace polylines.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input project file with Compass traces"},
+                 "output_path": {"type": "string", "description": "Output file with refitted planes"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="compass_p21", description="Estimate P21 fracture intensity using Compass traces.",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input point cloud with Compass traces"},
+                 "output_path": {"type": "string", "description": "Output point cloud with P21 scalar field"},
+                 "radius": {"type": "number", "default": 10.0, "description": "Search radius for P21 estimation"},
+                 "subsample": {"type": "integer", "default": 25, "description": "Subsample rate"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="treeiso", description="Individual tree segmentation from point cloud (qTreeIso).",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input point cloud (forest scan)"},
+                 "output_path": {"type": "string", "description": "Output point cloud with tree segmentation SFs"},
+                 "lambda1": {"type": "number", "default": 1.0, "description": "Initial seg regularization"},
+                 "k1": {"type": "integer", "default": 5, "description": "Initial seg min neighbors"},
+                 "decimate_res1": {"type": "number", "default": 0.05, "description": "Initial seg decimation resolution"},
+                 "lambda2": {"type": "integer", "default": 20, "description": "Intermediate seg regularization"},
+                 "k2": {"type": "integer", "default": 20, "description": "Intermediate seg min neighbors"},
+                 "max_gap": {"type": "number", "default": 2.0, "description": "Max gap between segments"},
+                 "decimate_res2": {"type": "number", "default": 0.1, "description": "Intermediate decimation resolution"},
+                 "rho": {"type": "number", "default": 0.5, "description": "Height-to-length ratio"},
+                 "vertical_weight": {"type": "number", "default": 0.5, "description": "Vertical overlap weight"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="fbx_settings", description="Configure FBX export format setting (qFBXIO).",
+             inputSchema={"type": "object", "properties": {
+                 "export_format": {"type": "string", "default": "FBX", "description": "FBX export format string"}},
+              "required": []}),
+        Tool(name="lasfwf_load", description="Load a Full Waveform LAS file (qLASFWFIO).",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "FWF LAS file to load"},
+                 "output_path": {"type": "string", "description": "Output file path"},
+                 "global_shift": {"type": "string", "default": "AUTO", "description": "Global shift: AUTO, FIRST, NONE, or 'X Y Z'"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="lasfwf_save", description="Save clouds as Full Waveform LAS (qLASFWFIO).",
+             inputSchema={"type": "object", "properties": {
+                 "input_path": {"type": "string", "description": "Input file with clouds to save"},
+                 "output_path": {"type": "string", "description": "Output LAS/LAZ file path"},
+                 "compressed": {"type": "boolean", "default": False, "description": "Save as compressed LAZ"},
+                 "all_at_once": {"type": "boolean", "default": False, "description": "Save all clouds in one file"}},
+              "required": ["input_path", "output_path"]}),
+        Tool(name="bundler_import", description="Import a Bundler reconstruction file (qAdditionalIO).",
+             inputSchema={"type": "object", "properties": {
+                 "bundler_file": {"type": "string", "description": "Bundler .out file path"},
+                 "output_path": {"type": "string", "description": "Output file path"},
+                 "alt_keypoints": {"type": "string", "default": "", "description": "Alternative keypoints file"},
+                 "scale_factor": {"type": "number", "default": 1.0, "description": "Scale factor"},
+                 "undistort": {"type": "boolean", "default": False, "description": "Undistort images"},
+                 "color_dtm_vertices": {"type": "integer", "default": 0, "description": "Colored DTM vertex count (0=disabled)"}},
+              "required": ["bundler_file", "output_path"]}),
         # ── Scene / Entity / View (GUI) ──
         Tool(
             name="export_entity",
@@ -2402,6 +2470,67 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 arguments["input_path"], arguments["output_path"],
                 profile_path=arguments["profile_path"],
                 axis=arguments.get("axis", "Z"),
+            ))
+
+        elif name == "compass_import_fol":
+            return _result(backend.compass_import_fol(
+                arguments["input_path"], arguments["output_path"],
+                dip_sf=arguments.get("dip_sf", "Dip"),
+                dipdir_sf=arguments.get("dipdir_sf", "DipDir"),
+                plane_size=arguments.get("plane_size", 2.0),
+            ))
+        elif name == "compass_import_lin":
+            return _result(backend.compass_import_lin(
+                arguments["input_path"], arguments["output_path"],
+                trend_sf=arguments.get("trend_sf", "Trend"),
+                plunge_sf=arguments.get("plunge_sf", "Plunge"),
+                length=arguments.get("length", 2.0),
+            ))
+        elif name == "compass_refit":
+            return _result(backend.compass_refit(
+                arguments["input_path"], arguments["output_path"],
+            ))
+        elif name == "compass_p21":
+            return _result(backend.compass_p21(
+                arguments["input_path"], arguments["output_path"],
+                radius=arguments.get("radius", 10.0),
+                subsample=arguments.get("subsample", 25),
+            ))
+        elif name == "treeiso":
+            return _result(backend.tree_iso(
+                arguments["input_path"], arguments["output_path"],
+                lambda1=arguments.get("lambda1", 1.0),
+                k1=arguments.get("k1", 5),
+                decimate_res1=arguments.get("decimate_res1", 0.05),
+                lambda2=arguments.get("lambda2", 20),
+                k2=arguments.get("k2", 20),
+                max_gap=arguments.get("max_gap", 2.0),
+                decimate_res2=arguments.get("decimate_res2", 0.1),
+                rho=arguments.get("rho", 0.5),
+                vertical_weight=arguments.get("vertical_weight", 0.5),
+            ))
+        elif name == "fbx_settings":
+            return _result(backend.fbx_settings(
+                export_format=arguments.get("export_format", "FBX"),
+            ))
+        elif name == "lasfwf_load":
+            return _result(backend.lasfwf_load(
+                arguments["input_path"], arguments["output_path"],
+                global_shift=arguments.get("global_shift", "AUTO"),
+            ))
+        elif name == "lasfwf_save":
+            return _result(backend.lasfwf_save(
+                arguments["input_path"], arguments["output_path"],
+                compressed=arguments.get("compressed", False),
+                all_at_once=arguments.get("all_at_once", False),
+            ))
+        elif name == "bundler_import":
+            return _result(backend.bundler_import(
+                arguments["bundler_file"], arguments["output_path"],
+                alt_keypoints=arguments.get("alt_keypoints", ""),
+                scale_factor=arguments.get("scale_factor", 1.0),
+                undistort=arguments.get("undistort", False),
+                color_dtm_vertices=arguments.get("color_dtm_vertices", 0),
             ))
 
         # ── Scalar field operations ──

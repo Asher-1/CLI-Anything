@@ -32,7 +32,7 @@ python -m pytest cli_anything/acloudviewer/tests/ -v
 | File | What it covers | Count |
 |------|---------------|-------|
 | `test_utils.py` | RPC client, backend methods, convert, batch-convert, processing, SIBR, Colmap, ReplSkin | 171 |
-| `test_mcp.py` | MCP tool registration, schema validation, 121 tool dispatch | 144 |
+| `test_mcp.py` | MCP tool registration, schema validation, 178 tool dispatch | 144 |
 | `test_cli_comprehensive.py` | Comprehensive CLI subcommand coverage, JSON mode, help text | 141 |
 | `test_core.py` | Session, Scene, Formats, FormatConversion, VersionDetection, BinaryDiscovery, ColmapBackend, RPCClient, BackendMode | 96 |
 | `test_installer.py` | Platform detection, asset matching, download, Qt IFW, --from-file | 81 |
@@ -56,7 +56,7 @@ platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 ### Notes
 
 - **592 tests passed** — all core functionality fully tested
-- **121 MCP tools verified** — full tool registration and schema validation
+- **178 MCP tools verified** — full tool registration and schema validation
 - **Format conversion**: ASC mapping, alias extension lookup, VTK dual-format, cross-type (cloud↔mesh)
 - **Version detection**: maintenancetool, .desktop, CHANGELOG, --version fallback chain
 - **Installer**: Platform detection, Qt IFW headless install, --from-file, curl/wget download
