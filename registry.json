@@ -1086,6 +1086,25 @@
           "url": "https://github.com/collectivewinca"
         }
       ]
+    },
+    {
+      "name": "mailchimp",
+      "display_name": "Mailchimp",
+      "version": "0.1.0",
+      "description": "Mailchimp Marketing API v3.0 — manage audiences, campaigns, reports, automations, ecommerce, templates, and more from an agent-native CLI",
+      "requires": "MAILCHIMP_API_KEY",
+      "homepage": "https://mailchimp.com/developer/marketing/",
+      "source_url": null,
+      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=mailchimp/agent-harness",
+      "entry_point": "cli-anything-mailchimp",
+      "skill_md": "skills/cli-anything-mailchimp/SKILL.md",
+      "category": "web",
+      "contributors": [
+        {
+          "name": "iGodly",
+          "url": "https://github.com/iGodly"
+        }
+      ]
     }
   ]
 }
