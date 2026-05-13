@@ -6,6 +6,8 @@ Test core functionality with synthetic data, no external dependencies
 
 import pytest
 import json
+import click
+from click.testing import CliRunner
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
@@ -491,3 +493,114 @@ class TestCLIClick:
         expected = ['list', 'get', 'create', 'update', 'delete', 'trigger']
         for cmd in expected:
             assert cmd in webhooks.commands, f"webhooks.{cmd} not found"
+
+    def test_repl_dispatches_click_command_with_quoted_args(self):
+        """Test REPL dispatches parsed input through Click and preserves quotes"""
+        import cli_anything.firefly_iii.firefly_iii_cli as cli_module
+
+        class FakeReplSkin:
+            prompts = ['probe "two words"', 'exit']
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def print_banner(self):
+                pass
+
+            def info(self, message):
+                pass
+
+            def prompt(self, prompt_name):
+                return self.prompts.pop(0)
+
+            def print_goodbye(self):
+                pass
+
+            def error(self, message):
+                raise AssertionError(f"Unexpected REPL error: {message}")
+
+            def help(self, commands):
+                pass
+
+        @click.command(name="probe")
+        @click.argument("value")
+        def probe(value):
+            click.echo(f"value={value}")
+
+        original_probe = cli_module.cli.commands.get("probe")
+        cli_module.cli.add_command(probe)
+
+        try:
+            runner = CliRunner()
+            with patch.object(cli_module, "FireflyIIIBackend", return_value=Mock()), \
+                 patch.object(cli_module, "ReplSkin", FakeReplSkin):
+                result = runner.invoke(
+                    cli_module.cli,
+                    ["--base-url", "https://firefly.example.com", "--pat", "test-pat"],
+                )
+        finally:
+            if original_probe is None:
+                cli_module.cli.commands.pop("probe", None)
+            else:
+                cli_module.cli.commands["probe"] = original_probe
+
+        assert result.exit_code == 0
+        assert "value=two words" in result.output
+
+    def test_repl_click_error_remains_interactive(self):
+        """Test Click parser errors are reported without exiting the REPL"""
+        import cli_anything.firefly_iii.firefly_iii_cli as cli_module
+
+        class FakeReplSkin:
+            prompts = ["probe-error --unknown", "exit"]
+            instances = []
+
+            def __init__(self, *args, **kwargs):
+                self.errors = []
+                self.goodbye_printed = False
+                self.instances.append(self)
+
+            def print_banner(self):
+                pass
+
+            def info(self, message):
+                pass
+
+            def prompt(self, prompt_name):
+                return self.prompts.pop(0)
+
+            def print_goodbye(self):
+                self.goodbye_printed = True
+
+            def error(self, message):
+                self.errors.append(message)
+
+            def help(self, commands):
+                pass
+
+        @click.command(name="probe-error")
+        @click.option("--known")
+        def probe_error(known):
+            click.echo(f"known={known}")
+
+        original_probe = cli_module.cli.commands.get("probe-error")
+        cli_module.cli.add_command(probe_error)
+
+        try:
+            runner = CliRunner()
+            with patch.object(cli_module, "FireflyIIIBackend", return_value=Mock()), \
+                 patch.object(cli_module, "ReplSkin", FakeReplSkin):
+                result = runner.invoke(
+                    cli_module.cli,
+                    ["--base-url", "https://firefly.example.com", "--pat", "test-pat"],
+                )
+        finally:
+            if original_probe is None:
+                cli_module.cli.commands.pop("probe-error", None)
+            else:
+                cli_module.cli.commands["probe-error"] = original_probe
+
+        assert result.exit_code == 0
+        skin = FakeReplSkin.instances[-1]
+        assert any("No such option" in error for error in skin.errors)
+        assert skin.goodbye_printed is True

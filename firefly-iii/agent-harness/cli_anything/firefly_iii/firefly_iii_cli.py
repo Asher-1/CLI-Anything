@@ -9,6 +9,7 @@ converted from MCP mode to stateless CLI mode to avoid Node residual process iss
 import click
 import json
 import os
+import shlex
 import sys
 from typing import Dict, Any, Optional
 
@@ -175,16 +176,30 @@ def repl():
                 _repl_skin.help(cli.commands)
                 continue
 
-            # Parse command
-            parts = user_input.split()
+            # Parse command through shell-like rules so quoted arguments survive.
+            try:
+                parts = shlex.split(user_input)
+            except ValueError as e:
+                _repl_skin.error(f"Parse error: {e}")
+                continue
+
             command_name = parts[0]
             args = parts[1:]
 
             if command_name in cli.commands:
-                # Build command context
-                ctx = click.Context(cli.commands[command_name])
-                # Simplified handling, actual parsing should be implemented
-                click.echo(f"Executing: {command_name} {' '.join(args)}")
+                try:
+                    cli.commands[command_name].main(
+                        args=args,
+                        prog_name=command_name,
+                        standalone_mode=False,
+                    )
+                except click.ClickException as e:
+                    _repl_skin.error(e.format_message())
+                except click.Abort:
+                    _repl_skin.error("Command aborted")
+                except click.exceptions.Exit as e:
+                    if e.exit_code:
+                        _repl_skin.error(f"Command exited with status {e.exit_code}")
             else:
                 _repl_skin.error(f"Unknown command: {command_name}")
 

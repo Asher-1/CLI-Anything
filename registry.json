@@ -177,6 +177,25 @@
       ]
     },
     {
+      "name": "firefly-iii",
+      "display_name": "Firefly III",
+      "version": "1.0.0",
+      "description": "Personal finance management via the Firefly III REST API",
+      "requires": "Firefly III instance and personal access token",
+      "homepage": "https://www.firefly-iii.org",
+      "source_url": null,
+      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=firefly-iii/agent-harness",
+      "entry_point": "cli-anything-firefly-iii",
+      "skill_md": "skills/cli-anything-firefly-iii/SKILL.md",
+      "category": "finance",
+      "contributors": [
+        {
+          "name": "CLI-Anything Community",
+          "url": "https://github.com/HKUDS/CLI-Anything"
+        }
+      ]
+    },
+    {
       "name": "gimp",
       "display_name": "GIMP",
       "version": "1.0.0",
