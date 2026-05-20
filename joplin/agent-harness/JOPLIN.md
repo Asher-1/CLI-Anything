@@ -139,6 +139,13 @@ Current validation baseline (Windows + Joplin CLI 3.6.2):
 - New mutating commands should either call `sess.snapshot(reason)` (creates an
   undo point) or `sess.mark_dirty()` (just marks the project as modified) so
   auto-save still persists the appended history entry.
+- `utils/joplin_backend.py` returns raw `stdout`/`stderr` from Joplin. The
+  benign-Node-warning filter is used only inside the non-zero exit decision
+  (and once inside `run_joplin_json` when JSON parsing fails on stdout that
+  may contain a warning prefix). Never rewrite caller-facing stdout.
+- Error envelopes must use the same `command` string as success payloads.
+  `handle_error` derives IDs with `func.__name__.replace("_", ".", 1)` so
+  multi-word subcommands stay `config.import_file`, not `config.import.file`.
 
 ## Known limitations
 

@@ -79,6 +79,11 @@ When `--json` is enabled, commands return:
   probing the symlink-resolved binary directory, the Windows-style sibling
   `node_modules/joplin`, the Unix-style parent `lib/node_modules/joplin`, and
   finally `npm root -g`.
+- Backend `stdout`/`stderr` in command results are verbatim; do not assume
+  warnings were stripped from note bodies or exports.
+- On failure, parse `error` using the same `command` field as success
+  (`config.import_file`, `e2ee.decrypt_file`, …). Multi-word subcommands use
+  a single dot between group and subcommand.
 
 ## Test workflow
 

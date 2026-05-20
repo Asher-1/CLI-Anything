@@ -68,5 +68,6 @@ Current validation baseline (Windows + Joplin CLI 3.6.2):
 - `python -m pytest -q cli_anything/joplin/tests/test_core.py` â†?`85 passed, 1 skipped`
 - `python -m pytest -q cli_anything/joplin/tests` â†?`112 passed, 2 skipped`
 
-See `cli_anything/joplin/tests/TEST.md` for the full plan and
-`cli_anything/joplin/WORKFLOWS.md` for the verified workflow inventory.
+See `cli_anything/joplin/tests/TEST.md` for the full plan (85 unit + 27 e2e,
+2 skipped on Windows) and `cli_anything/joplin/WORKFLOWS.md` for the verified
+workflow inventory.

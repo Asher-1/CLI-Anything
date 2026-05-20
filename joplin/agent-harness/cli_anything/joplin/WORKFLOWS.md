@@ -98,7 +98,16 @@ tag.add, tag.remove, attach.add, interop.export, note.remove, notebook.remove
 5. If the workflow is large or demoable, extend
    `TestBackendIntegration.test_full_backend_roundtrip`.
 
-## 6. Known limitations
+## 6. Implementation guarantees
+
+- Subprocess `stdout`/`stderr` in backend results are verbatim Joplin output.
+  Benign Node deprecation warnings are filtered only when deciding whether a
+  non-zero exit code is a real failure; they are not stripped from the returned
+  streams (so multi-line note bodies and exports stay intact).
+- JSON error envelopes use the same `command` identifier as success responses
+  (`config.import_file`, `backend.export_sync_status`, `e2ee.decrypt_file`, …).
+
+## 7. Known limitations
 
 - `joplin search` is gated behind GUI mode on some Joplin CLI 3.x builds. The
   search workflow accepts a clean `ok=false` JSON envelope with the original

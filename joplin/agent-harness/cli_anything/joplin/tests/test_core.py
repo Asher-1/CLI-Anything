@@ -4,11 +4,13 @@ These tests run without a real Joplin backend. They cover:
 
 - harness project schema, save/open, history
 - session state machine (set/get/snapshot/undo/redo/save)
-- backend command runner (subprocess invocation, JSON parsing, error handling)
-- CLI JSON envelope contract across every command group
+- backend command runner (subprocess invocation, JSON parsing, error handling,
+  verbatim stdout preservation, benign Node warning decision-only filtering)
+- CLI JSON envelope contract across every command group (including stable
+  error command IDs for multi-word subcommands)
 - auto-save behavior, dry-run, project status reporting
-- new commands: notes copy/move/rename, notebooks remove, todos group,
-  attach, status, session history, tag tagnotes
+- notes copy/move/rename, notebooks remove, todos group, attach, status,
+  session history, tag tagnotes, backend version fallback layouts
 """
 
 import json

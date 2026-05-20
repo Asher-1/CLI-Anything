@@ -61,6 +61,18 @@ When `--json` is enabled, every command returns:
 - `data`: command payload
 - `error`: `null` on success, or `{ type, message }` on failure
 
+Success and failure share the same `command` identifier (e.g. `config.import_file`,
+`backend.export_sync_status`). Multi-word subcommands use one dot between the
+group and subcommand name.
+
+## Backend behavior
+
+- `run_joplin_command` returns verbatim `stdout`/`stderr` from the Joplin
+  process. Benign Node.js deprecation warnings are filtered only when deciding
+  whether a non-zero exit code is a real failure.
+- `run_joplin_json` retries JSON parsing on a scrubbed copy of stdout when the
+  raw stream contains a known warning prefix ahead of the JSON payload.
+
 ## Command groups
 
 - `project`: `new`, `open`, `save`, `info`, `json`, `status`
