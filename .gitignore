@@ -65,6 +65,7 @@
 !/dify-workflow/
 !/adguardhome/
 !/novita/
+!/minimax/
 !/ollama/
 !/browser/
 !/seaclip/
@@ -214,6 +215,7 @@
 !/dify-workflow/agent-harness/
 !/adguardhome/agent-harness/
 !/novita/agent-harness/
+!/minimax/agent-harness/
 !/ollama/agent-harness/
 !/browser/agent-harness/
 !/seaclip/agent-harness/
