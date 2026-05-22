@@ -98,5 +98,5 @@ When `--json` is enabled, commands return:
 
 Current validation baseline (Windows + Joplin CLI 3.6.2):
 
-- `python -m pytest -q cli_anything/joplin/tests/test_core.py` â†?`91 passed`
-- `python -m pytest -q cli_anything/joplin/tests` â†?`118 passed, 1 skipped`
+- `python -m pytest -q cli_anything/joplin/tests/test_core.py` ? `96 passed`
+- `python -m pytest -q cli_anything/joplin/tests` ? `123 passed, 1 skipped`

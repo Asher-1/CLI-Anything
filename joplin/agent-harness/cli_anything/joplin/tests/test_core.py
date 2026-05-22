@@ -563,15 +563,84 @@ def test_backend_run_json_empty_stdout(monkeypatch):
 def test_notes_remove_passes_force_and_permanent(monkeypatch):
     captured = {}
 
-    def fake(args, cfg):
+    def fake(args, cfg, timeout=120):
+        # The help-probe call goes through run_joplin_command too; emit a
+        # stub that advertises --permanent so the probe returns True.
+        if args[:1] == ["help"]:
+            return {"returncode": 0, "stdout": "rmnote\n  --permanent  Deletes permanently.\n", "stderr": ""}
         captured["args"] = args
         return {"returncode": 0}
 
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
     monkeypatch.setattr(note_core, "run_joplin_command", fake)
     note_core.remove_note(joplin_backend.BackendConfig(), "n1", force=True, permanent=True)
     assert "rmnote" in captured["args"]
-    assert "-f" in captured["args"]
-    assert "-p" in captured["args"]
+    assert "--force" in captured["args"]
+    assert "--permanent" in captured["args"]
+    # Short forms must not be used: Joplin's published terminal reference for
+    # rmnote pre-dates `--permanent`, and `-p` is also `--parent` elsewhere.
+    assert "-p" not in captured["args"]
+
+
+def test_notes_remove_without_permanent_skips_probe(monkeypatch):
+    """When permanent=False we must NOT probe `joplin help` -- it would just
+    be wasted subprocess work."""
+    calls = []
+
+    def fake(args, cfg, timeout=120):
+        calls.append(args)
+        return {"returncode": 0, "stdout": "", "stderr": ""}
+
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
+    monkeypatch.setattr(note_core, "run_joplin_command", fake)
+    note_core.remove_note(joplin_backend.BackendConfig(), "n1", force=True, permanent=False)
+    assert calls == [["rmnote", "n1", "--force"]]
+
+
+def test_notes_remove_permanent_refuses_when_help_lacks_flag(monkeypatch):
+    """Regression for P2: if the installed Joplin CLI doesn't advertise
+    `--permanent` we must raise a clear error rather than send the flag
+    (which Joplin would silently ignore, downgrading a permanent delete to
+    a trash move)."""
+    sent = []
+
+    def fake(args, cfg, timeout=120):
+        if args[:1] == ["help"]:
+            # Old Joplin help output - no --permanent listed.
+            return {"returncode": 0, "stdout": "rmnote\n  -f, --force  ...\n", "stderr": ""}
+        sent.append(args)
+        return {"returncode": 0}
+
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
+    monkeypatch.setattr(note_core, "run_joplin_command", fake)
+    with pytest.raises(RuntimeError) as excinfo:
+        note_core.remove_note(joplin_backend.BackendConfig(), "n1", force=True, permanent=True)
+    msg = str(excinfo.value)
+    assert "--permanent" in msg
+    assert "Joplin terminal CLI" in msg
+    # The actual rmnote command must not have been sent.
+    assert sent == []
+
+
+def test_notes_remove_permanent_support_cached(monkeypatch):
+    """The help probe must be cached per binary so we don't pay a subprocess
+    cost on every permanent delete."""
+    help_calls = 0
+
+    def fake(args, cfg, timeout=120):
+        nonlocal help_calls
+        if args[:1] == ["help"]:
+            help_calls += 1
+            return {"returncode": 0, "stdout": "--permanent  ...\n", "stderr": ""}
+        return {"returncode": 0}
+
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
+    monkeypatch.setattr(note_core, "run_joplin_command", fake)
+    cfg = joplin_backend.BackendConfig()
+    note_core.remove_note(cfg, "n1", permanent=True)
+    note_core.remove_note(cfg, "n2", permanent=True)
+    note_core.remove_note(cfg, "n3", permanent=True)
+    assert help_calls == 1
 
 
 def test_notes_copy_with_notebook(monkeypatch):
@@ -679,11 +748,56 @@ def test_notebooks_list_uses_json_and_ls_options(monkeypatch):
 def test_notebooks_remove_passes_flags(monkeypatch):
     captured = {}
 
-    monkeypatch.setattr(notebook_core, "run_joplin_command", lambda a, c: captured.setdefault("args", a) or {})
+    def fake(args, cfg, timeout=120):
+        captured.setdefault("args", args)
+        return {"returncode": 0, "stdout": "", "stderr": ""}
+
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
+    monkeypatch.setattr(notebook_core, "run_joplin_command", fake)
     notebook_core.remove_notebook(joplin_backend.BackendConfig(), "BookA", force=True, permanent=False)
     assert captured["args"][:2] == ["rmbook", "BookA"]
-    assert "-f" in captured["args"]
+    assert "--force" in captured["args"]
+    assert "--permanent" not in captured["args"]
     assert "-p" not in captured["args"]
+
+
+def test_notebooks_remove_permanent_refuses_when_help_lacks_flag(monkeypatch):
+    """Same defensive check as for notes: refuse rather than silently move to
+    trash on older Joplin CLI versions."""
+    sent = []
+
+    def fake(args, cfg, timeout=120):
+        if args[:1] == ["help"]:
+            return {"returncode": 0, "stdout": "rmbook\n  -f, --force  ...\n", "stderr": ""}
+        sent.append(args)
+        return {"returncode": 0}
+
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
+    # Both core modules probe through note_core helper; patch there too.
+    monkeypatch.setattr(note_core, "run_joplin_command", fake)
+    monkeypatch.setattr(notebook_core, "run_joplin_command", fake)
+    with pytest.raises(RuntimeError) as excinfo:
+        notebook_core.remove_notebook(joplin_backend.BackendConfig(), "BookA", force=True, permanent=True)
+    assert "rmbook" in str(excinfo.value)
+    assert "--permanent" in str(excinfo.value)
+    assert sent == []
+
+
+def test_notebooks_remove_permanent_long_form_when_supported(monkeypatch):
+    """When help advertises --permanent we send the long form (NOT `-p`)."""
+    captured = {}
+
+    def fake(args, cfg, timeout=120):
+        if args[:1] == ["help"]:
+            return {"returncode": 0, "stdout": "--permanent ...\n", "stderr": ""}
+        captured["args"] = args
+        return {"returncode": 0}
+
+    note_core._PERMANENT_FLAG_SUPPORT_CACHE.clear()
+    monkeypatch.setattr(note_core, "run_joplin_command", fake)
+    monkeypatch.setattr(notebook_core, "run_joplin_command", fake)
+    notebook_core.remove_notebook(joplin_backend.BackendConfig(), "BookA", force=True, permanent=True)
+    assert captured["args"] == ["rmbook", "BookA", "--force", "--permanent"]
 
 
 def test_todos_args_correct(monkeypatch):

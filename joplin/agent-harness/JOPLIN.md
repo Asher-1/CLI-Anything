@@ -125,8 +125,8 @@ For real backend runs, ensure `joplin` is installed and available in `PATH`.
 
 Current validation baseline (Windows + Joplin CLI 3.6.2):
 
-- `python -m pytest -q cli_anything/joplin/tests/test_core.py` â†?`91 passed`
-- `python -m pytest -q cli_anything/joplin/tests` â†?`118 passed, 1 skipped`
+- `python -m pytest -q cli_anything/joplin/tests/test_core.py` ? `96 passed`
+- `python -m pytest -q cli_anything/joplin/tests` ? `123 passed, 1 skipped`
 
 ## Development notes
 
@@ -152,7 +152,13 @@ Current validation baseline (Windows + Joplin CLI 3.6.2):
 - Some Joplin CLI builds reject `search` outside the REPL with
   `"only available in GUI mode"`. The harness surfaces this as a normal
   `ok=false` JSON envelope; agents should treat search as best-effort.
-- Non-ASCII process arguments on Windows pass through `joplin.cmd` â†?`cmd.exe`,
+- Non-ASCII process arguments on Windows pass through `joplin.cmd` ? `cmd.exe`,
   which truncates them to the active code page. Harness JSON state handles
   unicode correctly; only argv-forwarded titles are affected. The unicode
   workflow test is skipped on Windows.
+- `notes remove --permanent` / `notebooks remove --permanent` require Joplin
+  terminal CLI >= 3.0. Older builds silently ignore unknown options, so the
+  harness probes `joplin help rmnote` / `rmbook` once per binary and raises
+  a clear `RuntimeError` rather than letting a "permanent" delete fall
+  through to a soft trash move. The flag is forwarded as the long-form
+  `--permanent` (and `--force` for force), never the short `-p` / `-f`.

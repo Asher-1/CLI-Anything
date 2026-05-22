@@ -123,3 +123,11 @@ tag.add, tag.remove, attach.add, interop.export, note.remove, notebook.remove
   binary directory (Unix npm global, Homebrew, nvm), the Windows-style
   sibling `node_modules/joplin`, the Unix-style parent `lib/node_modules/joplin`,
   and `npm root -g` as a last resort.
+- `notes remove --permanent` / `notebooks remove --permanent` require Joplin
+  terminal CLI >= 3.0. Because Joplin silently ignores unknown options, the
+  harness probes `joplin help rmnote` / `rmbook` once per binary and raises
+  a clear error on older builds rather than downgrading a permanent delete
+  to a trash move. The flag is forwarded as long-form (`--permanent`,
+  `--force`); the short `-p` is intentionally avoided since Joplin uses
+  `-p` for `--parent` in `mkbook` and `--permanent` only became available
+  in 3.x.

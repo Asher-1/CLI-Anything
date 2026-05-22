@@ -8,7 +8,7 @@ The suite has two files:
 
 Real-backend classes are skipped automatically when `joplin` is not on `PATH`.
 
-## test_core.py (91 tests)
+## test_core.py (96 tests)
 
 Pure Python tests covering the harness surface. Safe to run anywhere without
 a Joplin backend.
@@ -41,6 +41,16 @@ Coverage areas:
 - Core module argument shapes for: notes (cp/mv/ren/remove/get verbose),
   notebooks (rmbook flags), todos (mktodo/toggle/clear/done/undone), tags
   (tagnotes via `tag list`)
+- `--permanent` flag guard (`rmnote` / `rmbook`): Joplin's CLI silently
+  ignores unknown options, so the harness probes `joplin help <command>`
+  once per binary and refuses to send `--permanent` if the installed CLI
+  doesn't advertise it (would otherwise downgrade a permanent delete to a
+  trash move on older builds). When supported we send the long-form
+  `--force` / `--permanent`, never the short `-f` / `-p` (the latter is
+  `--parent` on `mkbook`). Tests cover: long-form on supported CLI,
+  no probe when `permanent=False`, clear RuntimeError on unsupported CLI,
+  cached probe (one help call across N permanent deletes), and the
+  notebooks variant of the same guard
 - JSON envelope shape (success + error)
 - JSON contract per command group: notebooks, notes, todos, tags, search,
   sync, interop, config, session, attach, status, backend, server, e2ee
@@ -167,3 +177,8 @@ CLI_ANYTHING_FORCE_INSTALLED=1 python -m pytest -v -s cli_anything/joplin/tests/
   `cmd.exe`, which drops to the active code page. The unicode workflow test
   is therefore skipped on Windows. The Python-level unicode handling in the
   harness (project JSON, history, REPL) is covered in `test_core.py`.
+- `notes/notebooks remove --permanent` is only forwarded as the long-form
+  `--permanent` flag, and only after `joplin help rmnote`/`rmbook` reports
+  the flag (Joplin terminal CLI >= 3.0). On older Joplin builds the harness
+  raises `RuntimeError` rather than silently letting the delete go to the
+  trash. Omit `--permanent` to use a soft delete on any version.

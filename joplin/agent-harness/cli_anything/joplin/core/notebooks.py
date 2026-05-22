@@ -1,3 +1,4 @@
+from cli_anything.joplin.core.notes import _supports_permanent
 from cli_anything.joplin.utils.joplin_backend import BackendConfig, run_joplin_command, run_joplin_json
 
 
@@ -32,9 +33,23 @@ def use_notebook(config: BackendConfig, notebook: str) -> dict:
 
 
 def remove_notebook(config: BackendConfig, notebook: str, force: bool = True, permanent: bool = False) -> dict:
+    """Delete a notebook.
+
+    ``--permanent`` requires Joplin terminal CLI >= 3.0.  Joplin silently
+    ignores unknown options, so we probe ``joplin help rmbook`` first and
+    refuse rather than silently turn a permanent delete into a trash move.
+    """
     args = ["rmbook", notebook]
     if force:
-        args.append("-f")
+        args.append("--force")
     if permanent:
-        args.append("-p")
+        if not _supports_permanent(config, "rmbook"):
+            raise RuntimeError(
+                "Joplin CLI `rmbook` does not advertise `--permanent` "
+                "(requires Joplin terminal CLI >= 3.0). Refusing to send the "
+                "flag because Joplin would silently ignore it and move the "
+                "notebook to the trash instead of deleting it permanently. "
+                "Upgrade Joplin or omit `--permanent` to use a soft delete."
+            )
+        args.append("--permanent")
     return run_joplin_command(args, config)
