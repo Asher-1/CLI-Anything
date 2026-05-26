@@ -73,6 +73,14 @@ class SiYuanClient:
                 f"Cannot connect to SiYuan at {self.config.base_url}. "
                 f"Is SiYuan running? ({e})"
             ) from e
+        except requests.Timeout as e:
+            raise SiYuanClientError(
+                f"Request to SiYuan timed out after 30s ({e})"
+            ) from e
+        except requests.RequestException as e:
+            raise SiYuanClientError(
+                f"Request to SiYuan failed: {e}"
+            ) from e
 
         if resp.status_code != 200:
             raise SiYuanClientError(

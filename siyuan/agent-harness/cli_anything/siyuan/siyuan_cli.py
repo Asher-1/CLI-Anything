@@ -6,6 +6,7 @@ commands for notebooks, documents, blocks, search, and export.
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -180,7 +181,7 @@ def repl(ctx: click.Context):
 
 def _handle_repl_command(skin: Any, cmd: str) -> None:
     """Parse and execute a REPL command."""
-    parts = cmd.strip().split()
+    parts = shlex.split(cmd.strip())
     if not parts:
         return
 
