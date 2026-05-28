@@ -41,10 +41,11 @@ def load_config(config_path: str | None = None) -> SiYuanConfig:
             data = None
 
         if data is not None:
+            # File values as base, env vars override
             return SiYuanConfig(
-                host=data.get("host", "127.0.0.1"),
-                port=data.get("port", 6806),
-                token=data.get("token", ""),
+                host=os.environ.get("SIYUAN_HOST", data.get("host", "127.0.0.1")),
+                port=int(os.environ.get("SIYUAN_PORT", data.get("port", 6806))),
+                token=os.environ.get("SIYUAN_TOKEN", data.get("token", "")),
             )
 
     return SiYuanConfig(
