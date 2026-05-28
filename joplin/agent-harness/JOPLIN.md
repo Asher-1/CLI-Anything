@@ -1,10 +1,10 @@
-﻿# JOPLIN Harness SOP
+# JOPLIN Harness SOP
 
 ## Overview
 
 `cli-anything-joplin` is a stateful CLI harness for Joplin automation backed by
 the real `joplin` terminal binary. It is intended for command-driven
-workflows, real-backend validation, and agent-style demo runs.
+workflows, real-backend validation, and agent demo runs.
 
 ## Requirements
 

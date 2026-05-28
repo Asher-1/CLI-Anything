@@ -1,4 +1,4 @@
-﻿# Joplin Agent Harness
+# Joplin Agent Harness
 
 `cli-anything-joplin` is a stateful CLI harness for the Joplin terminal
 application. It wraps the real `joplin` binary for backend operations and is
@@ -12,7 +12,7 @@ demonstrations.
   status, config, backend utility, API server, and E2EE command groups
 - emits a stable JSON envelope (`ok`/`command`/`data`/`error`) for machine
   parsing
-- supports one-shot mode and REPL mode
+- supports one-shot and REPL modes
 - auto-saves the harness project on mutation; honors `--dry-run`
 
 ## Requirements

@@ -1,7 +1,8 @@
-﻿# cli-anything-joplin
+# cli-anything-joplin
 
-`cli-anything-joplin` is a stateful CLI harness that wraps the real `joplin` terminal
-binary, exposing every common Joplin workflow under a uniform JSON command envelope.
+`cli-anything-joplin` is a stateful CLI harness that wraps the real `joplin`
+terminal binary and exposes common Joplin workflows under a uniform JSON
+command envelope.
 
 It supports:
 

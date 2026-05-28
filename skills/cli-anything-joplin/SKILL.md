@@ -1,4 +1,4 @@
-﻿---
+---
 name: "cli-anything-joplin"
 description: "Command-line interface for Joplin workflows using the real joplin terminal backend"
 ---
@@ -83,7 +83,7 @@ When `--json` is enabled, commands return:
 - Backend `stdout`/`stderr` in command results are verbatim; do not assume
   warnings were stripped from note bodies or exports.
 - On failure, parse `error` using the same `command` field as success
-  (`config.import_file`, `e2ee.decrypt_file`, ?. Multi-word subcommands use
+  (`config.import_file`, `e2ee.decrypt_file`). Multi-word subcommands use
   a single dot between group and subcommand.
 
 ## Recommended workflow

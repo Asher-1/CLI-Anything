@@ -1,9 +1,9 @@
-﻿# Test Plan ???cli-anything-joplin
+# Test Plan - cli-anything-joplin
 
 The suite has two files:
 
-- `test_core.py` ???pure unit + CLI-contract tests (no `joplin` binary required)
-- `test_full_e2e.py` ???CLI subprocess tests + real-backend workflows + full
+- `test_core.py` - pure unit + CLI-contract tests (no `joplin` binary required)
+- `test_full_e2e.py` - CLI subprocess tests + real-backend workflows + full
   end-to-end roundtrip
 
 Real-backend classes are skipped automatically when `joplin` is not on `PATH`.
@@ -16,7 +16,7 @@ a Joplin backend.
 Coverage areas:
 
 - Project schema, save/open roundtrip, unicode roundtrip, history shape
-- Session lifecycle: set/get, snapshot, undo, redo, undo???redo chain,
+- Session lifecycle: set/get, snapshot, undo, redo, undo->redo chain,
   redo cleared on new snapshot, save/save-without-path, `mark_dirty`
 - Session save regression: nested project path auto-creates missing parent
   directories before lock/write
@@ -84,7 +84,7 @@ Coverage areas:
 - `project status` and `project save` errors when no project is loaded
 - Auto-save behavior: mutation auto-saves; `--dry-run` suppresses save
 - Todo and notebook-remove flows write the expected history actions
-- `session save` keeps undo/redo depth consistent across save ???undo ???redo ???save
+- `session save` keeps undo/redo depth consistent across save->undo->redo->save
 - Joplin source parity checks for `ls --format json`, `config --export`,
   `config --import-file`, `sync --upgrade/--use-lock`, `import --force`,
   `import --output-format`, `version`, `server`, and `e2ee` wrapper arguments
@@ -139,23 +139,23 @@ Isolated real-backend command tests:
 
 Short backend flows:
 
-- **Note lifecycle** ???create notebook ???use ???create note ???rename via `set`
-  ???get ???remove note ???remove notebook
-- **Note organization** ???copy, rename (via `ren`), move (via `mv`) between
+- **Note lifecycle** - create notebook -> use -> create note -> rename via `set`
+  -> get -> remove note -> remove notebook
+- **Note organization** - copy, rename (via `ren`), move (via `mv`) between
   notebooks
-- **Todo lifecycle** ???create todo ???list ???done ???undone ???toggle ???clear
-- **Tagging** ???add, list, notetags, tagnotes, remove
-- **Search** ???best-effort; tolerates the GUI-mode restriction by checking the
+- **Todo lifecycle** - create todo -> list -> done -> undone -> toggle -> clear
+- **Tagging** - add, list, notetags, tagnotes, remove
+- **Search** - best-effort; tolerates the GUI-mode restriction by checking the
   error message when the backend rejects `search` outside the REPL
-- **Sync (no target)** ???verifies `sync run` returns a payload even when no
+- **Sync (no target)** - verifies `sync run` returns a payload even when no
   target is configured
-- **Export** ???JEX and Markdown
-- **Import** ???Markdown directory import
-- **Attach** ???attach file to note, then read it back
-- **Unicode** ???skipped on Windows because `joplin.cmd` truncates non-ASCII
+- **Export** - JEX and Markdown
+- **Import** - Markdown directory import
+- **Attach** - attach file to note, then read it back
+- **Unicode** - skipped on Windows because `joplin.cmd` truncates non-ASCII
   args; the Python-only unicode roundtrip in `test_core.py` covers harness
   encoding
-- **Session history persists** ???verifies history actions land in the saved
+- **Session history persists** - verifies history actions land in the saved
   project file
 
 ### `TestBackendIntegration` (1 test, backend required)
@@ -175,7 +175,7 @@ Full end-to-end roundtrip used for agent demos and regression. Phases:
 
 After the run, the test verifies that the saved project's history contains
 every expected action (`notebook.create`, `note.copy`, `note.move`,
-`todo.toggle`, `tag.add`, `attach.add`, `interop.export`, ???.
+`todo.toggle`, `tag.add`, `attach.add`, `interop.export`, and cleanup actions.
 
 ## Forcing the installed console script
 
@@ -197,7 +197,7 @@ CLI_ANYTHING_FORCE_INSTALLED=1 python -m pytest -v -s cli_anything/joplin/tests/
   (Windows shim / custom prefix), the parent's `lib/node_modules/joplin`
   (non-symlinked `<prefix>/bin/joplin`), or whatever `npm root -g` reports.
   The original error is included in `stderr`.
-- Non-ASCII process arguments on Windows pass through `joplin.cmd` ???
+- Non-ASCII process arguments on Windows pass through `joplin.cmd` ->
   `cmd.exe`, which drops to the active code page. The unicode workflow test
   is therefore skipped on Windows. The Python-level unicode handling in the
   harness (project JSON, history, REPL) is covered in `test_core.py`.
