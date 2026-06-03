@@ -124,7 +124,7 @@ def project_new(ctx: click.Context, audio_path: str, output_path: str, name: str
     try:
         project = create_project(audio_path, name=name)
         path = save_project(project, output_path)
-    except (OSError, ValueError) as exc:
+    except (OSError, RuntimeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
     emit({"ok": True, "project_path": str(path), "project": project_summary(project)}, ctx_json(ctx))
 

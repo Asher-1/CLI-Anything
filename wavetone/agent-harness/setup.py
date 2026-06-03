@@ -43,7 +43,7 @@ setup(
             "cli-anything-wavetone=cli_anything.wavetone.wavetone_cli:main",
         ],
     },
-    package_data={"cli_anything.wavetone": ["skills/*.md"]},
+    package_data={"cli_anything.wavetone": ["skills/SKILL.md", "skills/*.md"]},
     include_package_data=True,
     zip_safe=False,
 )

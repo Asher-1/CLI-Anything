@@ -103,6 +103,9 @@ def launch_wavetone(
     wait_seconds: float = 0.0,
     terminate: bool = False,
 ) -> dict[str, Any]:
+    if platform.system().lower() != "windows":
+        raise RuntimeError("WaveTone launch requires Windows")
+
     exe = find_wavetone(executable)
     args = [str(exe)]
     audio: Path | None = None

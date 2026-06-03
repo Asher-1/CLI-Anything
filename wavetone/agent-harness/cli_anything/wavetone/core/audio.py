@@ -12,6 +12,24 @@ from typing import Any
 from .project import normalize_audio_path
 
 
+def _safe_float(value: Any) -> float | None:
+    if value in (None, "", "N/A"):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value: Any) -> int | None:
+    if value in (None, "", "N/A"):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _probe_wav_stdlib(path: Path) -> dict[str, Any]:
     with wave.open(str(path), "rb") as handle:
         frames = handle.getnframes()
@@ -57,16 +75,16 @@ def _probe_ffprobe(path: Path) -> dict[str, Any]:
         {},
     )
     fmt = data.get("format", {})
-    duration = float(fmt.get("duration") or 0.0)
+    duration = _safe_float(fmt.get("duration"))
     return {
         "path": str(path),
         "format": fmt.get("format_name"),
         "codec": audio_stream.get("codec_name"),
-        "duration_seconds": round(duration, 6),
-        "sample_rate": int(audio_stream["sample_rate"]) if audio_stream.get("sample_rate") else None,
+        "duration_seconds": round(duration, 6) if duration is not None else None,
+        "sample_rate": _safe_int(audio_stream.get("sample_rate")),
         "channels": audio_stream.get("channels"),
-        "bit_rate": int(fmt["bit_rate"]) if fmt.get("bit_rate") else None,
-        "size_bytes": int(fmt.get("size") or path.stat().st_size),
+        "bit_rate": _safe_int(fmt.get("bit_rate")),
+        "size_bytes": _safe_int(fmt.get("size")) or path.stat().st_size,
         "probe_method": "ffprobe",
     }
 

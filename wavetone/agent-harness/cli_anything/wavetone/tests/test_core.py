@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import json
-import math
 import subprocess
-import struct
-import wave
 from pathlib import Path
 
 import pytest
@@ -22,20 +19,9 @@ from cli_anything.wavetone.core.project import (
     update_analysis,
 )
 from cli_anything.wavetone.core.session import append_event, load_events
+from cli_anything.wavetone.tests.helpers import make_wav
 from cli_anything.wavetone.utils import wavetone_backend
 from cli_anything.wavetone.wavetone_cli import cli
-
-
-def make_wav(path: Path, freq: float = 440.0, duration: float = 0.25, sample_rate: int = 8000) -> Path:
-    frames = int(duration * sample_rate)
-    with wave.open(str(path), "wb") as handle:
-        handle.setnchannels(1)
-        handle.setsampwidth(2)
-        handle.setframerate(sample_rate)
-        for idx in range(frames):
-            sample = int(16000 * math.sin(2 * math.pi * freq * idx / sample_rate))
-            handle.writeframes(struct.pack("<h", sample))
-    return path
 
 
 def test_create_project_manifest(tmp_path: Path) -> None:
@@ -152,6 +138,36 @@ def test_ffprobe_uses_single_show_entries_argument(tmp_path: Path, monkeypatch: 
     assert info["sample_rate"] == 44100
 
 
+def test_ffprobe_handles_non_numeric_metadata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    audio = tmp_path / "tone.mp3"
+    audio.write_bytes(b"mp3")
+
+    monkeypatch.setattr(audio_core.shutil, "which", lambda name: "ffprobe")
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        stdout = json.dumps(
+            {
+                "streams": [{"codec_type": "audio", "sample_rate": "N/A"}],
+                "format": {
+                    "duration": "N/A",
+                    "format_name": "mp3",
+                    "bit_rate": "N/A",
+                    "size": "N/A",
+                },
+            }
+        )
+        return subprocess.CompletedProcess(args, 0, stdout=stdout)
+
+    monkeypatch.setattr(audio_core.subprocess, "run", fake_run)
+
+    info = audio_core._probe_ffprobe(audio)
+
+    assert info["duration_seconds"] is None
+    assert info["sample_rate"] is None
+    assert info["bit_rate"] is None
+    assert info["size_bytes"] == audio.stat().st_size
+
+
 def test_session_event_log(tmp_path: Path) -> None:
     session_path = tmp_path / "session.json"
     append_event(session_path, "created", {"project": "demo"})
@@ -215,3 +231,10 @@ def test_wavetone_launch_fails_on_early_nonzero_exit(monkeypatch: pytest.MonkeyP
     data = json.loads(result.output)
     assert data["ok"] is False
     assert data["launch"]["exit_code"] == 42
+
+
+def test_launch_requires_windows(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(wavetone_backend.platform, "system", lambda: "Linux")
+
+    with pytest.raises(RuntimeError, match="requires Windows"):
+        wavetone_backend.launch_wavetone()
