@@ -11,7 +11,7 @@ Agent-native CLI for the Godot game engine. Manage projects, scenes, exports, an
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=godot/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=godot/agent-harness
 ```
 
 ## Requirements

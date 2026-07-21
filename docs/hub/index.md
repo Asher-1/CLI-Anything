@@ -2,9 +2,9 @@
 
 CLI-Anything Hub is an agent-friendly registry and package manager for CLI tools that let AI agents operate GUI applications, developer tools, creative software, web APIs, and public SaaS platforms.
 
-Canonical site: https://clianything.cc
+Canonical site: https://asher-1.github.io/CLI-Anything
 
-Repository: https://github.com/HKUDS/CLI-Anything
+Repository: https://github.com/Asher-1/CLI-Anything
 
 PyPI package: https://pypi.org/project/cli-anything-hub/
 
@@ -17,7 +17,7 @@ pip install cli-anything-hub
 ## Agent Skill
 
 ```bash
-npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
+npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
 ## Commands
@@ -34,17 +34,17 @@ cli-hub launch <name> [args...]
 
 ## Machine-Readable Resources
 
-- `https://clianything.cc/llms.txt`
-- `https://clianything.cc/llms-full.txt`
-- `https://clianything.cc/pricing.md`
-- `https://clianything.cc/registry.json`
-- `https://clianything.cc/public_registry.json`
-- `https://clianything.cc/openapi.json`
-- `https://clianything.cc/.well-known/agent.json`
-- `https://clianything.cc/.well-known/agent-card.json`
-- `https://clianything.cc/.well-known/ai-plugin.json`
-- `https://clianything.cc/.well-known/agent-skills/index.json`
-- `https://reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md`
+- `https://asher-1.github.io/CLI-Anything/llms.txt`
+- `https://asher-1.github.io/CLI-Anything/llms-full.txt`
+- `https://asher-1.github.io/CLI-Anything/pricing.md`
+- `https://asher-1.github.io/CLI-Anything/registry.json`
+- `https://asher-1.github.io/CLI-Anything/public_registry.json`
+- `https://asher-1.github.io/CLI-Anything/openapi.json`
+- `https://asher-1.github.io/CLI-Anything/.well-known/agent.json`
+- `https://asher-1.github.io/CLI-Anything/.well-known/agent-card.json`
+- `https://asher-1.github.io/CLI-Anything/.well-known/ai-plugin.json`
+- `https://asher-1.github.io/CLI-Anything/.well-known/agent-skills/index.json`
+- `https://asher-1.github.io/CLI-Anything/SKILL.txt`
 
 ## Copyright
 

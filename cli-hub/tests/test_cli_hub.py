@@ -62,7 +62,7 @@ from cli_hub.cli import main
 # ─── Sample registry data ─────────────────────────────────────────────
 
 SAMPLE_REGISTRY = {
-    "meta": {"repo": "https://github.com/HKUDS/CLI-Anything", "description": "test"},
+    "meta": {"repo": "https://github.com/Asher-1/CLI-Anything", "description": "test"},
     "clis": [
         {
             "name": "gimp",
@@ -71,7 +71,7 @@ SAMPLE_REGISTRY = {
             "description": "Image editing via GIMP",
             "requires": "gimp",
             "homepage": "https://gimp.org",
-            "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=gimp/agent-harness",
+            "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness",
             "entry_point": "cli-anything-gimp",
             "skill_md": "skills/cli-anything-gimp/SKILL.md",
             "category": "image",
@@ -85,7 +85,7 @@ SAMPLE_REGISTRY = {
             "description": "3D modeling via Blender",
             "requires": "blender",
             "homepage": "https://blender.org",
-            "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=blender/agent-harness",
+            "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=blender/agent-harness",
             "entry_point": "cli-anything-blender",
             "skill_md": None,
             "category": "3d",
@@ -99,7 +99,7 @@ SAMPLE_REGISTRY = {
             "description": "Audio editing and processing via sox",
             "requires": "sox",
             "homepage": "https://audacityteam.org",
-            "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=audacity/agent-harness",
+            "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=audacity/agent-harness",
             "entry_point": "cli-anything-audacity",
             "skill_md": None,
             "category": "audio",
@@ -110,7 +110,7 @@ SAMPLE_REGISTRY = {
 }
 
 SAMPLE_MATRIX_REGISTRY = {
-    "meta": {"repo": "https://github.com/HKUDS/CLI-Anything", "description": "test matrices"},
+    "meta": {"repo": "https://github.com/Asher-1/CLI-Anything", "description": "test matrices"},
     "matrices": [
         {
             "name": "video-creation",
@@ -1258,7 +1258,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "test-event"
-            assert payload["properties"]["hostname"] == "clianything.cc"
+            assert payload["properties"]["hostname"] == "asher-1.github.io/CLI-Anything"
             assert payload["properties"]["source"] == "cli"
 
     @patch("cli_hub.analytics._send_event")
@@ -1278,7 +1278,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["payload"]["name"] == "test-event"
-            assert payload["payload"]["hostname"] == "clianything.cc"
+            assert payload["payload"]["hostname"] == "asher-1.github.io/CLI-Anything"
 
     @patch("cli_hub.analytics._send_event")
     def test_track_install_event_name_is_flat(self, mock_send):
@@ -1290,7 +1290,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-install"
-            assert payload["properties"]["$current_url"] == "https://clianything.cc/cli-anything-hub/install/gimp"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/install/gimp"
             assert payload["properties"]["cli"] == "gimp"
             assert payload["properties"]["version"] == "1.0.0"
             assert "platform" in payload["properties"]
@@ -1305,7 +1305,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-uninstall"
-            assert payload["properties"]["$current_url"] == "https://clianything.cc/cli-anything-hub/uninstall/blender"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/uninstall/blender"
             assert payload["properties"]["cli"] == "blender"
             assert "platform" in payload["properties"]
 
@@ -1321,7 +1321,7 @@ class TestAnalytics:
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-launch"
             assert payload["properties"]["cli"] == "gimp"
-            assert payload["properties"]["$current_url"] == "https://clianything.cc/cli-anything-hub/launch/gimp"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/launch/gimp"
 
     @patch("cli_hub.analytics._send_event")
     def test_track_visit_human(self, mock_send):
@@ -1333,7 +1333,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-hub call"
-            assert payload["properties"]["$current_url"] == "https://clianything.cc/cli-anything-hub/call"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/call"
             assert payload["properties"]["command"] == "root"
             assert payload["properties"]["is_agent"] is False
             assert payload["properties"]["traffic_type"] == "human"
@@ -1443,7 +1443,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-anything-hub-installed"
-            assert payload["properties"]["$current_url"] == "https://clianything.cc/cli-anything-hub/installed"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/installed"
             # Marker file should now exist
             assert (tmp_path / ".cli-hub" / ".first_run_sent").exists()
 

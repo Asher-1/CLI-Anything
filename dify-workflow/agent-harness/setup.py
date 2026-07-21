@@ -27,7 +27,7 @@ setup(
     description="CLI-Anything wrapper for the Dify Workflow CLI and DSL editor",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

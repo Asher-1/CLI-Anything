@@ -156,7 +156,7 @@ Check:
 
 ```bash
 # Clone repository
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything/firefly-iii/agent-harness
 
 # Install dependencies

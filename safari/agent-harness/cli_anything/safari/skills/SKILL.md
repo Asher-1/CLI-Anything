@@ -327,8 +327,8 @@ re-spawning the subprocess on every invocation.
 
 - [Safari MCP GitHub](https://github.com/achiya-automation/safari-mcp)
 - [Safari MCP on npm](https://www.npmjs.com/package/safari-mcp)
-- [CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-- [MCP Backend Pattern Guide](https://github.com/HKUDS/CLI-Anything/blob/main/cli-anything-plugin/guides/mcp-backend.md)
+- [CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- [MCP Backend Pattern Guide](https://github.com/Asher-1/CLI-Anything/blob/main/cli-anything-plugin/guides/mcp-backend.md)
 
 ## Security Considerations
 

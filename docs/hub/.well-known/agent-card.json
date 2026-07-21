@@ -1,13 +1,13 @@
 {
   "name": "CLI-Anything Hub",
   "description": "Agent-friendly CLI registry and package manager for discovering, installing, and launching command-line tools for GUI applications, developer tools, creative software, web APIs, and public SaaS platforms.",
-  "url": "https://clianything.cc",
+  "url": "https://asher-1.github.io/CLI-Anything",
   "version": "0.3.0",
   "provider": {
-    "organization": "HKUDS",
-    "url": "https://github.com/HKUDS/CLI-Anything"
+    "organization": "Asher-1",
+    "url": "https://github.com/Asher-1/CLI-Anything"
   },
-  "documentationUrl": "https://clianything.cc/llms-full.txt",
+  "documentationUrl": "https://asher-1.github.io/CLI-Anything/llms-full.txt",
   "capabilities": {
     "streaming": false,
     "pushNotifications": false,

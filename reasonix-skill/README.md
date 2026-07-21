@@ -1,6 +1,6 @@
 # CLI-Anything for Reasonix
 
-An adapter that brings the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) harness methodology to the [Reasonix](https://github.com/esengine/DeepSeek-Reasonix) coding agent.
+An adapter that brings the [CLI-Anything](https://github.com/Asher-1/CLI-Anything) harness methodology to the [Reasonix](https://github.com/esengine/DeepSeek-Reasonix) coding agent.
 
 CLI-Anything is a methodology for making **any GUI software agent-native** by generating stateful CLI harnesses with REPL mode, JSON output, undo/redo, and comprehensive tests. This adapter lets Reasonix act as the builder agent.
 
@@ -9,7 +9,7 @@ CLI-Anything is a methodology for making **any GUI software agent-native** by ge
 **macOS / Linux:**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything/reasonix-skill
 ./scripts/install.sh
 ```
@@ -17,7 +17,7 @@ cd CLI-Anything/reasonix-skill
 **Windows (PowerShell):**
 
 ```powershell
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything\reasonix-skill
 .\scripts\install.ps1
 ```

@@ -5,7 +5,7 @@ CLI harness for [Teltonika RMS](https://rms.teltonika-networks.com/) — manage 
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=rms/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=rms/agent-harness
 ```
 
 Or for development:

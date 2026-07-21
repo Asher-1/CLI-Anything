@@ -193,7 +193,7 @@ def main():
         "## More Info",
         "",
         f"- Repository: {data['meta']['repo']}",
-        "- Web Hub: https://clianything.cc",
+        "- Web Hub: https://asher-1.github.io/CLI-Anything",
         f"- Last Updated: {data['meta']['updated']}",
     ])
 

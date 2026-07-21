@@ -18,7 +18,7 @@ setup(
     description="Experimental CLI harness for NotebookLM via an installed notebooklm CLI. Unofficial and community-maintained.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

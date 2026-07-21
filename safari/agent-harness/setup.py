@@ -23,10 +23,10 @@ setup(
     long_description=read_readme(),
     long_description_content_type="text/markdown",
 
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     project_urls={
-        "Homepage": "https://github.com/HKUDS/CLI-Anything",
-        "Issues": "https://github.com/HKUDS/CLI-Anything/issues",
+        "Homepage": "https://github.com/Asher-1/CLI-Anything",
+        "Issues": "https://github.com/Asher-1/CLI-Anything/issues",
         "Upstream": "https://github.com/achiya-automation/safari-mcp",
     },
 

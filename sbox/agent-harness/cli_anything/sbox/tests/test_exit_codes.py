@@ -1,6 +1,6 @@
 """Verify one-shot CLI invocations exit non-zero on failure.
 
-Reviewer feedback at HKUDS/CLI-Anything PR #251 flagged that handlers were
+Reviewer feedback at Asher-1/CLI-Anything PR #251 flagged that handlers were
 catching exceptions, printing via ``_output_error()``, then returning normally.
 That made scripts and agents see failures as success. These tests pin the
 contract: any failed command in one-shot mode must exit with code 1, while

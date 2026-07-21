@@ -10,7 +10,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.history import InMemoryHistory
 
-_SKILL_SOURCE_REPO = os.environ.get("CLI_ANYTHING_SKILL_REPO", "HKUDS/CLI-Anything")
+_SKILL_SOURCE_REPO = os.environ.get("CLI_ANYTHING_SKILL_REPO", "Asher-1/CLI-Anything")
 
 
 def _display_home_path(path: str) -> str:

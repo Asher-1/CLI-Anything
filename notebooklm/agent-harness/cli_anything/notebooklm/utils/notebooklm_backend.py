@@ -4,7 +4,7 @@ This module wraps an installed `notebooklm` CLI for use inside a CLI-Anything
 harness. It does not implement a Google official API client.
 
 References:
-- CLI-Anything methodology: https://github.com/HKUDS/CLI-Anything
+- CLI-Anything methodology: https://github.com/Asher-1/CLI-Anything
 - notebooklm-py project: https://github.com/teng-lin/notebooklm-py
 
 Security rules:

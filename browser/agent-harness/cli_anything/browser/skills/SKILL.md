@@ -174,8 +174,8 @@ This avoids the 1-3 second cold start overhead for each command.
 ## Links
 
 - [DOMShell GitHub](https://github.com/apireno/DOMShell)
-- [CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-- [Issue #90](https://github.com/HKUDS/CLI-Anything/issues/90)
+- [CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- [Issue #90](https://github.com/Asher-1/CLI-Anything/issues/90)
 
 ## Security Considerations
 
@@ -211,3 +211,5 @@ Multiple browser sessions share the same Chrome instance. Cookies and authentica
 1. Using Chrome's guest mode or incognito
 2. Clearing cookies between sessions
 3. Using separate Chrome profiles for different security contexts
+- [CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- [Issue #90](https://github.com/Asher-1/CLI-Anything/issues/90)

@@ -10,7 +10,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="cli-anything contributors",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     license="MIT",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[

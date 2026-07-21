@@ -179,4 +179,4 @@ bash run_tests.sh --full -v    # Full test suite
 
 - **Uni-Mol Tools**: https://github.com/dptech-corp/Uni-Mol/tree/main/unimol_tools
 - **Uni-Mol Paper**: https://arxiv.org/abs/2209.11126
-- **CLI-Anything**: https://github.com/HKUDS/CLI-Anything
+- **CLI-Anything**: https://github.com/Asher-1/CLI-Anything

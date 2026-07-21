@@ -115,7 +115,7 @@ python -m unimol_tools.weights.weighthub
 
 # 3. Clone CLI-Anything
 cd ../..
-git clone git@github.com:HKUDS/CLI-Anything.git
+git clone git@github.com:Asher-1/CLI-Anything.git
 cd CLI-Anything/unimol_tools/agent-harness
 
 # 4. Install CLI

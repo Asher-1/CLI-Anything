@@ -2,11 +2,11 @@
 
 > CLI-Anything is an agent-friendly project that helps AI agents discover, install, and operate command-line interfaces for GUI applications, developer tools, creative software, web APIs, and public SaaS platforms.
 
-Canonical site: https://clianything.cc
-Repository: https://github.com/HKUDS/CLI-Anything
+Canonical site: https://asher-1.github.io/CLI-Anything
+Repository: https://github.com/Asher-1/CLI-Anything
 PyPI package: https://pypi.org/project/cli-anything-hub/
 Install hub: `pip install cli-anything-hub`
-Agent skill install: `npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y`
+Agent skill install: `npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y`
 
 ## What This Product Does
 
@@ -28,9 +28,9 @@ Agent skill install: `npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-ski
 
 ## Workflow Matrices
 
-Matrices package a whole workflow as capabilities × providers (harness CLIs, public CLIs, Python libs, native binaries, and cloud APIs). Browse them at https://clianything.cc/matrix.html.
+Matrices package a whole workflow as capabilities × providers (harness CLIs, public CLIs, Python libs, native binaries, and cloud APIs). Browse them at https://asher-1.github.io/CLI-Anything/matrix.html.
 
-- Matrix registry (machine-readable): https://clianything.cc/matrix_registry.json — capabilities, providers, preflight `requires` contracts, recipes, and known gaps.
+- Matrix registry (machine-readable): https://asher-1.github.io/CLI-Anything/matrix_registry.json — capabilities, providers, preflight `requires` contracts, recipes, and known gaps.
 - Discover a capability across all matrices: `cli-hub can "<task>"`.
 - Preflight before installing (exit 3 = capability gaps): `cli-hub matrix preflight <name> --json`.
 - Scope installs to a capability, recipe, or subset: `cli-hub matrix install <name> --capability <id>` (also `--recipe`, `--only`, `--dry-run`, `--resume`).
@@ -45,18 +45,18 @@ Matrices package a whole workflow as capabilities × providers (harness CLIs, pu
 
 ## Machine-Readable Resources
 
-- Full context: https://clianything.cc/llms-full.txt
-- Markdown homepage: https://clianything.cc/index.md
-- Pricing: https://clianything.cc/pricing.md
-- Registry: https://clianything.cc/registry.json
-- Public registry: https://clianything.cc/public_registry.json
-- Matrix registry: https://clianything.cc/matrix_registry.json
-- OpenAPI description for read-only registry resources: https://clianything.cc/openapi.json
-- Agent discovery: https://clianything.cc/.well-known/agent.json
-- A2A agent card: https://clianything.cc/.well-known/agent-card.json
-- OpenAI plugin-style manifest: https://clianything.cc/.well-known/ai-plugin.json
-- Agent Skills index: https://clianything.cc/.well-known/agent-skills/index.json
-- Agent Skills artifact: https://reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md
+- Full context: https://asher-1.github.io/CLI-Anything/llms-full.txt
+- Markdown homepage: https://asher-1.github.io/CLI-Anything/index.md
+- Pricing: https://asher-1.github.io/CLI-Anything/pricing.md
+- Registry: https://asher-1.github.io/CLI-Anything/registry.json
+- Public registry: https://asher-1.github.io/CLI-Anything/public_registry.json
+- Matrix registry: https://asher-1.github.io/CLI-Anything/matrix_registry.json
+- OpenAPI description for read-only registry resources: https://asher-1.github.io/CLI-Anything/openapi.json
+- Agent discovery: https://asher-1.github.io/CLI-Anything/.well-known/agent.json
+- A2A agent card: https://asher-1.github.io/CLI-Anything/.well-known/agent-card.json
+- OpenAI plugin-style manifest: https://asher-1.github.io/CLI-Anything/.well-known/ai-plugin.json
+- Agent Skills index: https://asher-1.github.io/CLI-Anything/.well-known/agent-skills/index.json
+- Agent Skills artifact: https://asher-1.github.io/CLI-Anything/SKILL.txt
 
 ## Copyright
 

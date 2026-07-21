@@ -11,7 +11,7 @@ A CLI harness for **MiniMax AI** — providing chat completions and text-to-spee
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=minimax/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=minimax/agent-harness
 ```
 
 **Prerequisites:**

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "repo": "https://github.com/HKUDS/CLI-Anything",
+    "repo": "https://github.com/Asher-1/CLI-Anything",
     "description": "Curated CLI Matrix registry for CLI-Hub multi-CLI workflows (capability-based, v2 schema)",
     "updated": "2026-06-11",
     "schema_doc": "docs/cli-matrix/matrix_registry.schema.md"
@@ -15,7 +15,7 @@
       "category": "video",
       "matrix": "cli-matrix",
       "matrix_id": "S1",
-      "homepage": "https://github.com/HKUDS/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
+      "homepage": "https://github.com/Asher-1/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
       "skill_md": "cli-hub-matrix/video-creation/SKILL.md",
       "clis": [
         "generate-veo-video",
@@ -358,7 +358,7 @@
       "category": "knowledge",
       "matrix": "cli-matrix",
       "matrix_id": "S2",
-      "homepage": "https://github.com/HKUDS/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
+      "homepage": "https://github.com/Asher-1/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
       "skill_md": "cli-hub-matrix/knowledge-research/SKILL.md",
       "clis": [
         "exa",
@@ -616,7 +616,7 @@
       "category": "3d",
       "matrix": "cli-matrix",
       "matrix_id": "S3",
-      "homepage": "https://github.com/HKUDS/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
+      "homepage": "https://github.com/Asher-1/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
       "skill_md": "cli-hub-matrix/3d-cad/SKILL.md",
       "clis": [
         "blender",
@@ -849,7 +849,7 @@
       "category": "game",
       "matrix": "cli-matrix",
       "matrix_id": "S4",
-      "homepage": "https://github.com/HKUDS/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
+      "homepage": "https://github.com/Asher-1/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
       "skill_md": "cli-hub-matrix/game-development/SKILL.md",
       "clis": [
         "godot",
@@ -1066,7 +1066,7 @@
       "category": "image",
       "matrix": "cli-matrix",
       "matrix_id": "S5",
-      "homepage": "https://github.com/HKUDS/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
+      "homepage": "https://github.com/Asher-1/CLI-Anything/blob/main/docs/cli-matrix/cli-matrix-plan.md",
       "skill_md": "cli-hub-matrix/image-design/SKILL.md",
       "clis": [
         "comfyui",

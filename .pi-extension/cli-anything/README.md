@@ -120,6 +120,6 @@ Apache License 2.0 - See the main CLI-Anything repository for full license detai
 
 ## See Also
 
-- [CLI-Anything Main Repository](https://github.com/HKUDS/CLI-Anything)
-- [CLI-Hub](https://hkuds.github.io/CLI-Anything/) - Browse all community CLIs
+- [CLI-Anything Main Repository](https://github.com/Asher-1/CLI-Anything)
+- [CLI-Hub](https://asher-1.github.io/CLI-Anything/) - Browse all community CLIs
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines

@@ -1,10 +1,10 @@
 # cli-hub
 
-Package manager for [CLI-Anything](https://github.com/HKUDS/CLI-Anything) — a framework that auto-generates stateful CLI interfaces for GUI applications, making them agent-native.
+Package manager for [CLI-Anything](https://github.com/Asher-1/CLI-Anything) — a framework that auto-generates stateful CLI interfaces for GUI applications, making them agent-native.
 
 Browse, install, and manage 40+ CLI harnesses for software like GIMP, Blender, Inkscape, LibreOffice, Audacity, OBS Studio, and more — all from your terminal.
 
-**Web Hub**: [clianything.cc](https://clianything.cc)
+**Web Hub**: [asher-1.github.io/CLI-Anything](https://asher-1.github.io/CLI-Anything)
 
 ## Install
 
@@ -116,6 +116,6 @@ export CLI_HUB_NO_ANALYTICS=1
 
 ## Links
 
-- **Web Hub**: [clianything.cc](https://clianything.cc)
-- **Repository**: [github.com/HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-- **Live Catalog**: [SKILL.md](https://reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md)
+- **Web Hub**: [asher-1.github.io/CLI-Anything](https://asher-1.github.io/CLI-Anything)
+- **Repository**: [github.com/Asher-1/CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- **Live Catalog**: [SKILL.md](https://asher-1.github.io/CLI-Anything/SKILL.txt)

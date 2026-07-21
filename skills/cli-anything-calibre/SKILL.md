@@ -13,7 +13,7 @@ A stateful CLI harness for Calibre e-book management. Wraps the real Calibre too
 This CLI is installed as part of the cli-anything-calibre package:
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=calibre/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=calibre/agent-harness
 ```
 
 **Prerequisites:**

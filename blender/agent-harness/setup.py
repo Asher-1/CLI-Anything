@@ -29,11 +29,11 @@ setup(
 
     author="cli-anything contributors",
     author_email="",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
 
     project_urls={
-        "Source": "https://github.com/HKUDS/CLI-Anything",
-        "Tracker": "https://github.com/HKUDS/CLI-Anything/issues",
+        "Source": "https://github.com/Asher-1/CLI-Anything",
+        "Tracker": "https://github.com/Asher-1/CLI-Anything/issues",
     },
 
     license="MIT",

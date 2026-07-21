@@ -87,7 +87,7 @@ Inside the REPL:
 
 ```
 ◆  cli-anything · Siyuan                   v1.0.0
-   ◇ Install: npx skills add HKUDS/CLI-Anything --skill cli-anything-siyuan -g -y
+   ◇ Install: npx skills add Asher-1/CLI-Anything --skill cli-anything-siyuan -g -y
    ◇ Global skill: ~/.agents/skills/cli-anything-siyuan/SKILL.md
 
    Type help for commands, quit to exit

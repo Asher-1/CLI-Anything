@@ -143,6 +143,7 @@ class TestInstalledHarnesses:
     """Verify each real harness has SKILL.md in the correct package location."""
 
     HARNESSES = [
+        ("acloudviewer", "acloudviewer"),
         ("adguardhome", "adguardhome"),
         ("anygen", "anygen"),
         ("audacity", "audacity"),
@@ -152,6 +153,7 @@ class TestInstalledHarnesses:
         ("gimp", "gimp"),
         ("inkscape", "inkscape"),
         ("kdenlive", "kdenlive"),
+        ("krita", "krita"),
         ("libreoffice", "libreoffice"),
         ("mermaid", "mermaid"),
         ("mubu", "mubu"),

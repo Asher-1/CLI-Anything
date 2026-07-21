@@ -6,16 +6,16 @@
     "description": "Read-only machine-readable resources for CLI-Anything Hub, an agent-friendly registry and package manager for CLI tools.",
     "contact": {
       "name": "HKUDS",
-      "url": "https://github.com/HKUDS/CLI-Anything"
+      "url": "https://github.com/Asher-1/CLI-Anything"
     },
     "license": {
       "name": "Apache-2.0",
-      "url": "https://github.com/HKUDS/CLI-Anything/blob/main/LICENSE"
+      "url": "https://github.com/Asher-1/CLI-Anything/blob/main/LICENSE"
     }
   },
   "servers": [
     {
-      "url": "https://clianything.cc"
+      "url": "https://asher-1.github.io/CLI-Anything"
     }
   ],
   "paths": {

@@ -7,7 +7,7 @@ Edit screen recordings via command line: add zoom effects, speed ramps, trim sec
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=openscreen/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=openscreen/agent-harness
 ```
 
 **Prerequisites:**

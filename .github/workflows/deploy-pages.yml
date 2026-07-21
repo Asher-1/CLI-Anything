@@ -46,19 +46,10 @@ jobs:
       - name: Generate meta-skill
         run: python3 .github/scripts/generate_meta_skill.py
 
-      - name: Install AWS CLI
-        run: pip install awscli
+      - name: Publish agent catalog to GitHub Pages (fork fallback)
+        run: cp cli-hub-skill/SKILL.md docs/hub/SKILL.txt
 
-      - name: Upload SKILL.md to DO Spaces
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.DO_SPACES_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.DO_SPACES_SECRET }}
-        run: |
-          aws s3 cp cli-hub-skill/SKILL.md \
-            s3://${{ secrets.DO_SPACES_BUCKET }}/SKILL.md \
-            --endpoint-url ${{ secrets.DO_SPACES_ENDPOINT }} \
-            --acl public-read \
-            --content-type text/markdown
+
 
       - name: Copy registries to hub for cli-hub access
         run: |
@@ -76,7 +67,7 @@ jobs:
 
       # Copied after the Jekyll build so SKILL.md front matter is served
       # verbatim instead of being converted to HTML. Published at
-      # https://hkuds.github.io/CLI-Anything/matrix/<name>/{SKILL.md,references/,scripts/}
+      # https://asher-1.github.io/CLI-Anything/matrix/<name>/{SKILL.md,references/,scripts/}
       # (consumed by cli_hub.matrix_skill's published-URL fallback).
       - name: Copy matrix skill content into site
         run: |

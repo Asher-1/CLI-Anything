@@ -18,7 +18,7 @@ UMAMI_URL = "https://cloud.umami.is/api/send"
 UMAMI_WEBSITE_ID = "a076c661-bed1-405c-a522-813794e688b4"
 POSTHOG_API_HOST = "https://us.i.posthog.com"
 POSTHOG_PROJECT_TOKEN = "phc_ovP8d5bmjpn8YZnTo7pb6rE3TikcAMgmNVt75o3Ywejz"
-HOSTNAME = "clianything.cc"
+HOSTNAME = "asher-1.github.io/CLI-Anything"
 USER_AGENT = f"Mozilla/5.0 (compatible; cli-anything-hub/{__version__})"
 ANALYTICS_ID_FILE = ".analytics_id"
 

@@ -12,7 +12,7 @@ line entry.
 ## Install
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=web-yu-pri/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=web-yu-pri/agent-harness
 ```
 
 If no browser is found:

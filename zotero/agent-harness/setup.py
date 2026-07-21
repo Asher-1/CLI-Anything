@@ -39,7 +39,7 @@ setup(
     description="Agent-native CLI harness for Zotero using SQLite, connector, and Local API backends",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     python_requires=">=3.10",
     install_requires=[

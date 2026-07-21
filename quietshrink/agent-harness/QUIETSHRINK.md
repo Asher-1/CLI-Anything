@@ -25,7 +25,7 @@ Screen recording compression is a frequent agent task: "compress this screencast
 ## Install
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=quietshrink/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=quietshrink/agent-harness
 ```
 
 The harness depends on the bash `quietshrink` CLI being available in `$PATH`. Install it with:

@@ -28,6 +28,7 @@ Fixes #<!-- issue number -->
 - [ ] E2E tests at `cli_anything/<software>/tests/test_full_e2e.py` are present
 - [ ] `README.md` includes the new software (with link to harness directory)
 - [ ] `registry.json` includes an entry with `source_url: null` (see [Contributing guide](CONTRIBUTING.md#registry-fields))
+- [ ] `registry.json` includes an entry for the new software (for the [CLI-Hub](https://asher-1.github.io/CLI-Anything/hub/))
 - [ ] `repl_skin.py` in `utils/` is an unmodified copy from the plugin
 
 ### For New Software CLIs (standalone repo)

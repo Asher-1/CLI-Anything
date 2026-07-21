@@ -18,7 +18,7 @@ setup(
     if __import__("os").path.exists("cli_anything/comfyui/README.md")
     else "CLI harness for ComfyUI AI image generation.",
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

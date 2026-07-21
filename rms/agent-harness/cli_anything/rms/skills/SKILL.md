@@ -12,7 +12,7 @@ CLI harness for Teltonika RMS (Remote Management System). Manage routers, gatewa
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=rms/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=rms/agent-harness
 ```
 
 ## Authentication

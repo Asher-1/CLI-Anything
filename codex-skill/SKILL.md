@@ -18,7 +18,7 @@ Before implementation, use the full methodology source of truth:
    `CLI-Anything` repository checkout, read `../cli-anything-plugin/HARNESS.md` and
    the resources around it.
 5. If neither local source is available, clone or download
-   `https://github.com/HKUDS/CLI-Anything` and use `cli-anything-plugin/HARNESS.md`.
+   `https://github.com/Asher-1/CLI-Anything` and use `cli-anything-plugin/HARNESS.md`.
 6. Only if all full-methodology sources are unavailable, follow the condensed rules below.
 
 The installer vendors the canonical resources from `cli-anything-plugin/` into this

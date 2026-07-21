@@ -7,7 +7,7 @@ and Hermes. Reads directly from the live CC Switch SQLite database.
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=cc-switch/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=cc-switch/agent-harness
 ```
 
 Or for local development:

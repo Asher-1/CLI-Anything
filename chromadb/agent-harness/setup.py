@@ -8,7 +8,7 @@ setup(
     author="cli-anything contributors",
     author_email="",
     description="CLI-Anything harness for ChromaDB vector database",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

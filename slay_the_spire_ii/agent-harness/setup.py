@@ -19,7 +19,7 @@ setup(
     description="CLI harness for Slay the Spire 2 - Control the real game via a local bridge mod. Requires: Slay the Spire 2 (Steam) with STS2_Bridge mod enabled",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

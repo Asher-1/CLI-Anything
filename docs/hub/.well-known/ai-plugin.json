@@ -9,10 +9,10 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://clianything.cc/openapi.json",
+    "url": "https://asher-1.github.io/CLI-Anything/openapi.json",
     "is_user_authenticated": false
   },
   "logo_url": "https://github.com/HKUDS.png",
   "contact_email": "yuhao@yuhao.page",
-  "legal_info_url": "https://clianything.cc/pricing.md"
+  "legal_info_url": "https://asher-1.github.io/CLI-Anything/pricing.md"
 }

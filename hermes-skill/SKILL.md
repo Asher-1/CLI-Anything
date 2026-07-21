@@ -10,7 +10,7 @@ Use this skill when the user wants Hermes Agent to act like the `CLI-Anything` b
 Before implementation, use the full methodology source of truth when available:
 
 1. If this skill is being used from inside the `CLI-Anything` repository, read `../cli-anything-plugin/HARNESS.md` first.
-2. If that local file is unavailable, clone or download `cli-anything-plugin` from `https://github.com/HKUDS/CLI-Anything/tree/main/cli-anything-plugin`, then use `HARNESS.md` and the resources around it from that folder.
+2. If that local file is unavailable, clone or download `cli-anything-plugin` from `https://github.com/Asher-1/CLI-Anything/tree/main/cli-anything-plugin`, then use `HARNESS.md` and the resources around it from that folder.
 3. Only if both local and network retrieval fail, follow the condensed rules below.
 
 ## Inputs

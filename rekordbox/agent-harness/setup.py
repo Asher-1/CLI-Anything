@@ -18,7 +18,7 @@ setup(
     description="CLI harness for Pioneer Rekordbox - DJ library + live-deck control via SQLCipher direct DB access and virtual MIDI. Requires: rekordbox 6/7, optional virtual MIDI driver (loopMIDI / LoopBe / teVirtualMIDI on Windows).",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -47,4 +47,4 @@ User-agent: Bytespider
 Allow: /
 
 Content-Signal: search=yes, ai-input=yes, ai-train=yes
-Sitemap: https://clianything.cc/sitemap.xml
+Sitemap: https://asher-1.github.io/CLI-Anything/sitemap.xml
