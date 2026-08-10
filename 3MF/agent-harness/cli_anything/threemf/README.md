@@ -2,12 +2,12 @@
 
 **3MF Mesh Geometry Editor** — Detect and resize cylindrical holes, repair meshes, compare 3D printing files.
 
-Part of the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) ecosystem.
+Part of the [CLI-Anything](https://github.com/Asher-1/CLI-Anything) ecosystem.
 
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=3MF/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=3MF/agent-harness
 ```
 
 Or for development:
@@ -101,4 +101,4 @@ cli_anything/threemf/
 
 ## License
 
-MIT — See [CLI-Anything LICENSE](https://github.com/HKUDS/CLI-Anything/blob/main/LICENSE)
+MIT — See [CLI-Anything LICENSE](https://github.com/Asher-1/CLI-Anything/blob/main/LICENSE)

@@ -1,6 +1,6 @@
 # CLI-Anything Full Agent Context
 
-CLI-Anything is an agent-friendly open source project and web hub for discovering, installing, and operating command-line interfaces built for AI agents. The public website is https://clianything.cc and the source repository is https://github.com/HKUDS/CLI-Anything.
+CLI-Anything is an agent-friendly open source project and web hub for discovering, installing, and operating command-line interfaces built for AI agents. The public website is https://asher-1.github.io/CLI-Anything and the source repository is https://github.com/Asher-1/CLI-Anything.
 
 The project has three related surfaces:
 
@@ -19,7 +19,7 @@ pip install cli-anything-hub
 Install the agent meta-skill:
 
 ```bash
-npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
+npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
 ## Core Commands
@@ -70,35 +70,35 @@ cli-hub search <query> --json
 
 ## Public Machine-Readable URLs
 
-- Homepage: https://clianything.cc/
-- Markdown homepage: https://clianything.cc/index.md
-- Short LLM context: https://clianything.cc/llms.txt
-- Full LLM context: https://clianything.cc/llms-full.txt
-- Pricing: https://clianything.cc/pricing.md
-- Sitemap: https://clianything.cc/sitemap.xml
-- Crawler policy: https://clianything.cc/robots.txt
-- Harness registry: https://clianything.cc/registry.json
-- Public CLI registry: https://clianything.cc/public_registry.json
-- Registry dates: https://clianything.cc/registry-dates.json
-- OpenAPI: https://clianything.cc/openapi.json
-- Agent discovery: https://clianything.cc/.well-known/agent.json
-- A2A agent card: https://clianything.cc/.well-known/agent-card.json
-- OpenAI plugin-style manifest: https://clianything.cc/.well-known/ai-plugin.json
-- Agent Skills index: https://clianything.cc/.well-known/agent-skills/index.json
-- Agent Skills artifact: https://reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md
+- Homepage: https://asher-1.github.io/CLI-Anything/
+- Markdown homepage: https://asher-1.github.io/CLI-Anything/index.md
+- Short LLM context: https://asher-1.github.io/CLI-Anything/llms.txt
+- Full LLM context: https://asher-1.github.io/CLI-Anything/llms-full.txt
+- Pricing: https://asher-1.github.io/CLI-Anything/pricing.md
+- Sitemap: https://asher-1.github.io/CLI-Anything/sitemap.xml
+- Crawler policy: https://asher-1.github.io/CLI-Anything/robots.txt
+- Harness registry: https://asher-1.github.io/CLI-Anything/registry.json
+- Public CLI registry: https://asher-1.github.io/CLI-Anything/public_registry.json
+- Registry dates: https://asher-1.github.io/CLI-Anything/registry-dates.json
+- OpenAPI: https://asher-1.github.io/CLI-Anything/openapi.json
+- Agent discovery: https://asher-1.github.io/CLI-Anything/.well-known/agent.json
+- A2A agent card: https://asher-1.github.io/CLI-Anything/.well-known/agent-card.json
+- OpenAI plugin-style manifest: https://asher-1.github.io/CLI-Anything/.well-known/ai-plugin.json
+- Agent Skills index: https://asher-1.github.io/CLI-Anything/.well-known/agent-skills/index.json
+- Agent Skills artifact: https://asher-1.github.io/CLI-Anything/SKILL.txt
 
 ## Registry Files
 
 The main registry describes generated harness CLIs:
 
 ```text
-https://clianything.cc/registry.json
+https://asher-1.github.io/CLI-Anything/registry.json
 ```
 
 The public registry describes public and third-party CLIs:
 
 ```text
-https://clianything.cc/public_registry.json
+https://asher-1.github.io/CLI-Anything/public_registry.json
 ```
 
 Agents can read these files directly to find CLI names, descriptions, categories, install commands, entry points, source links, docs links, requirements, and SKILL.md paths.
@@ -113,9 +113,9 @@ Agents can read these files directly to find CLI names, descriptions, categories
 
 ## Contribution
 
-Repository: https://github.com/HKUDS/CLI-Anything
-Contributing guide: https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md
-Pull request template: https://github.com/HKUDS/CLI-Anything/blob/main/.github/PULL_REQUEST_TEMPLATE.md
+Repository: https://github.com/Asher-1/CLI-Anything
+Contributing guide: https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md
+Pull request template: https://github.com/Asher-1/CLI-Anything/blob/main/.github/PULL_REQUEST_TEMPLATE.md
 PyPI package: https://pypi.org/project/cli-anything-hub/
 
 ## Copyright

@@ -17,7 +17,7 @@ python -m pip install "dify-ai-workflow-tools @ git+https://github.com/Akabane71
 Then install this harness:
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=dify-workflow/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=dify-workflow/agent-harness
 ```
 
 If the upstream project is published to PyPI later, you can replace the first

@@ -172,7 +172,7 @@ update the pinned tool count if safari-mcp changed.
 
 - [safari-mcp GitHub](https://github.com/achiya-automation/safari-mcp)
 - [safari-mcp on npm](https://www.npmjs.com/package/safari-mcp)
-- [CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-- [Harness architecture deep-dive](https://github.com/HKUDS/CLI-Anything/blob/main/safari/agent-harness/HARNESS.md)
-- [Safari-specific analysis](https://github.com/HKUDS/CLI-Anything/blob/main/safari/agent-harness/SAFARI.md)
-- [Test plan & results](https://github.com/HKUDS/CLI-Anything/blob/main/safari/agent-harness/cli_anything/safari/tests/TEST.md)
+- [CLI-Anything](https://github.com/Asher-1/CLI-Anything)
+- [Harness architecture deep-dive](https://github.com/Asher-1/CLI-Anything/blob/main/safari/agent-harness/HARNESS.md)
+- [Safari-specific analysis](https://github.com/Asher-1/CLI-Anything/blob/main/safari/agent-harness/SAFARI.md)
+- [Test plan & results](https://github.com/Asher-1/CLI-Anything/blob/main/safari/agent-harness/cli_anything/safari/tests/TEST.md)

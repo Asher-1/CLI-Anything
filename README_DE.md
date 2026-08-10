@@ -9,7 +9,7 @@
 CLI-Anything: Die Brücke zwischen KI-Agenten und der Software der Welt</strong><br>
 </p>
 
-**🌐 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)**: Alle von der Community gebauten CLIs auf **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)** entdecken — mit einem Befehl installieren. Du willst dein eigenes CLI beitragen? [PR einreichen](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md) — der Hub aktualisiert sich sofort.
+**🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: Alle von der Community gebauten CLIs auf **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)** entdecken — mit einem Befehl installieren. Du willst dein eigenes CLI beitragen? [PR einreichen](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — der Hub aktualisiert sich sofort.
 
 <p align="center">
   <a href="#-schnellstart"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="Schnellstart"></a>
@@ -57,7 +57,7 @@ CLI-Anything: Die Brücke zwischen KI-Agenten und der Software der Welt</strong>
 <details>
 <summary>Frühere Neuigkeiten (10.–18. April)</summary>
 
-- **2026-04-18** 🧩 **Alle SKILL.md-Dateien werden jetzt unter dem Top-Level-Verzeichnis `skills/` vereinheitlicht** — jeder CLI-Skill lässt sich aus einer einzigen kanonischen Quelle installieren via `npx skills add HKUDS/CLI-Anything --skill <skill-name> -g -y`. Außerdem haben wir Root-Skill-Validierungs-CI ergänzt, Contribution-/PR-Docs sowie REPL-Skill-Path-Hinweise auf das neue Layout angepasst und das **CLI-Hub**-Install-First-Frontend rund um den neuen `npx skills`-Flow überarbeitet.
+- **2026-04-18** 🧩 **Alle SKILL.md-Dateien werden jetzt unter dem Top-Level-Verzeichnis `skills/` vereinheitlicht** — jeder CLI-Skill lässt sich aus einer einzigen kanonischen Quelle installieren via `npx skills add Asher-1/CLI-Anything --skill <skill-name> -g -y`. Außerdem haben wir Root-Skill-Validierungs-CI ergänzt, Contribution-/PR-Docs sowie REPL-Skill-Path-Hinweise auf das neue Layout angepasst und das **CLI-Hub**-Install-First-Frontend rund um den neuen `npx skills`-Flow überarbeitet.
 
 - **2026-04-17** 🌐 **CLI-Hub** hat einen weiteren Install-UX-Pass bekommen — öffentliche Registry-Metadaten und Skill-Coverage wurden geschärft, das Visit-Counting korrigiert und das Web-Hub weiter verfeinert. 🧪 **Shotcut**-Render-Output-Dauer wurde gefixt (#92). 📝 **SKILL**-Contribution-Pfade wurden für den neuen Docs-Flow korrigiert (#224), und der Skill-Generator behandelt leere Intros jetzt sicher (#203).
 
@@ -128,7 +128,7 @@ CLI-Anything: Die Brücke zwischen KI-Agenten und der Software der Welt</strong>
 
 - **2026-03-18** 🧪 Erweiterung der Test-Coverage — zusätzliche E2E-Szenarien und Edge-Case-Validierung über mehrere CLIs hinweg.
 
-- **2026-03-17** 🌐 Den **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)** gelauncht — eine zentrale Registry, in der jedes CLI mit einem einzigen `pip`-Befehl gebrowst, gesucht und installiert werden kann.
+- **2026-03-17** 🌐 Den **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)** gelauncht — eine zentrale Registry, in der jedes CLI mit einem einzigen `pip`-Befehl gebrowst, gesucht und installiert werden kann.
 
 - **2026-03-16** 🤖 **SKILL.md-Generierung** ergänzt (Phase 6.5) — jedes generierte CLI bringt jetzt eine KI-entdeckbare Skill-Definition mit.
 
@@ -181,7 +181,7 @@ CLI-Anything wird als Claude-Code-Plugin-Marketplace auf GitHub bereitgestellt.
 
 ```bash
 # CLI-Anything-Marketplace hinzufügen
-/plugin marketplace add HKUDS/CLI-Anything
+/plugin marketplace add Asher-1/CLI-Anything
 ```
 
 **Schritt 2: Plugin installieren**
@@ -233,7 +233,7 @@ Wenn du den Marketplace nicht nutzen willst:
 
 ```bash
 # Repo klonen
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Plugin in das Plugin-Verzeichnis von Claude Code kopieren
 cp -r CLI-Anything/cli-anything-plugin ~/.claude/plugins/cli-anything
@@ -255,7 +255,7 @@ Kopiere die CLI-Anything-Commands **und** die `HARNESS.md` in das Command-Verzei
 
 ```bash
 # Repo klonen
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Globale Installation (in allen Projekten verfügbar)
 cp CLI-Anything/opencode-commands/*.md ~/.config/opencode/commands/
@@ -301,7 +301,7 @@ Die Commands laufen als Sub-Tasks und folgen derselben 7-Phasen-Methodik wie in 
 **Schritt 1: Plugin registrieren**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 bash CLI-Anything/qoder-plugin/setup-qodercli.sh
 ```
 
@@ -326,7 +326,7 @@ CLI-Anything stellt eine native OpenClaw-`SKILL.md` bereit. Kopiere sie in das S
 
 ```bash
 # Repo klonen
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # In den globalen Skill-Ordner installieren
 mkdir -p ~/.openclaw/skills/cli-anything
@@ -353,7 +353,7 @@ Mitgelieferten Installer ausführen:
 
 ```bash
 # Repo klonen
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Skill installieren
 bash CLI-Anything/codex-skill/scripts/install.sh
@@ -389,7 +389,7 @@ Der Codex-Skill wendet dieselbe Methodik an wie das Claude-Code-Plugin und die O
 **Schritt 1: Plugin installieren**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything
 copilot plugin install ./cli-anything-plugin
 ```
@@ -442,7 +442,7 @@ cli-anything-gimp
 CLI-Hub lässt Agenten autonom die CLIs entdecken, installieren und nutzen, die sie für eine Aufgabe brauchen.
 
 ```bash
-npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
+npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
 **Ebenfalls verfügbar auf:** [ClawHub](https://clawhub.ai/yuh-yang/cli-anything-hub), [SkillHub](https://www.skillhub.club/web/skills/itsyuhao-cli-anything-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
@@ -1021,7 +1021,7 @@ cli-hub launch <name> [args...]
 
 ```bash
 # Marketplace hinzufügen und installieren (empfohlen)
-/plugin marketplace add HKUDS/CLI-Anything
+/plugin marketplace add Asher-1/CLI-Anything
 /plugin install cli-anything
 
 # CLI für eine Software mit Codebase bauen
@@ -1103,11 +1103,11 @@ Jedes generierte Harness enthält zusätzlich:
 Wenn CLI-Anything dir hilft, deine Software agent-native zu machen, freuen wir uns über einen Stern! ⭐
 
 <div align="center">
-  <a href="https://star-history.com/#HKUDS/CLI-Anything&Date">
+  <a href="https://star-history.com/#Asher-1/CLI-Anything&Date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date" />
-      <img alt="Star-History-Diagramm" src="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date" />
+      <img alt="Star-History-Diagramm" src="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date" />
     </picture>
   </a>
 </div>

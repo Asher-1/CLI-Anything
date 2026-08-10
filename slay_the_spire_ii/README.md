@@ -211,4 +211,4 @@ This project was informed by:
 
 - [`wuhao21/sts2-cli`](https://github.com/wuhao21/sts2-cli)
 - [`Gennadiyev/STS2MCP`](https://github.com/Gennadiyev/STS2MCP)
-- [`HKUDS/CLI-Anything`](https://github.com/HKUDS/CLI-Anything)
+- [`Asher-1/CLI-Anything`](https://github.com/Asher-1/CLI-Anything)

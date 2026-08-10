@@ -13,7 +13,7 @@ Agent-native CLI for the s&box game engine (Facepunch Studios, Source 2). 79+ co
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=sbox/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=sbox/agent-harness
 ```
 
 ## Requirements
@@ -311,4 +311,4 @@ cli-anything-sbox> quit
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SBOX_PATH` | s&box installation directory | Auto-detected from Steam library folders |
-| `CLI_ANYTHING_SKILL_REPO` | Override the repo `repl_skin` reads SKILL.md from | `HKUDS/CLI-Anything` |
+| `CLI_ANYTHING_SKILL_REPO` | Override the repo `repl_skin` reads SKILL.md from | `Asher-1/CLI-Anything` |

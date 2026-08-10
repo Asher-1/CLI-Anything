@@ -15,8 +15,8 @@ skills/
 Typical usage:
 
 ```bash
-npx skills add HKUDS/CLI-Anything --list
-npx skills add HKUDS/CLI-Anything --skill cli-anything-audacity -g -y
+npx skills add Asher-1/CLI-Anything --list
+npx skills add Asher-1/CLI-Anything --skill cli-anything-audacity -g -y
 ```
 
 The `SKILL.md` files here are the canonical repo-root copies. Installed harness

@@ -1,0 +1,114 @@
+{
+  "fork": {
+    "github_repo": "Asher-1/CLI-Anything",
+    "github_url": "https://github.com/Asher-1/CLI-Anything",
+    "pages_base": "https://asher-1.github.io/CLI-Anything",
+    "skill_catalog_url": "https://asher-1.github.io/CLI-Anything/SKILL.txt",
+    "upstream_repo": "HKUDS/CLI-Anything",
+    "upstream_pages": "https://hkuds.github.io/CLI-Anything",
+    "upstream_hub_domain": "https://clianything.cc",
+    "upstream_skill_cdn": "https://reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md"
+  },
+  "fork_only_paths": [
+    "acloudviewer/",
+    "scripts/sync-upstream-adapt.sh",
+    "scripts/post-sync-adapt.py",
+    "scripts/resolve-rebase-conflicts.sh",
+    "scripts/verify-fork-isolation.sh",
+    "customize.sh",
+    ".sync-config.json",
+    "sync-upstream.sh",
+    "SYNC_README.md",
+    "SYNC_UPSTREAM.md",
+    "Makefile",
+    ".gitattributes",
+    ".github/workflows/check-upstream.yml"
+  ],
+  "fork_cli_entries": [
+    "acloudviewer"
+  ],
+  "replacements": [
+    {
+      "from": "HKUDS/CLI-Anything",
+      "to": "Asher-1/CLI-Anything",
+      "description": "GitHub repository references"
+    },
+    {
+      "from": "https://github.com/HKUDS/CLI-Anything",
+      "to": "https://github.com/Asher-1/CLI-Anything",
+      "description": "GitHub repository URLs"
+    },
+    {
+      "from": "hkuds.github.io/CLI-Anything",
+      "to": "asher-1.github.io/CLI-Anything",
+      "description": "GitHub Pages URLs"
+    },
+    {
+      "from": "https://hkuds.github.io/CLI-Anything",
+      "to": "https://asher-1.github.io/CLI-Anything",
+      "description": "GitHub Pages URLs with scheme"
+    },
+    {
+      "from": "clianything.cc",
+      "to": "asher-1.github.io/CLI-Anything",
+      "description": "Upstream custom hub domain"
+    },
+    {
+      "from": "https://clianything.cc",
+      "to": "https://asher-1.github.io/CLI-Anything",
+      "description": "Upstream custom hub domain with scheme"
+    },
+    {
+      "from": "reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md",
+      "to": "asher-1.github.io/CLI-Anything/SKILL.txt",
+      "description": "Upstream DO Spaces skill catalog CDN"
+    },
+    {
+      "from": "https://reeceyang.sgp1.cdn.digitaloceanspaces.com/SKILL.md",
+      "to": "https://asher-1.github.io/CLI-Anything/SKILL.txt",
+      "description": "Upstream DO Spaces skill catalog CDN with scheme"
+    },
+    {
+      "from": "\"organization\": \"HKUDS\"",
+      "to": "\"organization\": \"Asher-1\"",
+      "description": "Agent card organization"
+    }
+  ],
+  "include_patterns": [
+    "README*.md",
+    "registry.json",
+    "public_registry.json",
+    "matrix_registry.json",
+    "docs/**/*.md",
+    "docs/**/*.txt",
+    "docs/**/*.html",
+    "docs/**/*.json",
+    "docs/hub/.well-known/**",
+    "**/SKILL.md",
+    "**/README.md",
+    "**/setup.py",
+    "cli-hub/**/*.py",
+    "cli-hub/**/*.md",
+    "cli-hub-meta-skill/**/*.md",
+    "codex-skill/**",
+    ".github/scripts/**/*.py",
+    "*/agent-harness/**/*.md",
+    "*/agent-harness/**/*.py",
+    "*/agent-harness/**/*.txt"
+  ],
+  "exclude_patterns": [
+    "SYNC_UPSTREAM.md",
+    "SYNC_README.md",
+    "scripts/sync-upstream-adapt.sh",
+    "scripts/post-sync-adapt.py",
+    "scripts/resolve-rebase-conflicts.sh",
+    "scripts/verify-fork-isolation.sh",
+    "sync-upstream.sh",
+    ".github/workflows/check-upstream.yml",
+    "**/test*.py",
+    "**/__pycache__/**"
+  ],
+  "exclude_content": [
+    "based on HKUDS and thanks to \\[HKUDS\\]"
+  ]
+}

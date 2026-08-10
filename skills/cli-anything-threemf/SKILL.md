@@ -10,7 +10,7 @@ description: "3MF mesh geometry editor — detect and resize cylindrical holes, 
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=3MF/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=3MF/agent-harness
 ```
 
 ## Commands

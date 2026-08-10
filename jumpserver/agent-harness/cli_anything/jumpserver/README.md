@@ -6,7 +6,7 @@ JumpServer bastion host CLI harness for AI agents and humans.
 
 ```bash
 # Install
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=jumpserver/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=jumpserver/agent-harness
 
 # Configure
 cli-anything-jumpserver config set base_url https://jumpserver.example.com

@@ -1,6 +1,6 @@
 # cli-anything-calibre
 
-A CLI harness for [Calibre](https://calibre-ebook.com/), the powerful e-book management application. Part of the [cli-anything](https://github.com/HKUDS/CLI-Anything) toolkit.
+A CLI harness for [Calibre](https://calibre-ebook.com/), the powerful e-book management application. Part of the [cli-anything](https://github.com/Asher-1/CLI-Anything) toolkit.
 
 ## What It Does
 

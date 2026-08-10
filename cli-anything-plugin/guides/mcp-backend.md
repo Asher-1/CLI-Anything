@@ -61,4 +61,4 @@ Add `mcp>=0.1.0` to `install_requires`.
 ## Example Implementations
 
 - `browser/agent-harness` — DOMShell MCP server for browser automation
-- See: https://github.com/HKUDS/CLI-Anything/tree/main/browser/agent-harness
+- See: https://github.com/Asher-1/CLI-Anything/tree/main/browser/agent-harness

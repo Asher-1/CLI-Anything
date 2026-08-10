@@ -29,6 +29,14 @@
 !/.github/labeler.yml
 !/.github/PULL_REQUEST_TEMPLATE.md
 !/.github/ISSUE_TEMPLATE/
+!/scripts/
+!/Makefile
+!/SYNC_README.md
+!/SYNC_UPSTREAM.md
+!/sync-upstream.sh
+!/customize.sh
+!/.sync-config.json
+!/.gitattributes
 
 # Step 3: Allow cli-anything-plugin, codex-skill, and skill_generation tests
 !/cli-anything-plugin/
@@ -36,12 +44,12 @@
 !/hermes-skill/
 !/reasonix-skill/
 !/skill_generation/
-!/openclaw-skill/
 !/cli-hub-meta-skill/
 !/cli-hub/
 !/cli-hub-matrix/
 !/skills/
 !/skills/**
+!/acloudviewer/
 
 # Ignore cli-hub-skill (auto-generated, not tracked)
 /cli-hub-skill/
@@ -160,6 +168,8 @@
 /chromadb/.*
 /musescore/*
 /musescore/.*
+/acloudviewer/*
+/acloudviewer/.*
 /krita/*
 /krita/.*
 /freecad/*
@@ -255,6 +265,7 @@
 !/pm2/agent-harness/
 !/chromadb/agent-harness/
 !/musescore/agent-harness/
+!/acloudviewer/agent-harness/
 !/krita/agent-harness/
 !/freecad/agent-harness/
 !/iterm2/agent-harness/

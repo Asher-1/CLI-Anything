@@ -372,6 +372,59 @@ CLI (e.g., DOMShell for browser automation). See [`guides/mcp-backend.md`](guide
 for the full backend wrapper pattern, session management, daemon mode, and example implementations.
 
 **Use when:** no native CLI exists, software has an MCP server, or you need agent-native tool integration.
+**Use case:** When the software provides an MCP server instead of a traditional CLI.
+Example: DOMShell provides browser automation via MCP tools.
+
+**When to use:**
+- The software has an official or community MCP server
+- No native CLI exists, or MCP provides better functionality
+- You want to integrate AI/agent tools that speak MCP protocol
+
+**Backend wrapper** (`utils/<service>_backend.py`):
+```python
+import asyncio
+from typing import Any
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+async def _call_tool(tool_name: str, arguments: dict) -> Any:
+    """Call an MCP tool."""
+    server_params = StdioServerParameters(
+        command="npx",
+        args=["@apireno/domshell"]
+    )
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.call_tool(tool_name, arguments)
+            return result
+
+def is_available() -> bool:
+    """Check if MCP server is available."""
+    # Try to spawn and verify
+    ...
+
+# Sync wrappers for each tool
+def ls(path: str = "/") -> dict:
+    """List directory contents."""
+    return asyncio.run(_call_tool("domshell_ls", {"path": path}))
+```
+
+**Session management:**
+- MCP server spawns per command (stateless from server perspective)
+- CLI maintains state (URL, working directory, navigation history)
+- Each command re-spawns the MCP server process
+
+**Daemon mode (optional):**
+- Spawn MCP server once, reuse connection for multiple commands
+- Reduces latency for interactive use
+- Requires explicit start/stop or `--daemon` flag
+
+**Dependencies:** Add `mcp>=0.1.0` to install_requires
+
+**Example implementations:**
+- `browser/agent-harness` — DOMShell MCP server for browser automation
+- See: https://github.com/Asher-1/CLI-Anything/tree/main/browser/agent-harness
 
 ### Filter Translation Pitfalls
 
@@ -722,6 +775,7 @@ This same SOP applies to any GUI application:
 | Audacity | `sox` | .aup3 | `apt install sox` | Generate sox commands → sox processes audio |
 | OBS Studio | `obs-websocket` | scene.json | `apt install obs-studio` | WebSocket API → OBS captures/records |
 | Browser (DOMShell) | `npx @apireno/domshell` (MCP) | Accessibility Tree (virtual FS) | `npm install -g npx` (if needed) + Chrome ext | MCP SDK → DOMShell tools → filesystem navigation |
+| ACloudViewer | `ACloudViewer -SILENT -O ...` | .ply/.pcd/.obj/30+ formats | ACloudViewer binary + `ACV_BINARY` env | Binary CLI + JSON-RPC WebSocket → 3D point cloud/mesh processing |
 
 **The software is a required dependency, not optional.** The CLI generates valid
 intermediate files (ODF, MLT XML, bpy scripts, SVG) and hands them to the real

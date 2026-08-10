@@ -9,19 +9,29 @@
 CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</strong><br>
 </p>
 
-**🌐 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)**: `pip install cli-anything-hub` then `cli-hub install <name>` — browse, install, and manage all community-built CLIs. Want to add your own? [Open a PR](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
+**🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: `pip install cli-anything-hub` then `cli-hub install <name>` — browse, install, and manage all community-built CLIs. Want to add your own? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
 
-**🎬 [See Demos](#-real-world-demos)**: Watch AI agents use generated CLIs plus preview, live preview, and trajectory loops to produce real artifacts — CAD builds, 3D scenes, diagrams, gameplay, subtitles, and more.
-
-**🙋 [Become a Contributor, or Request a CLI]**: [Join us](https://github.com/HKUDS/CLI-Anything/issues/new?template=contributor-signup.yml)! Sign up to build a new CLI harness — once reviewed and merged, you'll gain access as one of our community contributors! Wish CLI-Anything supported a specific software or service? Submit a [wishlist request](https://github.com/HKUDS/CLI-Anything/issues/new?template=cli-wishlist.yml)!
+**🔄 Fork maintainers**: sync with upstream via [`make sync-adapt`](./SYNC_README.md) (rebase + auto-adapt for `asher-1.github.io/CLI-Anything`).
 
 <p align="center">
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="Quick Start"></a>
-  <a href="https://hkuds.github.io/CLI-Anything/"><img src="https://img.shields.io/badge/CLI_Hub-Browse_%26_Install-ff69b4?style=for-the-badge" alt="CLI Hub"></a>
+  <a href="https://asher-1.github.io/CLI-Anything/"><img src="https://img.shields.io/badge/CLI_Hub-Browse_%26_Install-ff69b4?style=for-the-badge" alt="CLI Hub"></a>
   <a href="#-demonstrations"><img src="https://img.shields.io/badge/Demos-18_Apps-green?style=for-the-badge" alt="Demos"></a>
   <a href="#-test-results"><img src="https://img.shields.io/badge/Tests-2%2C461_Passing-brightgreen?style=for-the-badge" alt="Tests"></a>
   <a href="https://arxiv.org/abs/2606.03854"><img src="https://img.shields.io/badge/Tech_Report-arXiv%3A2606.03854-b31b1b?style=for-the-badge" alt="Tech Report"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-yellow?style=for-the-badge" alt="License"></a>
+</p>
+
+**🎬 [See Demos](#-real-world-demos)**: Watch AI agents use generated CLIs plus preview, live preview, and trajectory loops to produce real artifacts — CAD builds, 3D scenes, diagrams, gameplay, subtitles, and more.
+
+**🙋 [Become a Contributor, or Request a CLI]**: [Join us](https://github.com/Asher-1/CLI-Anything/issues/new?template=contributor-signup.yml)! Sign up to build a new CLI harness — once reviewed and merged, you'll gain access as one of our community contributors! Wish CLI-Anything supported a specific software or service? Submit a [wishlist request](https://github.com/Asher-1/CLI-Anything/issues/new?template=cli-wishlist.yml)!
+
+<p align="center">
+  <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-5_min-blue?style=for-the-badge" alt="Quick Start"></a>
+  <a href="https://asher-1.github.io/CLI-Anything/"><img src="https://img.shields.io/badge/CLI_Hub-Browse_%26_Install-ff69b4?style=for-the-badge" alt="CLI Hub"></a>
+  <a href="#-demonstrations"><img src="https://img.shields.io/badge/Demos-17_Apps-green?style=for-the-badge" alt="Demos"></a>
+  <a href="#-test-results"><img src="https://img.shields.io/badge/Tests-2%2C024_Passing-brightgreen?style=for-the-badge" alt="Tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"></a>
 </p>
 
 <p align="center">
@@ -30,11 +40,13 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
   <img src="https://img.shields.io/badge/pytest-100%25_pass-brightgreen" alt="Pytest">
   <img src="https://img.shields.io/badge/coverage-unit_%2B_e2e-orange" alt="Coverage">
   <img src="https://img.shields.io/badge/output-JSON_%2B_Human-blueviolet" alt="Output">
-  <a href="https://github.com/HKUDS/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/Feishu-Group-E9DBFC?style=flat&logo=feishu&logoColor=white" alt="Feishu"></a>
-<a href="https://github.com/HKUDS/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/WeChat-Group-C5EAB4?style=flat&logo=wechat&logoColor=white" alt="WeChat"></a>
+  <a href="https://github.com/Asher-1/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/Feishu-Group-E9DBFC?style=flat&logo=feishu&logoColor=white" alt="Feishu"></a>
+<a href="https://github.com/Asher-1/.github/blob/main/profile/README.md"><img src="https://img.shields.io/badge/WeChat-Group-C5EAB4?style=flat&logo=wechat&logoColor=white" alt="WeChat"></a>
 </p>
 
 **One Command Line**: Make any software agent-ready for Pi, OpenClaw, nanobot, Cursor, Claude Code, etc.&nbsp;&nbsp;[**中文文档**](README_CN.md) | [**日本語ドキュメント**](README_JA.md) | [**Deutsch**](README_DE.md)
+
+**Note**: This repository is based on HKUDS and thanks to [HKUDS](https://github.com/Asher-1/CLI-Anything)
 
 <p align="center">
   <img src="assets/cli-typing.gif" alt="CLI-Anything typing demo" width="800">
@@ -73,7 +85,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 <details>
 <summary>Earlier news (Apr 10–18)</summary>
 
-- **2026-04-18** 🧩 **All SKILL.md files are now being unified under the top-level `skills/` directory** — every CLI skill can be installed from one canonical source with `npx skills add HKUDS/CLI-Anything --skill <skill-name> -g -y`. We also added root-skill validation CI, synced contribution / PR docs and REPL skill-path hints to the new layout, and refreshed the **CLI-Hub** install-first frontend around the new `npx skills` flow.
+- **2026-04-18** 🧩 **All SKILL.md files are now being unified under the top-level `skills/` directory** — every CLI skill can be installed from one canonical source with `npx skills add Asher-1/CLI-Anything --skill <skill-name> -g -y`. We also added root-skill validation CI, synced contribution / PR docs and REPL skill-path hints to the new layout, and refreshed the **CLI-Hub** install-first frontend around the new `npx skills` flow.
 
 - **2026-04-17** 🌐 **CLI-Hub** received another install UX pass — public registry metadata and skill coverage were tightened, visit counting was corrected, and the web hub was further refined. 🧪 **Shotcut** render output duration was fixed (#92). 📝 **SKILL** contribution paths were corrected for the new docs flow (#224), and the skill generator now safely handles empty intros (#203).
 
@@ -120,6 +132,10 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 - **2026-03-28** 🌐 **CLIBrowser** added to CLI-Hub registry for agent-accessible browser automation.
 
 - **2026-03-27** 📚 Zotero SKILL.md enhanced with agent-facing constraints; REPL config and executable resolution fixes.
+- **2026-03-23** 🔬 Added [ACloudViewer](https://asher-1.github.io/ACloudViewer) harness — 3D point cloud and mesh processing with dual-mode backend (headless CLI + JSON-RPC GUI), MCP server with 121 tools, 40+ format support, SIBR dataset tools, Colmap 3D reconstruction, and 592 passing tests. Includes subsample, normals, ICP registration, distance computation, mesh reconstruction, and batch conversion.
+
+- **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-skill/SKILL.md`](cli-hub-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
+- **2026-03-23** 🤖 Launched **CLI-Hub meta-skill** — agents can now discover and install CLIs autonomously via [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md). The catalog auto-updates from `registry.json` via GitHub Actions, making the entire marketplace agent-native.
 
 - **2026-03-26** 📖 **Zotero CLI** harness landed for Zotero desktop (library management, collections, citations). Draw.io custom ID bugfix (#132) and registry.json syntax fix.
 
@@ -144,7 +160,8 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 - **2026-03-18** 🧪 Test coverage expansion — additional E2E scenarios and edge case validation across multiple CLIs.
 
-- **2026-03-17** 🌐 Launched the **[CLI-Hub](https://hkuds.github.io/CLI-Anything/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command.
+- **2026-03-17** 🌐 Launched the **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command.
+- **2026-03-17** 🌐 Launched the **[CLI-Hub](https://asher-1.github.io/CLI-Anything/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command. Contributors can add new CLIs or update existing ones by simply opening a PR with a `registry.json` entry. The hub updates automatically on merge.
 
 - **2026-03-16** 🤖 Added **SKILL.md generation** (Phase 6.5) — every generated CLI now ships with an AI-discoverable skill definition.
 
@@ -233,7 +250,7 @@ Give SKILL-compatible agents the CLI-Hub meta-skill so they can discover and ins
 **NPX SKILLS**
 
 ```bash
-npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
+npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
 **Works with:** OpenClaw, Nanobot, Claude Code, Codex, Reasonix, Antigravity, and other SKILL-compatible agents.
@@ -256,6 +273,8 @@ Use the CLI-Anything generator when you need a new harness for software, a codeb
 - **Python 3.10+**
 - Target software or source repo available locally or online
 - A supported AI coding agent: [Claude Code](#-claude-code) | [Pi](#-pi-coding-agent) | [OpenClaw](#-openclaw) | [OpenCode](#-opencode) | [Codex](#-codex) | [Hermes](#-hermes) | [Reasonix](#-reasonix) | [Qodercli](#-qodercli) | [GitHub Copilot CLI](#-github-copilot-cli) | [More Platforms](#-more-platforms-coming-soon)
+- Target software installed (e.g., ACloudViewer, GIMP, Blender, LibreOffice, or your own application)
+- A supported AI coding agent: [Claude Code](#-claude-code) | [OpenClaw](#-openclaw) | [OpenCode](#-opencode) | [Codex](#-codex) | [Qodercli](#-qodercli) | [GitHub Copilot CLI](#-github-copilot-cli) | [More Platforms](#-more-platforms-coming-soon)
 
 ### Pick Your Agent Platform
 
@@ -268,7 +287,7 @@ CLI-Anything is distributed as a Claude Code plugin marketplace hosted on GitHub
 
 ```bash
 # Add the CLI-Anything marketplace
-/plugin marketplace add HKUDS/CLI-Anything
+/plugin marketplace add Asher-1/CLI-Anything
 ```
 
 **Step 2: Install the Plugin**
@@ -300,7 +319,7 @@ If you see `Unknown skill: cli-anything`, focus on plugin install/load first (bo
 1. Reload plugin commands: `/reload-plugins`
 2. Verify the plugin is loaded: `/help cli-anything` (CLI-Anything help/commands should appear)
 3. Reinstall from marketplace if needed:
-   - `/plugin marketplace add HKUDS/CLI-Anything`
+   - `/plugin marketplace add Asher-1/CLI-Anything`
    - `/plugin install cli-anything`
 4. After confirming the plugin is available, retry the entry command:
    - Preferred: `/cli-anything ./gimp`
@@ -336,7 +355,7 @@ If you prefer not to use the marketplace:
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Copy plugin to Claude Code plugins directory
 cp -r CLI-Anything/cli-anything-plugin ~/.claude/plugins/cli-anything
@@ -358,7 +377,7 @@ The extension lives at `.pi-extension/cli-anything/` in this repository. Install
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything
 
 # Install globally into Pi's extensions directory
@@ -418,7 +437,7 @@ Copy the CLI-Anything commands **and** `HARNESS.md` to your OpenCode commands di
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Global install (available in all projects)
 cp CLI-Anything/opencode-commands/*.md ~/.config/opencode/commands/
@@ -489,7 +508,7 @@ Once Goose is configured, start a session and use the same CLI-Anything commands
 **Step 1: Register the Plugin**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 bash CLI-Anything/qoder-plugin/setup-qodercli.sh
 ```
 
@@ -514,7 +533,7 @@ CLI-Anything provides a native OpenClaw `SKILL.md` file. Copy it to your OpenCla
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Install to the global skills folder
 mkdir -p ~/.openclaw/skills/cli-anything
@@ -541,7 +560,7 @@ Run the bundled installer:
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Install the skill
 bash CLI-Anything/codex-skill/scripts/install.sh
@@ -593,7 +612,7 @@ Run the bundled installer:
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Install the skill
 bash CLI-Anything/hermes-skill/scripts/install.sh
@@ -635,7 +654,7 @@ Run the bundled installer:
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 
 # Install the skill
 bash CLI-Anything/reasonix-skill/scripts/install.sh
@@ -674,7 +693,7 @@ Codex/Hermes skills, binding Reasonix's `bash`, `write_file`, `edit_file`,
 **Step 1: Install the Plugin**
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything
 copilot plugin install ./cli-anything-plugin
 ```
@@ -720,7 +739,7 @@ cli-anything-gimp --json layer add -n "Background" --type solid --color "#1a1a2e
 cli-anything-gimp
 ```
 
-Each in-repo harness now has a canonical [`SKILL.md`](#-skillmd-generation) at `skills/cli-anything-<software>/SKILL.md`, which makes the monorepo directly discoverable via `npx skills add HKUDS/CLI-Anything --list`. Installed harness packages still ship a compatibility copy at `cli_anything/<software>/skills/SKILL.md`, and the REPL banner prefers the repo-root canonical file when present, falling back to the packaged copy otherwise.
+Each in-repo harness now has a canonical [`SKILL.md`](#-skillmd-generation) at `skills/cli-anything-<software>/SKILL.md`, which makes the monorepo directly discoverable via `npx skills add Asher-1/CLI-Anything --list`. Installed harness packages still ship a compatibility copy at `cli_anything/<software>/skills/SKILL.md`, and the REPL banner prefers the repo-root canonical file when present, falling back to the packaged copy otherwise.
 
 </details>
 
@@ -731,7 +750,21 @@ Each in-repo harness now has a canonical [`SKILL.md`](#-skillmd-generation) at `
 CLI-Hub lets agents autonomously discover, install, and use the CLIs they need.
 
 ```bash
-npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
+npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y
+CLI-Hub lets agents autonomously discover and install the CLIs they need — zero human intervention required.
+
+**Agent-Native Catalog:** [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+We published a **meta-skill** that lets any AI agent freely explore the full catalog of community CLIs and pick the right one for the task.
+
+**Install in one command:**
+
+```bash
+# OpenClaw
+openclaw skills install cli-anything-hub
+
+1. Point your agent to the catalog: [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+# nanobot
+nanobot skills install cli-anything-hub
 ```
 
 **Also available on:** [ClawHub](https://clawhub.ai/yuh-yang/cli-anything-hub), [SkillHub](https://www.skillhub.club/web/skills/itsyuhao-cli-anything-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
@@ -743,6 +776,23 @@ Find appropriate CLI software in CLI-Hub and complete the task: ...
 ```
 
 The meta-skill points agents to the live CLI-Hub catalog, where they can choose a CLI, install it, and read its own `SKILL.md` for task-specific usage.
+1. The meta-skill points to the live catalog at [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
+2. The agent reads 20+ CLIs organized by category with one-line `pip install` commands
+3. The agent installs whichever CLI fits the task, then reads that CLI's own SKILL.md for detailed usage
+
+```bash
+# Example: agent needs to edit images
+# 1. Agent reads the hub skill, finds GIMP CLI under "Image"
+# 2. Agent runs:
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=gimp/agent-harness
+# 3. Agent uses cli-anything-gimp --json for all operations
+```
+The catalog auto-updates whenever `registry.json` changes — new community CLIs show up automatically.
+
+The meta-skill auto-updates whenever `registry.json` changes — new community CLIs show up automatically.
+
+> **For Claude Code users:** Copy [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md) into your project or skills directory. This meta-skill points to the live catalog at `https://asher-1.github.io/CLI-Anything/SKILL.txt` for automatic CLI discovery.
+> **For Claude Code users:** Copy [`cli-hub-meta-skill/SKILL.md`](cli-hub-meta-skill/SKILL.md) into your project or skills directory for the same automatic CLI discovery.
 
 ---
 
@@ -793,6 +843,7 @@ AI agents are great at reasoning but terrible at using real professional softwar
 | 📊 "Agents need structured data" | Built-in JSON output for seamless agent consumption + human-readable formats for debugging |
 | 🔧 "Custom integrations are expensive" | One Claude plugin auto-generates CLIs for ANY codebase through proven 7-phase pipeline |
 | ⚡ "Prototype vs Production gap" | 2,280+ tests with real software validation. Battle-tested across 18 major applications |
+| ⚡ "Prototype vs Production gap" | 2,024+ tests with real software validation. Battle-tested across 17 major applications |
 
 ---
 
@@ -1248,6 +1299,11 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td><code>cli-anything-videocaptioner</code></td>
 <td>videocaptioner CLI (PyPI)</td>
 <td align="center">✅ 26</td>
+<td align="center"><strong>🔬 <a href="acloudviewer/agent-harness/">ACloudViewer</a></strong></td>
+<td>3D Point Cloud & Mesh Processing</td>
+<td><code>cli-anything-acloudviewer</code></td>
+<td>ACloudViewer binary CLI + JSON-RPC</td>
+<td align="center">✅ 592</td>
 </tr>
 <tr>
 <td align="center"><strong>🎨 Sketch</strong></td>
@@ -1333,6 +1389,11 @@ Each application received complete, production-ready CLI interfaces — not demo
 </table>
 
 > **100% pass rate** across all 2,461 tests — 1,732 unit tests + 579 end-to-end tests + 19 Node.js tests.
+<td align="center"><strong>✅ 2,043</strong></td>
+</tr>
+</table>
+
+> **100% pass rate** across all 2,043 tests — 1,533 unit tests + 491 end-to-end tests + 19 Node.js tests.
 
 ---
 
@@ -1369,6 +1430,7 @@ notebooklm     21 passed  ✅   (21 unit + 0 e2e)
 comfyui        70 passed  ✅   (60 unit + 10 e2e)
 adguardhome    36 passed  ✅   (24 unit + 12 e2e)
 ollama         98 passed  ✅   (87 unit + 11 e2e)
+acloudviewer  592 passed  ✅   (583 unit + 9 e2e)
 sketch         19 passed  ✅   (19 jest, Node.js)
 renderdoc      59 passed  ✅   (45 unit + 14 e2e)
 cloudcompare   88 passed  ✅   (49 unit + 39 e2e)
@@ -1381,6 +1443,8 @@ cloudanalyzer  14 passed  ✅   (7 unit + 7 e2e)
 joplin        134 passed  ✅   (107 unit + 27 e2e, 1 skipped on Windows)
 ──────────────────────────────────────────────────────────────────────────────
 TOTAL        2,461 passed  ✅   100% pass rate
+TOTAL        2,043 passed  ✅   100% pass rate
+TOTAL        1,917 passed  ✅   100% pass rate
 ```
 
 ---
@@ -1467,6 +1531,8 @@ cli-anything/
 ├── 🦙 ollama/agent-harness/             # Ollama CLI (98 tests)
 ├── 🎮 godot/agent-harness/              # Godot Engine CLI (24 tests)
 ├── 📦 sbox/agent-harness/               # s&box CLI (244 tests: 157 unit + 17 orchestrator + 50 e2e + 20 exit-code)
+├── 🔬 acloudviewer/agent-harness/      # ACloudViewer CLI (592 tests)
+└── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
 ├── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
 ├── 🔬 renderdoc/agent-harness/          # RenderDoc CLI (59 tests)
 ├── 🟩 nsight-graphics/agent-harness/    # Nsight Graphics CLI (51 tests)
@@ -1618,7 +1684,7 @@ cli-hub launch <name> [args...]
 
 ```bash
 # Add marketplace & install (recommended)
-/plugin marketplace add HKUDS/CLI-Anything
+/plugin marketplace add Asher-1/CLI-Anything
 /plugin install cli-anything
 
 # Build a CLI for any software with a codebase
@@ -1700,11 +1766,11 @@ Each generated harness also includes:
 If CLI-Anything helps make your software Agent-native, give us a star! ⭐
 
 <div align="center">
-  <a href="https://star-history.com/#HKUDS/CLI-Anything&Date">
+  <a href="https://star-history.com/#Asher-1/CLI-Anything&Date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=HKUDS/CLI-Anything&type=Date" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Asher-1/CLI-Anything&type=Date" />
     </picture>
   </a>
 </div>
@@ -1740,6 +1806,7 @@ Apache License 2.0 — free to use, modify, and distribute.
 **CLI-Anything** — *Make any software with a codebase Agent-native.*
 
 <sub>A methodology for the age of AI agents | 18 professional software demos | 2,280 passing tests</sub>
+<sub>A methodology for the age of AI agents | 17 professional software demos | 2,024 passing tests</sub>
 
 <br>
 
@@ -1749,5 +1816,5 @@ Apache License 2.0 — free to use, modify, and distribute.
 
 <p align="center">
   <em> Thanks for visiting ✨ CLI-Anything!</em><br><br>
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=HKUDS.CLI-Anything&style=for-the-badge&color=00d4ff" alt="Views">
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=Asher-1.CLI-Anything&style=for-the-badge&color=00d4ff" alt="Views">
 </p>

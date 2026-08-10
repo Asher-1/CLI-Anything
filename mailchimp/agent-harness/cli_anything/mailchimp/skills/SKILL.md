@@ -7,7 +7,7 @@ description: CLI harness for the Mailchimp Marketing API v3.0 — 303 commands a
 
 ## Identity
 
-An agent-native CLI for the [Mailchimp Marketing API v3.0](https://mailchimp.com/developer/marketing/docs/fundamentals/), built on the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) framework.
+An agent-native CLI for the [Mailchimp Marketing API v3.0](https://mailchimp.com/developer/marketing/docs/fundamentals/), built on the [CLI-Anything](https://github.com/Asher-1/CLI-Anything) framework.
 
 ## What This CLI Does
 
@@ -27,7 +27,7 @@ An agent-native CLI for the [Mailchimp Marketing API v3.0](https://mailchimp.com
 
 ```bash
 # From the CLI-Anything repo (once merged):
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=mailchimp/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=mailchimp/agent-harness
 
 # During development:
 cd mailchimp/agent-harness && pip install -e .

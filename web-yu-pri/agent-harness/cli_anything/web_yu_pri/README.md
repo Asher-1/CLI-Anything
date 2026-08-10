@@ -10,7 +10,7 @@ does not click final shipment confirmation buttons.
 ## Install
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=web-yu-pri/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=web-yu-pri/agent-harness
 ```
 
 If Playwright cannot find a browser, install Microsoft Edge or Chrome, or run:

@@ -8,7 +8,7 @@ setup(
     long_description_content_type="text/markdown",
     author="CLI-Anything Community",
     author_email="community@cli-anything.cc",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     entry_points={
         "console_scripts": [

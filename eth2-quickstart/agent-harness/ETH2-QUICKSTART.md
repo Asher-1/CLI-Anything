@@ -94,7 +94,7 @@ Returns the canonical `doctor --json` output and a short harness summary.
 The harness is meant to be installed from the CLI-Anything repo:
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=eth2-quickstart/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=eth2-quickstart/agent-harness
 ```
 
 At runtime it operates against an `eth2-quickstart` checkout discovered by:

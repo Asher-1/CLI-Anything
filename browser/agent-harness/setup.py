@@ -20,14 +20,15 @@ setup(
     long_description=read_readme(),
     long_description_content_type="text/markdown",
 
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     project_urls={
-        "Homepage": "https://github.com/HKUDS/CLI-Anything",
-        "Issues": "https://github.com/HKUDS/CLI-Anything/issues",
+        "Homepage": "https://github.com/Asher-1/CLI-Anything",
+        "Issues": "https://github.com/Asher-1/CLI-Anything/issues",
     },
 
     license="MIT",
 
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     python_requires=">=3.10",
 

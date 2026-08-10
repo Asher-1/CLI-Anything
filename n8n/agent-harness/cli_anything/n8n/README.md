@@ -3,12 +3,12 @@
 [![PyPI](https://img.shields.io/pypi/v/cli-anything-n8n.svg)](https://pypi.org/project/cli-anything-n8n/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![CLI-Anything](https://img.shields.io/badge/CLI--Anything-harness-orange.svg)](https://github.com/HKUDS/CLI-Anything)
+[![CLI-Anything](https://img.shields.io/badge/CLI--Anything-harness-orange.svg)](https://github.com/Asher-1/CLI-Anything)
 [![n8n API v1.1.1](https://img.shields.io/badge/n8n-API%20v1.1.1-EA4B71.svg)](https://docs.n8n.io/api/api-reference/)
 
 Control your [n8n](https://n8n.io) instance from the terminal. List workflows, check executions, manage tags — all without opening the browser.
 
-Built with the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) pattern, so AI agents can use it too.
+Built with the [CLI-Anything](https://github.com/Asher-1/CLI-Anything) pattern, so AI agents can use it too.
 
 ## Installation
 

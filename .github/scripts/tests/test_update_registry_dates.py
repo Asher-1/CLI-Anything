@@ -14,7 +14,7 @@ SPEC.loader.exec_module(MODULE)
 def test_resolve_harness_path_prefers_install_subdirectory_for_qgis():
     cli = {
         "name": "qgis",
-        "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=QGIS/agent-harness",
+        "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=QGIS/agent-harness",
         "skill_md": "QGIS/agent-harness/cli_anything/qgis/skills/SKILL.md",
     }
 
@@ -26,7 +26,7 @@ def test_resolve_harness_path_prefers_install_subdirectory_for_qgis():
 def test_resolve_harness_path_handles_underscore_directory_names():
     cli = {
         "name": "unimol_tools",
-        "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=unimol_tools/agent-harness",
+        "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=unimol_tools/agent-harness",
         "skill_md": "skills/cli-anything-unimol-tools/SKILL.md",
     }
 

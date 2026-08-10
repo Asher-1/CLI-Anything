@@ -85,7 +85,7 @@ cli-anything-notebooklm artifact generate-report --notebook nb_123
 ## Acknowledgements
 
 This harness is inspired by the CLI-Anything methodology:
-https://github.com/HKUDS/CLI-Anything
+https://github.com/Asher-1/CLI-Anything
 
 It is designed to work with the community-maintained `notebooklm` CLI from `notebooklm-py`:
 https://github.com/teng-lin/notebooklm-py
@@ -105,8 +105,8 @@ This project is unofficial and not affiliated with Google.
 
 ## References
 
-- CLI-Anything: https://github.com/HKUDS/CLI-Anything
-- CLI-Anything HARNESS.md: https://github.com/HKUDS/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md
+- CLI-Anything: https://github.com/Asher-1/CLI-Anything
+- CLI-Anything HARNESS.md: https://github.com/Asher-1/CLI-Anything/blob/main/cli-anything-plugin/HARNESS.md
 - notebooklm-py: https://github.com/teng-lin/notebooklm-py
 - notebooklm-py on PyPI: https://pypi.org/project/notebooklm-py/
 - Google NotebookLM help: https://support.google.com/notebooklm/answer/16206563

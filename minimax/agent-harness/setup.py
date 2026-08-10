@@ -18,7 +18,7 @@ setup(
     description="CLI harness for MiniMax AI — chat (MiniMax-M3) and TTS via MiniMax API. Requires: MINIMAX_API_KEY",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

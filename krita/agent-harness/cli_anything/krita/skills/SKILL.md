@@ -17,6 +17,60 @@ Install the CLI:
 cd krita/agent-harness && pip install -e .
 ```
 
+## Command Groups
+
+### Project
+
+Project management commands.
+
+| Command | Description |
+|---------|-------------|
+| `new` | Create a new Krita project |
+| `open` | Open an existing project |
+| `save` | Save the current project |
+| `info` | Display project information |
+
+### Layer
+
+Layer management commands.
+
+| Command | Description |
+|---------|-------------|
+| `add` | Add a new layer |
+| `remove` | Remove a layer |
+| `list` | List all layers |
+| `set` | Set layer properties (opacity, visibility, blending mode) |
+
+### Filter
+
+Filter and effect commands.
+
+| Command | Description |
+|---------|-------------|
+| `apply` | Apply a filter to a layer |
+| `list` | List available filters |
+
+### Export
+
+Export and rendering commands.
+
+| Command | Description |
+|---------|-------------|
+| `render` | Render project to image (PNG, JPEG, PSD, PDF, etc.) |
+| `animation` | Export animation frames |
+| `presets` | List export presets |
+| `formats` | List supported export formats |
+
+### Session
+
+Session management.
+
+| Command | Description |
+|---------|-------------|
+| `undo` | Undo last operation |
+| `redo` | Redo last undone operation |
+| `history` | Show session history |
+
 ## Command Reference
 
 ### Project Management

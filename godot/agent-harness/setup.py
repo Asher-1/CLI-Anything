@@ -19,7 +19,7 @@ setup(
     description="CLI harness for Godot Engine - Game project management, scene editing, export and GDScript execution. Recommended: Godot 4.x on PATH",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     classifiers=[
         "Development Status :: 4 - Beta",

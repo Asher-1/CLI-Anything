@@ -1,79 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://clianything.cc/</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/index.md</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/index.md</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/matrix.html</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/matrix.html</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/llms.txt</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/llms.txt</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/llms-full.txt</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/llms-full.txt</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/pricing.md</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/pricing.md</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/registry.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/registry.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/public_registry.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/public_registry.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/openapi.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/openapi.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/.well-known/agent.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/.well-known/agent.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/.well-known/agent-card.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/.well-known/agent-card.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/.well-known/ai-plugin.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/.well-known/ai-plugin.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://clianything.cc/.well-known/agent-skills/index.json</loc>
+    <loc>https://asher-1.github.io/CLI-Anything/.well-known/agent-skills/index.json</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

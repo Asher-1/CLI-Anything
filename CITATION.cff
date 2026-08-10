@@ -8,7 +8,7 @@ authors:
     given-names: Tianyu
   - family-names: Huang
     given-names: Chao
-repository-code: "https://github.com/HKUDS/CLI-Anything"
+repository-code: "https://github.com/Asher-1/CLI-Anything"
 url: "https://arxiv.org/abs/2606.03854"
 preferred-citation:
   type: article

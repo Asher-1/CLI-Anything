@@ -24,7 +24,7 @@ deep-reasoning) and fetching full-text or highlighted page contents.
 
 ## Installation
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=exa/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=exa/agent-harness
 ```
 
 ## Command Reference

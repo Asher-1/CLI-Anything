@@ -5,7 +5,7 @@ Agent-native CLI harness for the **Godot Engine** (4.x). Provides structured, JS
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=godot/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=godot/agent-harness
 ```
 
 ## Prerequisites

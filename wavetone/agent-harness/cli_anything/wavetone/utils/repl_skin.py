@@ -58,7 +58,7 @@ _RED = "\033[38;5;196m"
 _BLUE = "\033[38;5;75m"
 _MAGENTA = "\033[38;5;176m"
 
-_SKILL_SOURCE_REPO = os.environ.get("CLI_ANYTHING_SKILL_REPO", "HKUDS/CLI-Anything")
+_SKILL_SOURCE_REPO = os.environ.get("CLI_ANYTHING_SKILL_REPO", "Asher-1/CLI-Anything")
 
 # ── Brand icon ────────────────────────────────────────────────────────
 

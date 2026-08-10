@@ -9,7 +9,7 @@ setup(
     author="CLI-Anything-Team",
     author_email="",
     maintainer="CLI-Anything-Team",
-    url="https://github.com/HKUDS/CLI-Anything",
+    url="https://github.com/Asher-1/CLI-Anything",
     python_requires=">=3.10",
     packages=find_namespace_packages(include=["cli_anything.*"]),
     install_requires=[

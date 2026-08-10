@@ -1,6 +1,6 @@
 # cli-anything-musescore
 
-CLI wrapper for **MuseScore 4** — the first music notation tool in the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) ecosystem.
+CLI wrapper for **MuseScore 4** — the first music notation tool in the [CLI-Anything](https://github.com/Asher-1/CLI-Anything) ecosystem.
 
 ## Features
 

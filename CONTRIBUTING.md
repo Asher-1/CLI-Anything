@@ -19,6 +19,7 @@ Place your code under `<software>/agent-harness/` and ensure the following:
 3. **Tests** — unit tests (`test_core.py`, passable without backend) and E2E tests (`test_full_e2e.py`) are present and passing.
 4. **`README.md`** — the project README includes the new software with a link to its harness directory.
 5. **`registry.json`** — add an entry for the new software (see [Registry fields](#registry-fields) below).
+5. **`registry.json`** — add an entry for the new software so it appears on the [CLI-Hub](https://asher-1.github.io/CLI-Anything/hub/).
 6. **`repl_skin.py`** — an unmodified copy from the plugin exists in `utils/`.
 
 #### Option 2: Standalone repository (external)
@@ -50,7 +51,7 @@ Bug fixes resolve incorrect behavior in existing harnesses or the plugin.
 
 ## CLI-Hub & Registry
 
-All available CLIs are listed in `registry.json` at the repo root and displayed on the [CLI-Hub](https://hkuds.github.io/CLI-Anything/hub/). The hub reads `registry.json` directly from `main`, so it updates immediately when a PR is merged.
+All available CLIs are listed in `registry.json` at the repo root and displayed on the [CLI-Hub](https://asher-1.github.io/CLI-Anything/hub/). The hub reads `registry.json` directly from `main`, so it updates immediately when a PR is merged.
 
 ### Registry fields
 
@@ -65,7 +66,7 @@ Include an entry in `registry.json` as part of your PR. Each field is described 
 | `requires` | Yes | Runtime dependencies the user needs (e.g. `"Docker"`) or `null`. |
 | `homepage` | Yes | Official homepage of the **target software** (not your repo). |
 | `source_url` | Yes | For standalone repos: URL to your repo (e.g. `"https://github.com/user/repo"`). For in-repo harnesses: `null` (the hub auto-links to `<name>/agent-harness/`). |
-| `install_cmd` | Yes | Full pip install command. PyPI: `"pip install cli-anything-my-software"`. In-repo: `"pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=my-software/agent-harness"`. |
+| `install_cmd` | Yes | Full pip install command. PyPI: `"pip install cli-anything-my-software"`. In-repo: `"pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=my-software/agent-harness"`. |
 | `entry_point` | Yes | CLI command name (e.g. `"cli-anything-my-software"`). |
 | `skill_md` | Yes | Path to canonical SKILL.md. For standalone repos: full URL (e.g. `"https://github.com/user/repo/blob/main/.../SKILL.md"`). For in-repo: relative path under the repo-root `skills/` tree (e.g. `"skills/cli-anything-my-software/SKILL.md"`). Set to `null` if not yet available. |
 | `category` | Yes | One of the existing categories (check `registry.json` for examples). |
@@ -82,7 +83,8 @@ Include an entry in `registry.json` as part of your PR. Each field is described 
   "requires": "backend software or null",
   "homepage": "https://my-software.org",
   "source_url": null,
-  "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=my-software/agent-harness",
+  "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=my-software/agent-harness",
+  "install_cmd": "pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=my-software/agent-harness",
   "entry_point": "cli-anything-my-software",
   "skill_md": "skills/cli-anything-my-software/SKILL.md",
   "category": "category-name",
@@ -128,7 +130,7 @@ Each generated CLI lives in `<software>/agent-harness/` and is an independent Py
 
 ```bash
 # Clone the repo
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything
 
 # Install a harness in editable mode
@@ -185,4 +187,4 @@ python3 -m pytest cli_anything/<software>/tests/ -v
 
 ## Questions?
 
-If you have questions, feel free to open a [Discussion](https://github.com/HKUDS/CLI-Anything/discussions) or an issue tagged with `type: question`.
+If you have questions, feel free to open a [Discussion](https://github.com/Asher-1/CLI-Anything/discussions) or an issue tagged with `type: question`.

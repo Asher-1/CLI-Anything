@@ -17,13 +17,13 @@ This CLI requires a bridge mod that runs inside the game process. Both the CLI
 and the bridge are distributed from the same repository:
 
 ```
-https://github.com/HKUDS/CLI-Anything
+https://github.com/Asher-1/CLI-Anything
 ```
 
 ### 1. Install the CLI
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything/slay_the_spire_ii/agent-harness
 pip install -e .
 ```

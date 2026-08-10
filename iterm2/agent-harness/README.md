@@ -2,7 +2,7 @@
 
 A stateful CLI harness for [iTerm2](https://iterm2.com) — gives AI agents (and humans) full programmatic control over a running iTerm2 instance from the command line.
 
-Part of the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) ecosystem.
+Part of the [CLI-Anything](https://github.com/Asher-1/CLI-Anything) ecosystem.
 
 ---
 
@@ -47,12 +47,12 @@ iTerm2 → Preferences → General → Magic → Enable Python API ✓
 ## Installation
 
 ```bash
-pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=iterm2/agent-harness
+pip install git+https://github.com/Asher-1/CLI-Anything.git#subdirectory=iterm2/agent-harness
 ```
 
 From source (for development):
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything/iterm2/agent-harness
 pip install -e .
 ```
@@ -310,7 +310,7 @@ cli-anything-iterm2 session get-var user.project
 Unit tests run without iTerm2, E2E tests require a live instance.
 
 ```bash
-git clone https://github.com/HKUDS/CLI-Anything.git
+git clone https://github.com/Asher-1/CLI-Anything.git
 cd CLI-Anything/iterm2/agent-harness
 pip install -e .
 
