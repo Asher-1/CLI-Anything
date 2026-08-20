@@ -9,7 +9,7 @@
 CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</strong><br>
 </p>
 
-**🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: `pip install cli-anything-hub` then `cli-hub install <name>` — browse, install, and manage all community-built CLIs. Want to add your own? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
+**🌐 [CLI-Hub](https://asher-1.github.io/CLI-Anything/)**: `pip install cli-hub-py` then `cli-hub install <name>` — browse, install, and manage all community-built CLIs. Want to add your own? [Open a PR](https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md) — the hub updates instantly.
 
 **🔄 Fork maintainers**: sync with upstream via [`make sync-adapt`](./SYNC_README.md) (rebase + auto-adapt for `asher-1.github.io/CLI-Anything`).
 
@@ -101,7 +101,7 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 - **2026-04-11** 🔗 **n8n CLI** merged (#188) — workflow automation harness for self-hosted automation flows. 🔧 **Exa CLI** fix (#205) added the `x-exa-integration` header for usage tracking. 📦 **CLI-Hub** also gained its PyPI auto-publish workflow and package refresh pipeline.
 
-- **2026-04-10** 📦 **CLI-Hub package manager** launched — `pip install cli-anything-hub` to browse, search, install, update, and uninstall CLI-Anything harnesses from one command. The web Hub also shipped its first install-focused frontend refresh and "Empower yourself" toolkit card.
+- **2026-04-10** 📦 **CLI-Hub package manager** launched — `pip install cli-hub-py` to browse, search, install, update, and uninstall CLI-Anything harnesses from one command. The web Hub also shipped its first install-focused frontend refresh and "Empower yourself" toolkit card.
 
 </details>
 
@@ -201,7 +201,7 @@ CLI-Anything has two equally useful starting points:
 
 | Goal | Start Here |
 |------|------------|
-| **Use the existing CLI ecosystem now** | Install `cli-anything-hub`, browse the registry, and install ready-made CLIs. |
+| **Use the existing CLI ecosystem now** | Install `cli-hub`, browse the registry, and install ready-made CLIs. |
 | **Build a new agent-native CLI** | Install the CLI-Anything plugin/skill for your agent, then run the 7-phase harness generator. |
 
 <details open>
@@ -212,7 +212,7 @@ Install the CLI-Hub package manager first. It lets you browse, search, inspect, 
 **PIP**
 
 ```bash
-pip install cli-anything-hub
+pip install cli-hub-py
 ```
 
 | Command | What it does |
@@ -245,7 +245,7 @@ cli-hub launch gimp
 
 Give SKILL-compatible agents the CLI-Hub meta-skill so they can discover and install the right CLI for a task.
 
-**Also available on:** [ClawHub](https://clawhub.ai/yuh-yang/cli-anything-hub), [SkillHub](https://www.skillhub.club/web/skills/itsyuhao-cli-anything-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
+**Also available on:** [ClawHub](https://clawhub.ai/asher-1/skills/cli-hub-skill), [SkillHub](https://www.skillhub.club/skills/ludahai19-cli-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
 
 **NPX SKILLS**
 
@@ -760,14 +760,14 @@ We published a **meta-skill** that lets any AI agent freely explore the full cat
 
 ```bash
 # OpenClaw
-openclaw skills install cli-anything-hub
+openclaw skills install cli-hub
 
 1. Point your agent to the catalog: [`https://asher-1.github.io/CLI-Anything/SKILL.txt`](https://asher-1.github.io/CLI-Anything/SKILL.txt)
 # nanobot
-nanobot skills install cli-anything-hub
+nanobot skills install cli-hub
 ```
 
-**Also available on:** [ClawHub](https://clawhub.ai/yuh-yang/cli-anything-hub), [SkillHub](https://www.skillhub.club/web/skills/itsyuhao-cli-anything-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
+**Also available on:** [ClawHub](https://clawhub.ai/asher-1/skills/cli-hub-skill), [SkillHub](https://www.skillhub.club/skills/ludahai19-cli-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
 
 Then prompt:
 
@@ -1666,7 +1666,7 @@ The playbook distills key insights from successfully building all 18 diverse, pr
 
 ```bash
 # Install the package manager
-pip install cli-anything-hub
+pip install cli-hub-py
 
 # Browse, search, inspect, and install CLIs
 cli-hub list

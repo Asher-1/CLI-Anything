@@ -73,7 +73,7 @@ CLI-Anything: Die Brücke zwischen KI-Agenten und der Software der Welt</strong>
 
 - **2026-04-11** 🔗 **n8n CLI** gemerged (#188) — Workflow-Automation-Harness für selbst gehostete Automation-Flows. 🔧 **Exa CLI**-Fix (#205) ergänzt den `x-exa-integration`-Header für Usage-Tracking. 📦 **CLI-Hub** hat zudem seinen PyPI-Auto-Publish-Workflow und eine Package-Refresh-Pipeline bekommen.
 
-- **2026-04-10** 📦 **CLI-Hub Package Manager** gelauncht — `pip install cli-anything-hub`, um CLI-Anything-Harnesses aus einem Befehl heraus zu browsen, zu suchen, zu installieren, zu aktualisieren und zu deinstallieren. Das Web-Hub hat zudem seinen ersten Install-fokussierten Frontend-Refresh und die „Empower yourself"-Toolkit-Karte bekommen.
+- **2026-04-10** 📦 **CLI-Hub Package Manager** gelauncht — `pip install cli-hub-py`, um CLI-Anything-Harnesses aus einem Befehl heraus zu browsen, zu suchen, zu installieren, zu aktualisieren und zu deinstallieren. Das Web-Hub hat zudem seinen ersten Install-fokussierten Frontend-Refresh und die „Empower yourself"-Toolkit-Karte bekommen.
 
 </details>
 
@@ -445,7 +445,7 @@ CLI-Hub lässt Agenten autonom die CLIs entdecken, installieren und nutzen, die 
 npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
-**Ebenfalls verfügbar auf:** [ClawHub](https://clawhub.ai/yuh-yang/cli-anything-hub), [SkillHub](https://www.skillhub.club/web/skills/itsyuhao-cli-anything-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
+**Ebenfalls verfügbar auf:** [ClawHub](https://clawhub.ai/asher-1/skills/cli-hub-skill), [SkillHub](https://www.skillhub.club/skills/ludahai19-cli-hub), [SkillHub.cn](https://skillhub.cn/skills/cli-hub-meta-skill)
 
 Dann prompten:
 
@@ -1003,7 +1003,7 @@ Das Playbook bündelt die zentralen Erkenntnisse aus dem Bau von 11 unterschiedl
 
 ```bash
 # Package Manager installieren
-pip install cli-anything-hub
+pip install cli-hub-py
 
 # CLIs browsen, suchen, inspizieren und installieren
 cli-hub list

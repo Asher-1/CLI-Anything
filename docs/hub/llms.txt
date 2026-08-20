@@ -4,8 +4,8 @@
 
 Canonical site: https://asher-1.github.io/CLI-Anything
 Repository: https://github.com/Asher-1/CLI-Anything
-PyPI package: https://pypi.org/project/cli-anything-hub/
-Install hub: `pip install cli-anything-hub`
+PyPI package: https://pypi.org/project/cli-hub-py/
+Install hub: `pip install cli-hub-py`
 Agent skill install: `npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y`
 
 ## What This Product Does
@@ -60,4 +60,4 @@ Matrices package a whole workflow as capabilities × providers (harness CLIs, pu
 
 ## Copyright
 
-Copyright: HKUDS. Lead author: Yuhao Yang (yuhao.page).
+Copyright: Asher-1. Lead author: ludahai (ludahai19@163.com).

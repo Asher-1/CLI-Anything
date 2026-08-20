@@ -1,14 +1,14 @@
 {
   "name": "CLI-Anything Hub",
-  "id": "clianything-hub",
+  "id": "cli-hub",
   "url": "https://asher-1.github.io/CLI-Anything",
   "description": "Agent-friendly registry and package manager for CLI tools that let AI agents operate GUI applications, developer tools, creative software, web APIs, and public SaaS platforms.",
   "version": "0.3.0",
   "publisher": {
-    "name": "HKUDS",
-    "url": "https://github.com/HKUDS"
+    "name": "Asher-1",
+    "url": "https://github.com/Asher-1"
   },
-  "copyright": "Copyright: HKUDS. Lead author: Yuhao Yang (yuhao.page).",
+  "copyright": "Copyright: Asher-1. Lead author: ludahai (ludahai19@163.com).",
   "crawl_policy": {
     "ai_crawlers_welcome": true,
     "robots_txt": "https://asher-1.github.io/CLI-Anything/robots.txt",
@@ -24,9 +24,9 @@
     "provide agent skill guidance"
   ],
   "entry_points": {
-    "package": "cli-anything-hub",
+    "package": "cli-hub-py",
     "cli": "cli-hub",
-    "install": "pip install cli-anything-hub",
+    "install": "pip install cli-hub-py",
     "agent_skill_install": "npx skills add Asher-1/CLI-Anything --skill cli-hub-meta-skill -g -y"
   },
   "resources": {
@@ -34,7 +34,7 @@
     "markdown_homepage": "https://asher-1.github.io/CLI-Anything/index.md",
     "pricing": "https://asher-1.github.io/CLI-Anything/pricing.md",
     "repository": "https://github.com/Asher-1/CLI-Anything",
-    "pypi": "https://pypi.org/project/cli-anything-hub/",
+    "pypi": "https://pypi.org/project/cli-hub-py/",
     "registry": "https://asher-1.github.io/CLI-Anything/registry.json",
     "public_registry": "https://asher-1.github.io/CLI-Anything/public_registry.json",
     "openapi": "https://asher-1.github.io/CLI-Anything/openapi.json",

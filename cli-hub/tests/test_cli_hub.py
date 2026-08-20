@@ -1290,7 +1290,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-install"
-            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/install/gimp"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-hub/install/gimp"
             assert payload["properties"]["cli"] == "gimp"
             assert payload["properties"]["version"] == "1.0.0"
             assert "platform" in payload["properties"]
@@ -1305,7 +1305,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-uninstall"
-            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/uninstall/blender"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-hub/uninstall/blender"
             assert payload["properties"]["cli"] == "blender"
             assert "platform" in payload["properties"]
 
@@ -1321,7 +1321,7 @@ class TestAnalytics:
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-launch"
             assert payload["properties"]["cli"] == "gimp"
-            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/launch/gimp"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-hub/launch/gimp"
 
     @patch("cli_hub.analytics._send_event")
     def test_track_visit_human(self, mock_send):
@@ -1333,7 +1333,7 @@ class TestAnalytics:
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
             assert payload["event"] == "cli-hub call"
-            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/call"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-hub/call"
             assert payload["properties"]["command"] == "root"
             assert payload["properties"]["is_agent"] is False
             assert payload["properties"]["traffic_type"] == "human"
@@ -1442,8 +1442,8 @@ class TestAnalytics:
             time.sleep(0.2)
             mock_send.assert_called_once()
             payload = mock_send.call_args[0][0]
-            assert payload["event"] == "cli-anything-hub-installed"
-            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-anything-hub/installed"
+            assert payload["event"] == "cli-hub-installed"
+            assert payload["properties"]["$current_url"] == "https://asher-1.github.io/CLI-Anything/cli-hub/installed"
             # Marker file should now exist
             assert (tmp_path / ".cli-hub" / ".first_run_sent").exists()
 

@@ -19,7 +19,7 @@ UMAMI_WEBSITE_ID = "a076c661-bed1-405c-a522-813794e688b4"
 POSTHOG_API_HOST = "https://us.i.posthog.com"
 POSTHOG_PROJECT_TOKEN = "phc_ovP8d5bmjpn8YZnTo7pb6rE3TikcAMgmNVt75o3Ywejz"
 HOSTNAME = "asher-1.github.io/CLI-Anything"
-USER_AGENT = f"Mozilla/5.0 (compatible; cli-anything-hub/{__version__})"
+USER_AGENT = f"Mozilla/5.0 (compatible; cli-hub/{__version__})"
 ANALYTICS_ID_FILE = ".analytics_id"
 
 _pending_threads = []
@@ -264,7 +264,7 @@ def _send_event(payload):
         return None  # analytics must never break the user's workflow
 
 
-def track_event(event_name, url="/cli-anything-hub", data=None):
+def track_event(event_name, url="/cli-hub", data=None):
     """Fire-and-forget event to the active provider. Non-blocking, never raises."""
     if not _is_enabled():
         return
@@ -284,7 +284,7 @@ def track_event(event_name, url="/cli-anything-hub", data=None):
 def track_install(cli_name, version):
     """Track a CLI install event. CLI name goes in properties, not the event name,
     so the event catalog stays flat and dashboards can break down by properties.cli."""
-    track_event("cli-install", url=f"/cli-anything-hub/install/{cli_name}", data={
+    track_event("cli-install", url=f"/cli-hub/install/{cli_name}", data={
         "cli": cli_name,
         "version": version,
         "platform": platform.system().lower(),
@@ -293,7 +293,7 @@ def track_install(cli_name, version):
 
 def track_uninstall(cli_name):
     """Track a CLI uninstall event."""
-    track_event("cli-uninstall", url=f"/cli-anything-hub/uninstall/{cli_name}", data={
+    track_event("cli-uninstall", url=f"/cli-hub/uninstall/{cli_name}", data={
         "cli": cli_name,
         "platform": platform.system().lower(),
     })
@@ -302,7 +302,7 @@ def track_uninstall(cli_name):
 def track_launch(cli_name):
     """Track a CLI launch event — fires when a user runs `cli-hub launch <name>`.
     Distinct from install: this is actual usage signal."""
-    track_event("cli-launch", url=f"/cli-anything-hub/launch/{cli_name}", data={
+    track_event("cli-launch", url=f"/cli-hub/launch/{cli_name}", data={
         "cli": cli_name,
         "platform": platform.system().lower(),
     })
@@ -314,7 +314,7 @@ def track_matrix_install(matrix_name, scope="full", status="ok",
     which matrix, the install scope (capability/recipe/only/full), and the outcome.
     Matrix name and scope go in properties so the event catalog stays flat — dashboards
     break down by properties.matrix / properties.scope, mirroring track_install."""
-    track_event("matrix-install", url=f"/cli-anything-hub/matrix/install/{matrix_name}", data={
+    track_event("matrix-install", url=f"/cli-hub/matrix/install/{matrix_name}", data={
         "matrix": matrix_name,
         "scope": scope,
         "status": status,
@@ -329,7 +329,7 @@ def track_matrix_install(matrix_name, scope="full", status="ok",
 def track_matrix_preflight(matrix_name, scope="full", covered=0, capabilities=0, gaps=0):
     """Track a CLI-Matrix preflight (capability-coverage check) — consideration signal
     that precedes install. Captures how much of the matrix the environment already covers."""
-    track_event("matrix-preflight", url=f"/cli-anything-hub/matrix/preflight/{matrix_name}", data={
+    track_event("matrix-preflight", url=f"/cli-hub/matrix/preflight/{matrix_name}", data={
         "matrix": matrix_name,
         "scope": scope,
         "covered": covered,
@@ -342,7 +342,7 @@ def track_matrix_preflight(matrix_name, scope="full", covered=0, capabilities=0,
 def track_matrix_discover(kind, query="", results=0):
     """Track CLI-Matrix discovery — `matrix list`, `matrix search`, `matrix recipes`,
     and `cli-hub can`. `kind` distinguishes the surface; `results` is the hit count."""
-    track_event("matrix-discover", url="/cli-anything-hub/matrix/discover", data={
+    track_event("matrix-discover", url="/cli-hub/matrix/discover", data={
         "kind": kind,
         "query": (query or "")[:120],
         "results": results,
@@ -352,7 +352,7 @@ def track_matrix_discover(kind, query="", results=0):
 
 def track_matrix_info(matrix_name, kind="info"):
     """Track inspecting a single CLI-Matrix — `matrix info` and `matrix doctor`."""
-    track_event("matrix-info", url=f"/cli-anything-hub/matrix/info/{matrix_name}", data={
+    track_event("matrix-info", url=f"/cli-hub/matrix/info/{matrix_name}", data={
         "matrix": matrix_name,
         "kind": kind,
         "platform": platform.system().lower(),
@@ -371,7 +371,7 @@ def track_visit(is_agent=False, command="root", detection=None):
         "stdin_tty": stdin_tty,
         "is_interactive": stdin_tty,
     }
-    track_event("cli-hub call", url="/cli-anything-hub/call", data={
+    track_event("cli-hub call", url="/cli-hub/call", data={
         "command": command,
         "is_agent": context["is_agent"],
         "traffic_type": context["traffic_type"],
@@ -389,7 +389,7 @@ def track_first_run():
     marker = _analytics_dir() / ".first_run_sent"
     if marker.exists():
         return
-    track_event("cli-anything-hub-installed", url="/cli-anything-hub/installed", data={
+    track_event("cli-hub-installed", url="/cli-hub/installed", data={
         "version": __version__,
         "platform": platform.system().lower(),
     })

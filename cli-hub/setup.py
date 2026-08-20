@@ -49,13 +49,13 @@ class sdist(_sdist):
 
 
 setup(
-    name="cli-anything-hub",
-    version="0.4.1",
-    description="Package manager for CLI-Anything — browse, install, and manage 40+ agent-native CLI interfaces for GUI applications",
+    name="cli-hub-py",
+    version="0.5.0",
+    description="Package manager for CLI-Anything — browse, install, and manage 80+ agent-native CLI interfaces for GUI applications",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author="HKUDS",
-    author_email="hkuds@connect.hku.hk",
+    author="Asher-1",
+    author_email="ludahai666@gmail.com",
     url="https://github.com/Asher-1/CLI-Anything",
     project_urls={
         "Homepage": "https://asher-1.github.io/CLI-Anything",

@@ -1,13 +1,24 @@
 """Fetch, cache, and merge the CLI-Anything registries (harness + public)."""
 
 import json
+import os
 import time
 from pathlib import Path
 
 import requests
 
-REGISTRY_URL = "https://asher-1.github.io/CLI-Anything/registry.json"
-PUBLIC_REGISTRY_URL = "https://asher-1.github.io/CLI-Anything/public_registry.json"
+# Default registry URLs (pointing to the upstream repo's GitHub Pages)
+# These can be overridden via environment variables:
+#   CLI_HUB_REGISTRY_URL       - override the harness registry URL
+#   CLI_HUB_PUBLIC_REGISTRY_URL - override the public CLI registry URL
+#
+# This allows fork maintainers to point cli-hub at their own GitHub Pages
+# without modifying the installed package.
+_DEFAULT_REGISTRY_URL = "https://asher-1.github.io/CLI-Anything/registry.json"
+_DEFAULT_PUBLIC_REGISTRY_URL = "https://asher-1.github.io/CLI-Anything/public_registry.json"
+
+REGISTRY_URL = os.environ.get("CLI_HUB_REGISTRY_URL", _DEFAULT_REGISTRY_URL)
+PUBLIC_REGISTRY_URL = os.environ.get("CLI_HUB_PUBLIC_REGISTRY_URL", _DEFAULT_PUBLIC_REGISTRY_URL)
 CACHE_DIR = Path.home() / ".cli-hub"
 CACHE_FILE = CACHE_DIR / "registry_cache.json"
 PUBLIC_CACHE_FILE = CACHE_DIR / "public_registry_cache.json"

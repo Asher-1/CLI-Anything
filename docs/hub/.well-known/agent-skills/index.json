@@ -2,7 +2,7 @@
   "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
   "skills": [
     {
-      "name": "cli-anything-hub",
+      "name": "cli-hub",
       "description": "Browse, search, install, and launch agent-friendly CLI tools from the CLI-Anything registry.",
       "type": "skill-md",
       "url": "https://asher-1.github.io/CLI-Anything/SKILL.txt",

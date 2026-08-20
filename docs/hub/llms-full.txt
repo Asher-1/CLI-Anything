@@ -13,7 +13,7 @@ The project has three related surfaces:
 Install the hub package:
 
 ```bash
-pip install cli-anything-hub
+pip install cli-hub-py
 ```
 
 Install the agent meta-skill:
@@ -116,8 +116,8 @@ Agents can read these files directly to find CLI names, descriptions, categories
 Repository: https://github.com/Asher-1/CLI-Anything
 Contributing guide: https://github.com/Asher-1/CLI-Anything/blob/main/CONTRIBUTING.md
 Pull request template: https://github.com/Asher-1/CLI-Anything/blob/main/.github/PULL_REQUEST_TEMPLATE.md
-PyPI package: https://pypi.org/project/cli-anything-hub/
+PyPI package: https://pypi.org/project/cli-hub-py/
 
 ## Copyright
 
-Copyright: HKUDS. Lead author: Yuhao Yang (yuhao.page).
+Copyright: Asher-1. Lead author: ludahai (ludahai19@163.com).

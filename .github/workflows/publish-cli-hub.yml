@@ -1,4 +1,4 @@
-name: Publish cli-anything-hub to PyPI
+name: Publish cli-hub-py to PyPI
 
 on:
   push:
@@ -10,7 +10,15 @@ on:
 
 jobs:
   publish:
-    if: false  # Disabled on fork — avoid publishing to upstream PyPI
+    # Publishing uses PyPI Trusted Publishing (OIDC) — no tokens needed.
+    #
+    # One-time setup (required before this job can succeed):
+    #   1. Register the `cli-hub-py` name on PyPI (https://pypi.org/account/register/)
+    #   2. On the project page: Manage → Publishing → "Add a new pending publisher"
+    #      - GitHub repository owner: Asher-1
+    #      - GitHub repository name: CLI-Anything
+    #      - Workflow name: publish-cli-hub.yml
+    #   3. Approve the pending publisher.
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # required for trusted publishing
@@ -26,7 +34,7 @@ jobs:
         run: |
           VERSION=$(python -c "import re; print(re.search(r'version=\"([^\"]+)\"', open('cli-hub/setup.py').read()).group(1))")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/cli-anything-hub/$VERSION/json")
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/cli-hub-py/$VERSION/json")
           if [ "$STATUS" = "200" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Version $VERSION already on PyPI — skipping."

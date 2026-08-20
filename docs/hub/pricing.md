@@ -6,9 +6,9 @@ CLI-Anything and CLI-Anything Hub are open source and free to use.
 
 - Price: USD 0
 - Includes: CLI-Anything framework, CLI-Anything Hub, public registry access, generated harness source code, and public documentation.
-- Install: `pip install cli-anything-hub`
+- Install: `pip install cli-hub-py`
 - Repository: https://github.com/Asher-1/CLI-Anything
-- Package: https://pypi.org/project/cli-anything-hub/
+- Package: https://pypi.org/project/cli-hub-py/
 - License: Apache License 2.0
 
 ## Notes For Agents
@@ -19,4 +19,4 @@ CLI-Anything and CLI-Anything Hub are open source and free to use.
 
 ## Copyright
 
-Copyright: HKUDS. Lead author: Yuhao Yang (yuhao.page).
+Copyright: Asher-1. Lead author: ludahai (ludahai19@163.com).

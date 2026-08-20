@@ -9,7 +9,7 @@ const fixtures = require("./pr-labeler-fixtures.json");
 const REPO_ROOT = path.resolve(__dirname, "../../..");
 const LABELER_CONFIG_PATH = path.join(REPO_ROOT, ".github/labeler.yml");
 const EXPECTED_LABELS = [
-  "cli-anything-hub",
+  "cli-hub",
   "cli-anything-skill",
   "documentation",
   "existing-cli-fix",
@@ -172,7 +172,7 @@ test("labeler config and script agree on the supported label set", () => {
     assert(scriptLabels.has(label), `${label} must be creatable by pr-labeler.js`);
   }
 
-  assert(configLabels.has("cli-anything-hub"));
+  assert(configLabels.has("cli-hub"));
   assert(configLabels.has("cli-anything-skill"));
   assert(configLabels.has("github-actions"));
 });
@@ -183,7 +183,7 @@ test("registry-only maintenance is not treated as a new CLI", () => {
     files: [{filename: "registry.json", status: "modified"}],
   });
 
-  assert.deepStrictEqual(labels, ["cli-anything-hub"]);
+  assert.deepStrictEqual(labels, ["cli-hub"]);
 });
 
 test("mixed README and harness changes are not documentation-only", () => {

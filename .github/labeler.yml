@@ -1,4 +1,4 @@
-cli-anything-hub:
+cli-hub:
   - changed-files:
       - any-glob-to-any-file:
           - "cli-hub/**"

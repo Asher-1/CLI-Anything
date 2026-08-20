@@ -48,7 +48,7 @@
         "cli-hub"
       ],
       "examples": [
-        "pip install cli-anything-hub",
+        "pip install cli-hub-py",
         "cli-hub search browser",
         "cli-hub install gimp",
         "cli-hub launch gimp --help"
@@ -56,5 +56,5 @@
     }
   ],
   "supportsAuthenticatedExtendedCard": false,
-  "copyright": "Copyright: HKUDS. Lead author: Yuhao Yang (yuhao.page)."
+  "copyright": "Copyright: Asher-1. Lead author: ludahai (ludahai19@163.com)."
 }

@@ -13,7 +13,7 @@
     "files": [
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "new-cli"]
+    "expected": ["cli-hub", "new-cli"]
   },
   {
     "number": 259,
@@ -21,7 +21,7 @@
     "files": [
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "new-cli"]
+    "expected": ["cli-hub", "new-cli"]
   },
   {
     "number": 258,
@@ -29,7 +29,7 @@
     "files": [
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "new-cli"]
+    "expected": ["cli-hub", "new-cli"]
   },
   {
     "number": 256,
@@ -47,7 +47,7 @@
       {"filename": "registry.json", "status": "modified"},
       {"filename": "skills/cli-anything-calibre/SKILL.md", "status": "added"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "new-cli"]
+    "expected": ["cli-hub", "cli-anything-skill", "new-cli"]
   },
   {
     "number": 254,
@@ -61,7 +61,7 @@
       {"filename": "registry.json", "status": "modified"},
       {"filename": "skills/cli-anything-quietshrink/SKILL.md", "status": "added"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "new-cli"]
+    "expected": ["cli-hub", "cli-anything-skill", "new-cli"]
   },
   {
     "number": 252,
@@ -92,7 +92,7 @@
       {"filename": "sbox/agent-harness/setup.py", "status": "added"},
       {"filename": "skills/cli-anything-sbox/SKILL.md", "status": "added"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "new-cli"]
+    "expected": ["cli-hub", "cli-anything-skill", "new-cli"]
   },
   {
     "number": 245,
@@ -105,7 +105,7 @@
       {"filename": "registry.json", "status": "modified"},
       {"filename": "skills/cli-anything-lldb/SKILL.md", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "existing-cli-fix"]
+    "expected": ["cli-hub", "cli-anything-skill", "existing-cli-fix"]
   },
   {
     "number": 244,
@@ -158,7 +158,7 @@
       {"filename": "registry.json", "status": "modified"},
       {"filename": "skills/cli-anything-nslogger/SKILL.md", "status": "added"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "new-cli"]
+    "expected": ["cli-hub", "cli-anything-skill", "new-cli"]
   },
   {
     "number": 237,
@@ -173,7 +173,7 @@
       {"filename": "registry.json", "status": "modified"},
       {"filename": "skills/cli-anything-macrocli/SKILL.md", "status": "added"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "new-cli"]
+    "expected": ["cli-hub", "cli-anything-skill", "new-cli"]
   },
   {
     "number": 233,
@@ -185,7 +185,7 @@
       {"filename": "browser/agent-harness/setup.py", "status": "modified"},
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "existing-cli-fix"]
+    "expected": ["cli-hub", "cli-anything-skill", "existing-cli-fix"]
   },
   {
     "number": 220,
@@ -215,7 +215,7 @@
       {"filename": "cli-hub-meta-skill/SKILL.md", "status": "modified"},
       {"filename": "docs/hub/SKILL.md", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill"]
+    "expected": ["cli-hub", "cli-anything-skill"]
   },
   {
     "number": 189,
@@ -227,7 +227,7 @@
       {"filename": "minimax/agent-harness/setup.py", "status": "added"},
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "new-cli"]
+    "expected": ["cli-hub", "cli-anything-skill", "new-cli"]
   },
   {
     "number": 187,
@@ -247,7 +247,7 @@
       {"filename": "freecad/agent-harness/cli_anything/freecad/skills/SKILL.md", "status": "modified"},
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub", "cli-anything-skill", "existing-cli-fix"]
+    "expected": ["cli-hub", "cli-anything-skill", "existing-cli-fix"]
   },
   {
     "number": 106,
@@ -265,6 +265,6 @@
     "files": [
       {"filename": "registry.json", "status": "modified"}
     ],
-    "expected": ["cli-anything-hub"]
+    "expected": ["cli-hub"]
   }
 ]

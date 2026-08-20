@@ -9,7 +9,7 @@ Browse, install, and manage 40+ CLI harnesses for software like GIMP, Blender, I
 ## Install
 
 ```bash
-pip install cli-anything-hub
+pip install cli-hub-py
 ```
 
 ## Usage
@@ -84,7 +84,7 @@ Each CLI harness is a standalone Python package that wraps a real application (G
 
 cli-hub is designed to be agent-friendly. AI coding agents can:
 
-1. `pip install cli-anything-hub` to get the package manager
+1. `pip install cli-hub-py` to get the package manager
 2. `cli-hub search <keyword>` or `cli-hub list --json` to discover tools
 3. `cli-hub install <name>` to install what they need
 4. Use `--json` output for structured data parsing

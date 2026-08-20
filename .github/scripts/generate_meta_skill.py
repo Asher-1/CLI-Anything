@@ -40,7 +40,7 @@ def main():
 
     lines = [
         "---",
-        "name: cli-anything-hub",
+        "name: cli-hub",
         "description: >-",
         f"  Browse and install {total_count}+ CLI tools for GUI software and popular platforms.",
         "  Covers image editing, 3D, video, audio, office, diagrams, AI, communication, devops, and more.",
@@ -54,7 +54,7 @@ def main():
         "",
         "```bash",
         "# First, install the CLI Hub package manager",
-        "pip install cli-anything-hub",
+        "pip install cli-hub-py",
         "",
         "# Browse available CLIs",
         "cli-hub list",
@@ -184,7 +184,7 @@ def main():
         "",
         "## For AI Agents",
         "",
-        "1. Install the hub: `pip install cli-anything-hub`",
+        "1. Install the hub: `pip install cli-hub-py`",
         "2. Install the CLI you need: `cli-hub install <name>`",
         "3. Run the CLI directly via its entry point, or use `cli-hub launch <name> [args...]`",
         "4. For harness CLIs: use `--json` flag for machine-readable output; check exit codes (0=success)",

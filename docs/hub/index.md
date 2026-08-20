@@ -6,12 +6,12 @@ Canonical site: https://asher-1.github.io/CLI-Anything
 
 Repository: https://github.com/Asher-1/CLI-Anything
 
-PyPI package: https://pypi.org/project/cli-anything-hub/
+PyPI package: https://pypi.org/project/cli-hub-py/
 
 ## Install
 
 ```bash
-pip install cli-anything-hub
+pip install cli-hub-py
 ```
 
 ## Agent Skill
@@ -48,4 +48,4 @@ cli-hub launch <name> [args...]
 
 ## Copyright
 
-Copyright: HKUDS. Lead author: Yuhao Yang (yuhao.page).
+Copyright: Asher-1. Lead author: ludahai (ludahai19@163.com).

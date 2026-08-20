@@ -11,7 +11,7 @@ const LABELS = {
     color: "5319E7",
     description: "Changes CLI-Anything plugin or skill files",
   },
-  "cli-anything-hub": {
+  "cli-hub": {
     color: "FBCA04",
     description: "Changes CLI-Hub, registries, or hub docs",
   },
