@@ -63,6 +63,30 @@ class TestMCPServerModule:
         assert "open_file" in tool_names
         assert "convert_format" in tool_names
         assert "subsample" in tool_names
+        assert {"list_ai_tasks", "get_ai_schema", "run_ai_batch",
+                "run_plugin_command"} <= tool_names
+
+    @pytest.mark.asyncio
+    @patch('cli_anything.acloudviewer.mcp_server._get_backend')
+    async def test_call_ai_and_plugin_tools(self, mock_get_backend):
+        backend = Mock()
+        backend.ai_list.return_value = [{"name": "ocr"}]
+        backend.ai_schema.return_value = {"keyword": "OCR_RECOGNIZE"}
+        backend.ai_run.return_value = {"manifest": {"ok": 1}}
+        backend.plugin_run.return_value = {"exit_code": 0}
+        mock_get_backend.return_value = backend
+
+        await mcp_server.call_tool("list_ai_tasks", {})
+        await mcp_server.call_tool("get_ai_schema", {"task": "ocr"})
+        await mcp_server.call_tool("run_ai_batch", {
+            "task": "ocr", "options": {"IMAGE": "page.png"}})
+        await mcp_server.call_tool("run_plugin_command", {
+            "command": "CSF", "args": ["SCENES", "RELIEF"]})
+        backend.ai_list.assert_called_once()
+        backend.ai_schema.assert_called_once_with("ocr", timeout=60)
+        backend.ai_run.assert_called_once_with(
+            "ocr", {"IMAGE": "page.png"}, timeout=1800)
+        backend.plugin_run.assert_called_once()
 
     @pytest.mark.asyncio
     @patch('cli_anything.acloudviewer.mcp_server._get_backend')
@@ -1390,8 +1414,13 @@ class TestMCPColmapTools:
         result = await mcp_server.call_tool("colmap_auto_reconstruct", {
             "image_path": "/tmp/images",
             "workspace_path": "/tmp/ws",
+            "mapper": "hierarchical",
+            "random_seed": 3,
         })
         assert colmap_inst.automatic_reconstruct.called
+        kwargs = colmap_inst.automatic_reconstruct.call_args.kwargs
+        assert kwargs["mapper"] == "hierarchical"
+        assert kwargs["random_seed"] == 3
         assert len(result) > 0
 
     @pytest.mark.asyncio
@@ -1407,8 +1436,10 @@ class TestMCPColmapTools:
         result = await mcp_server.call_tool("colmap_extract_features", {
             "image_path": "/tmp/images",
             "database_path": "/tmp/db.db",
+            "num_threads": 1,
         })
         assert colmap_inst.feature_extractor.called
+        assert colmap_inst.feature_extractor.call_args.kwargs["num_threads"] == 1
         assert len(result) > 0
 
     @pytest.mark.asyncio
@@ -1424,8 +1455,10 @@ class TestMCPColmapTools:
         result = await mcp_server.call_tool("colmap_match_features", {
             "database_path": "/tmp/db.db",
             "method": "exhaustive",
+            "random_seed": 11,
         })
         assert colmap_inst.exhaustive_matcher.called
+        assert colmap_inst.exhaustive_matcher.call_args.kwargs["random_seed"] == 11
         assert len(result) > 0
 
     @pytest.mark.asyncio
@@ -1435,15 +1468,22 @@ class TestMCPColmapTools:
         backend_mock = Mock()
         mock_get_backend.return_value = backend_mock
         colmap_inst = Mock()
-        colmap_inst.mapper.return_value = {"status": "ok"}
+        colmap_inst.hierarchical_mapper.return_value = {"status": "ok"}
         mock_colmap_cls.return_value = colmap_inst
 
         result = await mcp_server.call_tool("colmap_sparse_reconstruct", {
             "database_path": "/tmp/db.db",
             "image_path": "/tmp/images",
             "output_path": "/tmp/sparse",
+            "method": "hierarchical",
+            "random_seed": 17,
+            "mapper_options": {"Mapper.min_num_matches": 42},
         })
-        assert colmap_inst.mapper.called
+        colmap_inst.hierarchical_mapper.assert_called_once_with(
+            "/tmp/db.db", "/tmp/images", "/tmp/sparse", {
+                "Mapper.min_num_matches": 42,
+                "Mapper.random_seed": 17,
+            })
         assert len(result) > 0
 
     @pytest.mark.asyncio

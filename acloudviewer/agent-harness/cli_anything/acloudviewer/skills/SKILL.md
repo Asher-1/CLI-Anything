@@ -83,6 +83,36 @@ cli-anything-acloudviewer  # REPL (general)
 | **GUI** | JSON-RPC WebSocket to running ACloudViewer | ACloudViewer running with JSON-RPC plugin |
 | **Headless** | Subprocess: `ACloudViewer -SILENT -O ... -SS ...` | ACloudViewer binary |
 
+### AICore Batch Inference and Plugin Passthrough
+
+Every AICore plugin (RMBG, DeepLSD, RF-DETR, YOLO, YOLO tracking, DA3,
+FaceDetect, GKD, OCR, SAM3, LightGlue, FreeSplatter, TRELLIS, LingbotMap,
+AnyLabeling, MapAnything, SAM3D) exposes one native batch command. Always ask
+the installed binary for the task schema before running it; option names and
+defaults are owned by the plugin, not by this harness.
+
+```bash
+cli-anything-acloudviewer --json ai list                 # task -> native command
+cli-anything-acloudviewer --json ai schema ocr           # options from the binary
+cli-anything-acloudviewer --json ai run ocr \
+  --image page-1.png --image page-2.png --out-dir ./ocr-out \
+  --option LANG=en --option LAYOUT=true
+cli-anything-acloudviewer --json ai run yolo-track \
+  --model yolo11n.gguf --option VIDEO=clip.mp4 --option TRACKS_JSON=tracks.json
+
+# Ordinary or third-party plugin command; --arg keeps legacy argv order
+cli-anything-acloudviewer --json plugin run ANIMATION \
+  --arg=-FPS --arg=24 --arg=-TOTAL_FRAMES --arg=10
+```
+
+`--image`, `--input-dir`, `--input-list`, `--out-dir`, `--model`, `--device`,
+`--threads`, and `--download` are shortcuts for the same-named uppercase
+option; use one only when `ai schema` lists that key. Every other option goes
+through repeatable `--option KEY=VALUE` (JSON values keep their type; repeat a
+key for lists). The result is the command's `acloudviewer.aicore.batch/1`
+manifest. Both commands run an isolated headless child whenever a local binary
+exists; GUI mode falls back to JSON-RPC `aicore.batch` only without one.
+
 ## Command Groups
 
 ### Check & Install
@@ -378,13 +408,15 @@ cli-anything-acloudviewer info
 cli-anything-acloudviewer --json info
 ```
 
-## MCP Server (178 tools)
+## MCP Server (182 tools)
 
 ```bash
 cli-anything-acloudviewer-mcp --mode auto
 ```
 
-The MCP server provides 178 tools across 21 categories for comprehensive 3D point cloud and mesh processing:
+The MCP server provides 182 tools across 22 categories for comprehensive 3D point cloud and mesh processing:
+
+**AICore & Generic Plugins (4):** `list_ai_tasks`, `get_ai_schema`, `run_ai_batch`, `run_plugin_command`
 
 **File I/O (5):** `open_file`, `convert_format`, `batch_convert`, `list_formats`, `export_entity`
 

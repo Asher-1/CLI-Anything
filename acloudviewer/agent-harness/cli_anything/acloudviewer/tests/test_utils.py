@@ -15,13 +15,28 @@ import pytest
 
 # ── RPC Client Tests ─────────────────────────────────────────────
 
+
+def _echo_ws() -> MagicMock:
+    """Mock connection answering like a JSON-RPC server: the canned
+    recv.return_value carries id 1, the reply echoes the request id (the
+    client discards replies to other requests)."""
+    ws = MagicMock()
+
+    def recv():
+        reply = json.loads(ws.recv.return_value)
+        reply["id"] = json.loads(ws.send.call_args[0][0])["id"]
+        return json.dumps(reply)
+
+    ws.recv.side_effect = recv
+    return ws
+
 class TestRPCClientCall:
     """Test call() request/response protocol without a real server."""
 
     def _make_client(self):
         from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
         c = ACloudViewerRPCClient("ws://fake:9999")
-        c._ws = MagicMock()
+        c._ws = _echo_ws()
         return c
 
     def test_call_sends_jsonrpc_request(self):
@@ -105,7 +120,7 @@ class TestRPCClientConvenience:
     def _make_client(self):
         from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
         c = ACloudViewerRPCClient()
-        c._ws = MagicMock()
+        c._ws = _echo_ws()
         c._ws.recv.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": "pong"})
         return c
 
@@ -205,7 +220,7 @@ class TestRPCClientNewWrappers:
     def _make_client(self):
         from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
         c = ACloudViewerRPCClient()
-        c._ws = MagicMock()
+        c._ws = _echo_ws()
         c._ws.recv.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": {}})
         return c
 
@@ -1013,6 +1028,24 @@ class TestColmapArgConstruction:
         assert "SIMPLE_PINHOLE" in cmd
         assert "--single_camera" in cmd
         assert "--use_gpu" in cmd
+        # The default mapper keeps the binary's own sparse-mode default.
+        assert "--mapper" not in cmd
+        assert "--sparse_mode" not in cmd
+        assert "--random_seed" not in cmd
+
+    @patch("subprocess.run")
+    def test_automatic_reconstruct_mapper_and_seed_args(self, mock_run, tmp_path):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr="")
+        b = self._backend()
+        result = b.automatic_reconstruct(
+            str(tmp_path / "ws"), str(tmp_path / "imgs"),
+            mapper="GLOBAL", random_seed=7)
+        cmd = mock_run.call_args[0][0]
+        assert cmd[cmd.index("--mapper") + 1] == "global"
+        assert cmd[cmd.index("--sparse_mode") + 1] == "colmap"
+        assert cmd[cmd.index("--random_seed") + 1] == "7"
+        assert result["mapper"] == "global"
 
     @patch("subprocess.run")
     def test_feature_extractor_args(self, mock_run, tmp_path):
@@ -1024,7 +1057,26 @@ class TestColmapArgConstruction:
         cmd = mock_run.call_args[0][0]
         assert "feature_extractor" in cmd
         assert "OPENCV" in cmd
-        assert "--SiftExtraction.use_gpu" in cmd
+        assert "--FeatureExtraction.use_gpu" in cmd
+        assert "--FeatureExtraction.num_threads" not in cmd
+
+    @patch("subprocess.run")
+    def test_feature_extractor_forwards_num_threads(self, mock_run, tmp_path):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr="")
+        b = self._backend()
+        b.feature_extractor(str(tmp_path / "db"), str(tmp_path / "imgs"),
+                            num_threads=1)
+        cmd = mock_run.call_args[0][0]
+        assert cmd[cmd.index("--FeatureExtraction.num_threads") + 1] == "1"
+
+    def test_feature_extractor_rejects_nonpositive_threads(self, tmp_path):
+        b = self._backend()
+        with patch("subprocess.run") as mock_run:
+            with pytest.raises(ValueError, match="num_threads"):
+                b.feature_extractor(str(tmp_path / "db"),
+                                    str(tmp_path / "imgs"), num_threads=0)
+        mock_run.assert_not_called()
 
     @patch("subprocess.run")
     def test_exhaustive_matcher_args(self, mock_run):
@@ -1034,18 +1086,64 @@ class TestColmapArgConstruction:
         b.exhaustive_matcher("/tmp/db", use_gpu=False)
         cmd = mock_run.call_args[0][0]
         assert "exhaustive_matcher" in cmd
-        assert "--SiftMatching.use_gpu" in cmd
+        assert "--FeatureMatching.use_gpu" in cmd
+        assert "--TwoViewGeometry.random_seed" not in cmd
+
+    @pytest.mark.parametrize("method,args", [
+        ("exhaustive_matcher", ("/tmp/db",)),
+        ("sequential_matcher", ("/tmp/db",)),
+        ("vocab_tree_matcher", ("/tmp/db", "/tmp/tree.bin")),
+        ("spatial_matcher", ("/tmp/db",)),
+    ])
+    @patch("subprocess.run")
+    def test_matcher_forwards_two_view_geometry_seed(self, mock_run, method, args):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr="")
+        b = self._backend()
+        getattr(b, method)(*args, random_seed=20261009)
+        cmd = mock_run.call_args[0][0]
+        assert method in cmd
+        assert cmd[cmd.index("--TwoViewGeometry.random_seed") + 1] == "20261009"
+
+    def test_matcher_rejects_negative_seed_before_running(self):
+        b = self._backend()
+        with patch("subprocess.run") as mock_run:
+            with pytest.raises(ValueError, match="random_seed"):
+                b.exhaustive_matcher("/tmp/db", random_seed=-1)
+        mock_run.assert_not_called()
 
     @patch("subprocess.run")
     def test_mapper_args(self, mock_run, tmp_path):
         mock_run.return_value = subprocess.CompletedProcess(
             args=[], returncode=0, stdout="", stderr="")
         b = self._backend()
-        b.mapper("/db", "/imgs", str(tmp_path / "output"))
+        b.mapper("/db", "/imgs", str(tmp_path / "output"), {
+            "Mapper.random_seed": 17,
+            "Mapper.ba_global_max_num_iterations": 50,
+        })
         cmd = mock_run.call_args[0][0]
         assert "mapper" in cmd
         assert "--database_path" in cmd
         assert "--output_path" in cmd
+        assert cmd[cmd.index("--Mapper.random_seed") + 1] == "17"
+        assert cmd[cmd.index("--Mapper.ba_global_max_num_iterations") + 1] == "50"
+
+    @patch("subprocess.run")
+    def test_hierarchical_mapper_options_are_forwarded(self, mock_run, tmp_path):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr="")
+        b = self._backend()
+        b.hierarchical_mapper("/db", "/imgs", str(tmp_path / "output"), {
+            "Mapper.min_num_matches": "42",
+        })
+        cmd = mock_run.call_args[0][0]
+        assert "hierarchical_mapper" in cmd
+        assert cmd[cmd.index("--Mapper.min_num_matches") + 1] == "42"
+
+    def test_mapper_option_args_rejects_argv_control_characters(self):
+        b = self._backend()
+        with pytest.raises(ValueError, match="invalid mapper option name"):
+            b._mapper_option_args({"--Mapper.min_num_matches": 42})
 
     @patch("subprocess.run")
     def test_poisson_mesher_args(self, mock_run):

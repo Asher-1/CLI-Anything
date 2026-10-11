@@ -707,7 +707,7 @@ class TestRPCClient:
     def test_default_url(self):
         from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
         client = ACloudViewerRPCClient()
-        assert client._url == "ws://localhost:6001"
+        assert client._url == "ws://127.0.0.1:6001"  # server binds IPv4 loopback
 
     def test_custom_url(self):
         from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient

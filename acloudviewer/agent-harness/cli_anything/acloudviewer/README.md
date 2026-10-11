@@ -27,7 +27,7 @@ environment variable to its absolute path.
 | **GUI** | JSON-RPC WebSocket to running ACloudViewer | ACloudViewer with JSON-RPC plugin |
 
 The CLI auto-detects: if a running ACloudViewer instance responds on
-`ws://localhost:6001`, GUI mode is used; otherwise headless.
+`ws://127.0.0.1:6001`, GUI mode is used; otherwise headless.
 
 ### Commands by category (what each command needs)
 
@@ -38,6 +38,8 @@ The CLI auto-detects: if a running ACloudViewer instance responds on
 **Headless** (binary `-SILENT` mode; no GUI):
 
 - `convert`, `batch-convert`
+- `ai`: `list`, `schema`, `run` (all registered AICore plugin batch tasks)
+- `plugin`: `run` (ordinary/third-party native command passthrough)
 - `process`: `subsample`, `normals`, `icp`, `sor`, `c2c-dist`, `c2m-dist`, `crop`, `density`, `curvature`, `roughness`, `delaunay`, `sample-mesh`, `color-banding`, `volume-25d`, `crop-2d`, `rasterize`, `cross-section`, `stat-test`, `approx-density`, `feature`, `best-fit-plane`, `extract-cc`, `set-active-sf`, `remove-sf`, `remove-all-sfs`, `rename-sf`, `filter-sf`, `coord-to-sf`, `sf-arithmetic`, `sf-op`, `octree-normals`, `orient-normals`, `invert-normals`, `clear-normals`, `normals-to-dip`, `normals-to-sfs`, `remove-rgb`, `merge-clouds`, `extract-vertices`, `flip-triangles`, `mesh-volume`, `merge-meshes`, `match-centers`, `drop-global-shift`, `closest-point-set`, `remove-scan-grids`, `pcv`, `compass-export`, `compass-import-fol`, `compass-import-lin`, `compass-refit`, `compass-p21`, `sra`
 - `reconstruct`: `mesh`, `auto`, `extract-features`, `match`, `sparse`, `undistort`, `dense-stereo`, `fuse`, `poisson`, `simplify-mesh`, `texture-mesh`, `convert-model`, `analyze-model`, `delaunay-mesh`
 - `sibr`: `tool`, `prepare-colmap`, `texture-mesh`, `unwrap-mesh`, `tonemapper`, `align-meshes`, `camera-converter`, `nvm-to-sibr`, `crop-from-center`, `clipping-planes`, `distord-crop`
@@ -75,6 +77,28 @@ cli-anything-acloudviewer install --help
 # List supported file formats
 cli-anything-acloudviewer --json formats
 ```
+
+### AICore and plugin automation — **Headless or GUI RPC**
+
+```bash
+# Registry identity is local; schemas come from the installed plugin
+cli-anything-acloudviewer --json ai list
+cli-anything-acloudviewer --json --mode headless ai schema lightglue
+
+# External-data batch inference; repeat inputs and arbitrary typed options
+cli-anything-acloudviewer --json --mode headless ai run ocr \
+  --image page-1.png --image page-2.png --out-dir ./ocr-out \
+  --option LANG=en --option LAYOUT=true
+
+# Legacy ordinary plugin argv is preserved exactly
+cli-anything-acloudviewer --mode headless plugin run ANIMATION \
+  --arg=-FPS --arg=24 --arg=-TOTAL_FRAMES --arg=10
+```
+
+`ai run` returns the plugin's `acloudviewer.aicore.batch/1` manifest. In GUI
+mode it calls JSON-RPC `aicore.batch`; in headless mode it invokes the same
+native command directly. MCP exposes the same boundary as `list_ai_tasks`,
+`get_ai_schema`, `run_ai_batch`, and `run_plugin_command`.
 
 ### File conversion — **Headless**
 
@@ -230,6 +254,10 @@ cli-anything-acloudviewer reconstruct match ./database.db --method exhaustive
 # 3. Sparse reconstruction (Structure-from-Motion)
 cli-anything-acloudviewer reconstruct sparse -d ./database.db --image-path ./images/ -o ./sparse/
 
+# Reproducible sparse reconstruction with raw COLMAP mapper options
+cli-anything-acloudviewer reconstruct sparse -d ./database.db --image-path ./images/ -o ./sparse/ \
+  --random-seed 17 --mapper-option Mapper.min_num_matches=32
+
 # 4. Undistort images for dense reconstruction
 cli-anything-acloudviewer reconstruct undistort --image-path ./images/ -i ./sparse/0 -o ./dense/
 
@@ -333,7 +361,7 @@ cli-anything-acloudviewer sibr unwrap-mesh ./workspace/
 
 ### Scene, entity, view & open — **GUI**
 
-Requires a running ACloudViewer with the JSON-RPC plugin (`--mode gui` or auto-detect when `ws://localhost:6001` is available).
+Requires a running ACloudViewer with the JSON-RPC plugin (`--mode gui` or auto-detect when `ws://127.0.0.1:6001` is available).
 
 ```bash
 # Open a file in the viewer
@@ -502,9 +530,9 @@ Key method groups:
 | **Transform** | `transform.apply` |
 | **COLMAP** | `colmap.reconstruct`, `colmap.run` |
 
-## MCP Server (178 Tools)
+## MCP Server (182 Tools)
 
-An optional MCP server exposes 178 tools for integration with AI agents:
+An optional MCP server exposes 182 tools for integration with AI agents:
 
 ```bash
 pip install -e .
@@ -568,7 +596,7 @@ pip install -e ".[dev]"
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
 
-Test suite: ~592 tests covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (178 tools), and session management.
+Test suite covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (182 tools), and session management.
 
 ## Methodology
 

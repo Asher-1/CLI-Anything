@@ -56,7 +56,7 @@ platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 ### Notes
 
 - **592 tests passed** — all core functionality fully tested
-- **178 MCP tools verified** — full tool registration and schema validation
+- **182 MCP tools verified** — full tool registration and schema validation
 - **Format conversion**: ASC mapping, alias extension lookup, VTK dual-format, cross-type (cloud↔mesh)
 - **Version detection**: maintenancetool, .desktop, CHANGELOG, --version fallback chain
 - **Installer**: Platform detection, Qt IFW headless install, --from-file, curl/wget download

@@ -1478,6 +1478,12 @@ async def list_tools() -> list[Tool]:
                                  "description": "individual, video, or internet"},
                     "mesher": {"type": "string", "default": "poisson",
                               "description": "poisson or delaunay"},
+                    "mapper": {"type": "string", "default": "incremental",
+                               "enum": ["incremental", "hierarchical", "global"],
+                               "description": "Sparse mapper; non-incremental selects the "
+                                              "COLMAP sparse mode"},
+                    "random_seed": {"type": "integer",
+                                    "description": "Seed every stochastic stage"},
                     "camera_model": {"type": "string", "default": "",
                                     "description": "Camera model (e.g. SIMPLE_RADIAL)"},
                     "single_camera": {"type": "boolean", "default": False},
@@ -1500,6 +1506,8 @@ async def list_tools() -> list[Tool]:
                     "camera_model": {"type": "string", "default": "SIMPLE_RADIAL"},
                     "single_camera": {"type": "boolean", "default": False},
                     "use_gpu": {"type": "boolean", "default": True},
+                    "num_threads": {"type": "integer", "minimum": 1,
+                                    "description": "FeatureExtraction.num_threads; 1 gives run-independent image ids."},
                 },
                 "required": ["image_path", "database_path"],
             },
@@ -1517,6 +1525,8 @@ async def list_tools() -> list[Tool]:
                     "vocab_tree_path": {"type": "string", "default": "",
                                        "description": "Path to vocab tree (required for vocab_tree method)"},
                     "use_gpu": {"type": "boolean", "default": True},
+                    "random_seed": {"type": "integer", "minimum": 0,
+                                    "description": "Passed to COLMAP as TwoViewGeometry.random_seed."},
                 },
                 "required": ["database_path"],
             },
@@ -1530,6 +1540,15 @@ async def list_tools() -> list[Tool]:
                     "database_path": {"type": "string"},
                     "image_path": {"type": "string"},
                     "output_path": {"type": "string"},
+                    "method": {"type": "string", "enum": ["incremental", "hierarchical"],
+                               "default": "incremental"},
+                    "random_seed": {"type": "integer",
+                                    "description": "Passed to COLMAP as Mapper.random_seed."},
+                    "mapper_options": {
+                        "type": "object",
+                        "description": "Raw COLMAP mapper KEY/value pairs without -- prefixes.",
+                        "additionalProperties": {"type": ["string", "number", "boolean"]},
+                    },
                 },
                 "required": ["database_path", "image_path", "output_path"],
             },
@@ -1953,6 +1972,54 @@ async def list_tools() -> list[Tool]:
                     "entity_ids": {"type": "array", "items": {"type": "integer"}},
                 },
                 "required": ["entity_ids"],
+            },
+        ),
+        # ── AICore and generic plugin commands ──────────────────────────
+        Tool(
+            name="list_ai_tasks",
+            description="List all AICore plugin batch tasks and their stable command names.",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="get_ai_schema",
+            description="Query an AICore task's full option schema from the actual ACloudViewer binary.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "Registry name or command keyword"},
+                    "timeout": {"type": "integer", "default": 60},
+                },
+                "required": ["task"],
+            },
+        ),
+        Tool(
+            name="run_ai_batch",
+            description="Run any registered AICore plugin over external images, sequences, videos, or image sets. "
+                        "Use get_ai_schema first; array option values repeat the key.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "Registry name or command keyword"},
+                    "options": {"type": "object", "description": "Task options from get_ai_schema"},
+                    "timeout": {"type": "integer", "default": 1800,
+                                "description": "Timeout in seconds"},
+                },
+                "required": ["task", "options"],
+            },
+        ),
+        Tool(
+            name="run_plugin_command",
+            description="Run any ordinary/third-party ACloudViewer plugin CLI command headlessly. "
+                        "args preserves legacy positional syntax; options supplies KEY VALUE pairs.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string"},
+                    "args": {"type": "array", "items": {"type": "string"}},
+                    "options": {"type": "object"},
+                    "timeout": {"type": "integer", "default": 300},
+                },
+                "required": ["command"],
             },
         ),
         # ── COLMAP generic executor ─────────────────────────────────────
@@ -2836,6 +2903,25 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 return _error("Only available in GUI mode")
             return _result(backend._rpc.list_methods())
 
+        # ── AICore and generic plugin commands ────────────────────────
+        elif name == "list_ai_tasks":
+            return _result(backend.ai_list())
+
+        elif name == "get_ai_schema":
+            return _result(backend.ai_schema(
+                arguments["task"], timeout=arguments.get("timeout", 60)))
+
+        elif name == "run_ai_batch":
+            return _result(backend.ai_run(
+                arguments["task"], arguments["options"],
+                timeout=arguments.get("timeout", 1800)))
+
+        elif name == "run_plugin_command":
+            return _result(backend.plugin_run(
+                arguments["command"], args=arguments.get("args"),
+                options=arguments.get("options"),
+                timeout=arguments.get("timeout", 300)))
+
         # ── COLMAP generic executor (must precede startswith("colmap_")) ─
         elif name == "colmap_run":
             return _result(backend.colmap_run_gui(
@@ -2861,7 +2947,9 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                     mesher=arguments.get("mesher", "poisson"),
                     camera_model=arguments.get("camera_model", ""),
                     single_camera=arguments.get("single_camera", False),
-                    use_gpu=arguments.get("use_gpu", True))
+                    use_gpu=arguments.get("use_gpu", True),
+                    mapper=arguments.get("mapper", "incremental"),
+                    random_seed=arguments.get("random_seed"))
 
                 do_import = arguments.get("import_results")
                 if do_import is None:
@@ -2884,32 +2972,53 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                     arguments["database_path"], arguments["image_path"],
                     camera_model=arguments.get("camera_model", "SIMPLE_RADIAL"),
                     single_camera=arguments.get("single_camera", False),
-                    use_gpu=arguments.get("use_gpu", True)))
+                    use_gpu=arguments.get("use_gpu", True),
+                    num_threads=arguments.get("num_threads")))
 
             elif name == "colmap_match_features":
                 method = arguments.get("method", "exhaustive")
                 use_gpu = arguments.get("use_gpu", True)
+                random_seed = arguments.get("random_seed")
                 if method == "exhaustive":
                     return _result(colmap.exhaustive_matcher(
-                        arguments["database_path"], use_gpu=use_gpu))
+                        arguments["database_path"], use_gpu=use_gpu,
+                        random_seed=random_seed))
                 elif method == "sequential":
                     return _result(colmap.sequential_matcher(
-                        arguments["database_path"], use_gpu=use_gpu))
+                        arguments["database_path"], use_gpu=use_gpu,
+                        random_seed=random_seed))
                 elif method == "spatial":
                     return _result(colmap.spatial_matcher(
-                        arguments["database_path"], use_gpu=use_gpu))
+                        arguments["database_path"], use_gpu=use_gpu,
+                        random_seed=random_seed))
                 elif method == "vocab_tree":
                     vocab_path = arguments.get("vocab_tree_path", "")
                     return _result(colmap.vocab_tree_matcher(
                         arguments["database_path"],
-                        vocab_tree_path=vocab_path, use_gpu=use_gpu))
+                        vocab_tree_path=vocab_path, use_gpu=use_gpu,
+                        random_seed=random_seed))
                 else:
                     return _error(f"Unknown matcher method: {method}")
 
             elif name == "colmap_sparse_reconstruct":
-                return _result(colmap.mapper(
+                method = arguments.get("method", "incremental")
+                mapper_options = arguments.get("mapper_options", {})
+                if not isinstance(mapper_options, dict):
+                    return _error("mapper_options must be an object")
+                if "random_seed" in arguments:
+                    if "Mapper.random_seed" in mapper_options:
+                        return _error(
+                            "random_seed conflicts with mapper_options.Mapper.random_seed")
+                    mapper_options = dict(mapper_options)
+                    mapper_options["Mapper.random_seed"] = arguments["random_seed"]
+                mapper = (colmap.hierarchical_mapper
+                          if method == "hierarchical" else colmap.mapper
+                          if method == "incremental" else None)
+                if mapper is None:
+                    return _error(f"Unknown sparse reconstruction method: {method}")
+                return _result(mapper(
                     arguments["database_path"], arguments["image_path"],
-                    arguments["output_path"]))
+                    arguments["output_path"], mapper_options))
 
             elif name == "colmap_dense_stereo":
                 return _result(colmap.patch_match_stereo(
@@ -3116,7 +3225,7 @@ async def _run(mode: str, rpc_url: str):
 def main():
     parser = argparse.ArgumentParser(description="ACloudViewer MCP Server")
     parser.add_argument("--mode", choices=["auto", "gui", "headless"], default="auto")
-    parser.add_argument("--rpc-url", default="ws://localhost:6001")
+    parser.add_argument("--rpc-url", default="ws://127.0.0.1:6001")
     args = parser.parse_args()
     asyncio.run(_run(args.mode, args.rpc_url))
 

@@ -142,7 +142,8 @@ class ColmapBackend:
         cmd = [self._binary] + args
         try:
             r = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout)
+                cmd, capture_output=True, text=True, errors="replace",
+                timeout=timeout)
         except subprocess.TimeoutExpired:
             raise ColmapError(f"colmap timed out after {timeout}s: {' '.join(args[:3])}")
 
@@ -192,12 +193,17 @@ class ColmapBackend:
         dense: bool = True,
         use_gpu: bool = True,
         num_threads: int = -1,
+        mapper: str = "incremental",
+        random_seed: int | None = None,
     ) -> dict:
         """Run the full automatic reconstruction pipeline.
 
         Quality: low, medium, high, extreme
         Data type: individual, video, internet
         Mesher: poisson, delaunay
+        Mapper: incremental, hierarchical, global. Only the native COLMAP
+        sparse mode runs a mapper, so a non-incremental mapper also selects
+        ``--sparse_mode colmap``.
         """
         Path(workspace_path).mkdir(parents=True, exist_ok=True)
         args = [
@@ -220,12 +226,18 @@ class ColmapBackend:
             args += ["--use_gpu", "0"]
         if num_threads > 0:
             args += ["--num_threads", str(num_threads)]
+        mapper = mapper.lower()
+        if mapper != "incremental":
+            args += ["--mapper", mapper, "--sparse_mode", "colmap"]
+        if random_seed is not None:
+            args += ["--random_seed", str(random_seed)]
 
         self._run(args)
         result = {
             "workspace": workspace_path,
             "image_path": image_path,
             "quality": quality.lower(),
+            "mapper": mapper,
             "status": "completed",
             "outputs": {},
         }
@@ -257,7 +269,16 @@ class ColmapBackend:
         use_gpu: bool = True,
         max_image_size: int = 0,
         max_num_features: int = 8192,
+        num_threads: int | None = None,
     ) -> dict:
+        """Extract features into ``database_path``.
+
+        ``num_threads`` is ``FeatureExtraction.num_threads``. COLMAP assigns
+        image ids in extraction completion order, so only ``num_threads=1``
+        gives run-independent ids (the sorted file order).
+        """
+        if num_threads is not None and num_threads < 1:
+            raise ValueError(f"num_threads must be >= 1: {num_threads}")
         Path(database_path).parent.mkdir(parents=True, exist_ok=True)
         args = [
             "feature_extractor",
@@ -269,23 +290,42 @@ class ColmapBackend:
         if single_camera:
             args += ["--ImageReader.single_camera", "1"]
         if not use_gpu:
-            args += ["--SiftExtraction.use_gpu", "0"]
+            args += ["--FeatureExtraction.use_gpu", "0"]
         if max_image_size > 0:
             args += ["--SiftExtraction.max_image_size", str(max_image_size)]
+        if num_threads is not None:
+            args += ["--FeatureExtraction.num_threads", str(num_threads)]
 
         self._run(args)
         return {"database": database_path, "status": "completed"}
 
     # ── Matching ─────────────────────────────────────────────────────
 
+    @staticmethod
+    def _matching_args(use_gpu: bool, random_seed: int | None) -> list[str]:
+        """Options shared by every matcher.
+
+        ``random_seed`` seeds the two-view geometry RANSAC. Without it COLMAP
+        draws a fresh seed per run, so repeated matching of the same database
+        can store different inlier sets and relative poses.
+        """
+        args: list[str] = []
+        if not use_gpu:
+            args += ["--FeatureMatching.use_gpu", "0"]
+        if random_seed is not None:
+            if random_seed < 0:
+                raise ValueError(f"random_seed must be >= 0: {random_seed}")
+            args += ["--TwoViewGeometry.random_seed", str(random_seed)]
+        return args
+
     def exhaustive_matcher(
         self,
         database_path: str,
         use_gpu: bool = True,
+        random_seed: int | None = None,
     ) -> dict:
         args = ["exhaustive_matcher", "--database_path", database_path]
-        if not use_gpu:
-            args += ["--SiftMatching.use_gpu", "0"]
+        args += self._matching_args(use_gpu, random_seed)
         self._run(args)
         return {"database": database_path, "matcher": "exhaustive", "status": "completed"}
 
@@ -294,14 +334,14 @@ class ColmapBackend:
         database_path: str,
         overlap: int = 10,
         use_gpu: bool = True,
+        random_seed: int | None = None,
     ) -> dict:
         args = [
             "sequential_matcher",
             "--database_path", database_path,
             "--SequentialMatching.overlap", str(overlap),
         ]
-        if not use_gpu:
-            args += ["--SiftMatching.use_gpu", "0"]
+        args += self._matching_args(use_gpu, random_seed)
         self._run(args)
         return {"database": database_path, "matcher": "sequential", "status": "completed"}
 
@@ -310,14 +350,14 @@ class ColmapBackend:
         database_path: str,
         vocab_tree_path: str,
         use_gpu: bool = True,
+        random_seed: int | None = None,
     ) -> dict:
         args = [
             "vocab_tree_matcher",
             "--database_path", database_path,
             "--VocabTreeMatching.vocab_tree_path", vocab_tree_path,
         ]
-        if not use_gpu:
-            args += ["--SiftMatching.use_gpu", "0"]
+        args += self._matching_args(use_gpu, random_seed)
         self._run(args)
         return {"database": database_path, "matcher": "vocab_tree", "status": "completed"}
 
@@ -325,20 +365,34 @@ class ColmapBackend:
         self,
         database_path: str,
         use_gpu: bool = True,
+        random_seed: int | None = None,
     ) -> dict:
         args = ["spatial_matcher", "--database_path", database_path]
-        if not use_gpu:
-            args += ["--SiftMatching.use_gpu", "0"]
+        args += self._matching_args(use_gpu, random_seed)
         self._run(args)
         return {"database": database_path, "matcher": "spatial", "status": "completed"}
 
     # ── SfM (Sparse Reconstruction) ─────────────────────────────────
+
+    @staticmethod
+    def _mapper_option_args(mapper_options: dict[str, Any] | None) -> list[str]:
+        """Encode caller-owned COLMAP mapper options without renaming them."""
+        if not mapper_options:
+            return []
+
+        args: list[str] = []
+        for key, value in mapper_options.items():
+            if not key or key.startswith("-") or "=" in key:
+                raise ValueError(f"invalid mapper option name: {key!r}")
+            args.extend((f"--{key}", str(value)))
+        return args
 
     def mapper(
         self,
         database_path: str,
         image_path: str,
         output_path: str,
+        mapper_options: dict[str, Any] | None = None,
     ) -> dict:
         Path(output_path).mkdir(parents=True, exist_ok=True)
         args = [
@@ -347,6 +401,7 @@ class ColmapBackend:
             "--image_path", image_path,
             "--output_path", output_path,
         ]
+        args.extend(self._mapper_option_args(mapper_options))
         self._run(args)
         return {"output": output_path, "type": "incremental", "status": "completed"}
 
@@ -355,6 +410,7 @@ class ColmapBackend:
         database_path: str,
         image_path: str,
         output_path: str,
+        mapper_options: dict[str, Any] | None = None,
     ) -> dict:
         Path(output_path).mkdir(parents=True, exist_ok=True)
         args = [
@@ -363,6 +419,7 @@ class ColmapBackend:
             "--image_path", image_path,
             "--output_path", output_path,
         ]
+        args.extend(self._mapper_option_args(mapper_options))
         self._run(args)
         return {"output": output_path, "type": "hierarchical", "status": "completed"}
 

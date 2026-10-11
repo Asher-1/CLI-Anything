@@ -102,6 +102,31 @@ def _print_list(items: list, indent: int = 0) -> None:
             click.echo(f"{prefix}- {item}")
 
 
+def _parse_key_values(values: tuple[str, ...]) -> dict[str, Any]:
+    """Parse repeatable KEY=VALUE CLI options, preserving duplicate keys."""
+    result: dict[str, Any] = {}
+    for token in values:
+        if "=" not in token:
+            raise ValueError(f"Expected KEY=VALUE, got: {token}")
+        key, text = token.split("=", 1)
+        key = key.strip().upper()
+        if not key:
+            raise ValueError(f"Empty option name: {token}")
+        try:
+            value = json.loads(text)
+            if isinstance(value, dict) or value is None:
+                value = text
+        except json.JSONDecodeError:
+            value = text
+        if key in result:
+            if not isinstance(result[key], list):
+                result[key] = [result[key]]
+            result[key].append(value)
+        else:
+            result[key] = value
+    return result
+
+
 # ── Error handler ────────────────────────────────────────────────────────
 
 def handle_error(fn):
@@ -216,7 +241,7 @@ def _prompt_install_if_missing(skin: ReplSkin) -> str | None:
 @click.option("--json", "use_json", is_flag=True, help="JSON output")
 @click.option("--mode", type=click.Choice(["auto", "gui", "headless"]),
               default="auto", help="Backend mode")
-@click.option("--rpc-url", default="ws://localhost:6001",
+@click.option("--rpc-url", default="ws://127.0.0.1:6001",
               help="WebSocket URL for GUI mode")
 @click.pass_context
 def cli(ctx, use_json, mode, rpc_url):
@@ -903,6 +928,89 @@ def sf_group():
 def normals_group():
     """Normal vector shortcuts (headless). Aliases for `process *-normals` commands."""
     pass
+
+
+# ── AICore plugin batch inference ───────────────────────────────────────
+
+@cli.group("ai")
+def ai_group():
+    """AICore plugin inference and reconstruction (GUI RPC or headless)."""
+    pass
+
+
+@ai_group.command("list")
+@handle_error
+def ai_list():
+    """List every stable AICore batch task."""
+    output(get_backend().ai_list())
+
+
+@ai_group.command("schema")
+@click.argument("task")
+@click.option("--timeout", type=int, default=60, show_default=True)
+@handle_error
+def ai_schema(task, timeout):
+    """Query TASK's option schema from the actual ACloudViewer binary."""
+    output(get_backend().ai_schema(task, timeout=timeout))
+
+
+@ai_group.command("run")
+@click.argument("task")
+@click.option("--image", "images", multiple=True,
+              type=click.Path(exists=True), help="Input image (repeatable)")
+@click.option("--input-dir", type=click.Path(exists=True, file_okay=False))
+@click.option("--input-list", type=click.Path(exists=True, dir_okay=False))
+@click.option("--out-dir", type=click.Path(file_okay=False))
+@click.option("--model")
+@click.option("--device")
+@click.option("--threads", type=int)
+@click.option("--download/--no-download", default=None)
+@click.option("--result-json", type=click.Path(dir_okay=False))
+@click.option("--option", "extra_options", multiple=True,
+              help="Any task option as KEY=VALUE; repeat for lists")
+@click.option("--timeout", type=int, default=1800, show_default=True,
+              help="Timeout in seconds")
+@handle_error
+def ai_run(task, images, input_dir, input_list, out_dir, model, device,
+           threads, download, result_json, extra_options, timeout):
+    """Run TASK over external data; all plugin options remain available."""
+    options = _parse_key_values(extra_options)
+    if images:
+        options["IMAGE"] = list(images)
+    for key, value in (("INPUT_DIR", input_dir), ("INPUT_LIST", input_list),
+                       ("OUT_DIR", out_dir), ("MODEL", model),
+                       ("DEVICE", device), ("THREADS", threads),
+                       ("DOWNLOAD", download), ("RESULT_JSON", result_json)):
+        if value is not None:
+            options[key] = value
+    result = get_backend().ai_run(task, options, timeout=timeout)
+    get_session().snapshot(f"ai run {task}")
+    output(result)
+
+
+# ── Generic plugin command passthrough ──────────────────────────────────
+
+@cli.group("plugin")
+def plugin_group():
+    """Run ordinary or third-party plugin CLI commands headlessly."""
+    pass
+
+
+@plugin_group.command("run")
+@click.argument("command")
+@click.option("--arg", "args", multiple=True,
+              help="Raw trailing argument (repeatable, preserves order)")
+@click.option("--option", "option_values", multiple=True,
+              help="KEY=VALUE pair (repeatable; duplicate keys are retained)")
+@click.option("--timeout", type=int, default=300, show_default=True)
+@handle_error
+def plugin_run(command, args, option_values, timeout):
+    """Pass through any registered -COMMAND, including normal plugins."""
+    result = get_backend().plugin_run(
+        command, args=list(args), options=_parse_key_values(option_values),
+        timeout=timeout)
+    get_session().snapshot(f"plugin run {command}")
+    output(result)
 
 
 # ── Processing (headless) ──
@@ -2612,6 +2720,11 @@ def _get_colmap():
               case_sensitive=False), default="individual")
 @click.option("--mesher", type=click.Choice(["poisson", "delaunay"],
               case_sensitive=False), default="poisson")
+@click.option("--mapper", type=click.Choice(["incremental", "hierarchical", "global"],
+              case_sensitive=False), default="incremental",
+              help="Sparse mapper (non-incremental selects the COLMAP sparse mode)")
+@click.option("--random-seed", type=int,
+              help="Seed every stochastic stage of the automatic reconstructor.")
 @click.option("--camera-model", default="", help="Camera model (e.g. SIMPLE_RADIAL)")
 @click.option("--single-camera", is_flag=True, help="All images from one camera")
 @click.option("--no-sparse", is_flag=True, help="Skip sparse reconstruction")
@@ -2621,7 +2734,7 @@ def _get_colmap():
               help="Import results into ACloudViewer (default: gui=on, headless=off)")
 @handle_error
 def reconstruct_auto(image_path, workspace_path, quality, data_type,
-                     mesher, camera_model, single_camera,
+                     mesher, mapper, random_seed, camera_model, single_camera,
                      no_sparse, no_dense, no_gpu, import_results):
     """Automatic end-to-end reconstruction from images (Colmap)."""
     result = _get_colmap().automatic_reconstruct(
@@ -2630,7 +2743,7 @@ def reconstruct_auto(image_path, workspace_path, quality, data_type,
         mesher=mesher, camera_model=camera_model,
         single_camera=single_camera,
         sparse=not no_sparse, dense=not no_dense,
-        use_gpu=not no_gpu)
+        use_gpu=not no_gpu, mapper=mapper, random_seed=random_seed)
     get_session().snapshot("reconstruct auto")
 
     backend = get_backend()
@@ -2658,14 +2771,18 @@ def reconstruct_auto(image_path, workspace_path, quality, data_type,
 @click.option("--single-camera", is_flag=True)
 @click.option("--no-gpu", is_flag=True)
 @click.option("--max-features", type=int, default=8192)
+@click.option("--num-threads", type=click.IntRange(min=1),
+              help="FeatureExtraction.num_threads; 1 gives run-independent image ids.")
 @handle_error
 def reconstruct_extract_features(image_path, database_path, camera_model,
-                                 single_camera, no_gpu, max_features):
+                                 single_camera, no_gpu, max_features,
+                                 num_threads):
     """Extract features from images (Colmap feature_extractor)."""
     result = _get_colmap().feature_extractor(
         database_path, image_path,
         camera_model=camera_model, single_camera=single_camera,
-        use_gpu=not no_gpu, max_num_features=max_features)
+        use_gpu=not no_gpu, max_num_features=max_features,
+        num_threads=num_threads)
     output(result)
 
 
@@ -2676,21 +2793,54 @@ def reconstruct_extract_features(image_path, database_path, camera_model,
 @click.option("--overlap", type=int, default=10, help="Sequence overlap (sequential only)")
 @click.option("--vocab-tree", type=click.Path(), default="", help="Vocab tree path (vocab_tree only)")
 @click.option("--no-gpu", is_flag=True)
+@click.option("--random-seed", type=click.IntRange(min=0),
+              help="Pass the same seed to COLMAP as TwoViewGeometry.random_seed.")
 @handle_error
-def reconstruct_match(database_path, method, overlap, vocab_tree, no_gpu):
+def reconstruct_match(database_path, method, overlap, vocab_tree, no_gpu,
+                      random_seed):
     """Match features between images (Colmap matcher)."""
     colmap = _get_colmap()
+    use_gpu = not no_gpu
     if method == "exhaustive":
-        result = colmap.exhaustive_matcher(database_path, use_gpu=not no_gpu)
+        result = colmap.exhaustive_matcher(database_path, use_gpu=use_gpu,
+                                           random_seed=random_seed)
     elif method == "sequential":
-        result = colmap.sequential_matcher(database_path, overlap=overlap, use_gpu=not no_gpu)
+        result = colmap.sequential_matcher(database_path, overlap=overlap,
+                                           use_gpu=use_gpu,
+                                           random_seed=random_seed)
     elif method == "vocab_tree":
         if not vocab_tree:
             raise click.BadParameter("--vocab-tree required for vocab_tree method")
-        result = colmap.vocab_tree_matcher(database_path, vocab_tree, use_gpu=not no_gpu)
+        result = colmap.vocab_tree_matcher(database_path, vocab_tree,
+                                           use_gpu=use_gpu,
+                                           random_seed=random_seed)
     else:
-        result = colmap.spatial_matcher(database_path, use_gpu=not no_gpu)
+        result = colmap.spatial_matcher(database_path, use_gpu=use_gpu,
+                                        random_seed=random_seed)
     output(result)
+
+
+def _parse_mapper_options(raw_options: tuple[str, ...], random_seed: int | None) -> dict[str, str]:
+    """Convert repeated KEY=VALUE CLI arguments to COLMAP option values."""
+    mapper_options: dict[str, str] = {}
+    for raw_option in raw_options:
+        key, separator, value = raw_option.partition("=")
+        if not separator or not key or key.startswith("-") or "=" in value:
+            raise click.BadParameter(
+                "must use KEY=VALUE with an unprefixed option name",
+                param_hint="--mapper-option")
+        if key in mapper_options:
+            raise click.BadParameter(
+                f"duplicates mapper option {key!r}", param_hint="--mapper-option")
+        mapper_options[key] = value
+
+    if random_seed is not None:
+        if "Mapper.random_seed" in mapper_options:
+            raise click.BadParameter(
+                "conflicts with --mapper-option Mapper.random_seed=...",
+                param_hint="--random-seed")
+        mapper_options["Mapper.random_seed"] = str(random_seed)
+    return mapper_options
 
 
 @reconstruct_group.command("sparse")
@@ -2699,14 +2849,21 @@ def reconstruct_match(database_path, method, overlap, vocab_tree, no_gpu):
 @click.option("--output", "-o", "output_path", type=click.Path(), required=True)
 @click.option("--method", type=click.Choice(["incremental", "hierarchical"]),
               default="incremental")
+@click.option("--random-seed", type=int,
+              help="Pass the same seed to COLMAP as Mapper.random_seed.")
+@click.option("--mapper-option", "mapper_options", multiple=True, metavar="KEY=VALUE",
+              help="Raw COLMAP mapper option; may be repeated.")
 @handle_error
-def reconstruct_sparse(database_path, image_path, output_path, method):
+def reconstruct_sparse(database_path, image_path, output_path, method, random_seed,
+                       mapper_options):
     """Run sparse reconstruction / SfM (Colmap mapper)."""
+    mapper_options = _parse_mapper_options(mapper_options, random_seed)
     colmap = _get_colmap()
     if method == "hierarchical":
-        result = colmap.hierarchical_mapper(database_path, image_path, output_path)
+        result = colmap.hierarchical_mapper(
+            database_path, image_path, output_path, mapper_options)
     else:
-        result = colmap.mapper(database_path, image_path, output_path)
+        result = colmap.mapper(database_path, image_path, output_path, mapper_options)
     output(result)
 
 
@@ -3424,7 +3581,22 @@ def repl(project_path):
 
 # ── Entry point ──────────────────────────────────────────────────────────
 
+def _tolerate_unencodable_output() -> None:
+    """Keep human-mode glyphs from aborting a command on narrow encodings.
+
+    A redirected stdout/stderr uses the locale encoding (cp1252 on Windows
+    runners), which cannot represent the REPL skin's box-drawing characters.
+    Keep the encoding the consumer decodes with and substitute only the
+    characters it cannot represent; --json output is ASCII and unaffected.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
+
+
 def main():
+    _tolerate_unencodable_output()
     cli()
 
 

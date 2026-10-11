@@ -1553,3 +1553,122 @@ class TestProcessExtendedCommands:
         result = runner.invoke(cli, ['process', 'sample-mesh', str(src), '-o', str(dst)])
         assert result.exit_code == 0
         assert backend_mock.sample_mesh.called
+
+
+class TestReconstructMatch:
+    """`extract-features` and `match` forward their determinism controls."""
+
+    @patch('cli_anything.acloudviewer.acloudviewer_cli._get_colmap')
+    def test_extract_features_forwards_num_threads(self, mock_colmap, tmp_path):
+        colmap = Mock()
+        colmap.feature_extractor.return_value = {"status": "completed"}
+        mock_colmap.return_value = colmap
+        images = tmp_path / "images"
+        images.mkdir()
+
+        result = CliRunner().invoke(cli, [
+            'reconstruct', 'extract-features', str(images), '-d',
+            str(tmp_path / "database.db"), '--num-threads', '1'])
+
+        assert result.exit_code == 0, result.output
+        assert colmap.feature_extractor.call_args.kwargs["num_threads"] == 1
+
+    @patch('cli_anything.acloudviewer.acloudviewer_cli._get_colmap')
+    def test_extract_features_rejects_zero_threads(self, mock_colmap, tmp_path):
+        images = tmp_path / "images"
+        images.mkdir()
+        result = CliRunner().invoke(cli, [
+            'reconstruct', 'extract-features', str(images), '-d',
+            str(tmp_path / "database.db"), '--num-threads', '0'])
+        assert result.exit_code != 0
+        mock_colmap.assert_not_called()
+
+    @pytest.mark.parametrize("method,backend_call", [
+        ("exhaustive", "exhaustive_matcher"),
+        ("sequential", "sequential_matcher"),
+        ("spatial", "spatial_matcher"),
+    ])
+    @patch('cli_anything.acloudviewer.acloudviewer_cli._get_colmap')
+    def test_forwards_seed(self, mock_colmap, tmp_path, method, backend_call):
+        colmap = Mock()
+        getattr(colmap, backend_call).return_value = {"status": "completed"}
+        mock_colmap.return_value = colmap
+        db = tmp_path / "database.db"
+        db.write_bytes(b"")
+
+        result = CliRunner().invoke(cli, [
+            'reconstruct', 'match', str(db), '--method', method, '--no-gpu',
+            '--random-seed', '20261009'])
+
+        assert result.exit_code == 0, result.output
+        kwargs = getattr(colmap, backend_call).call_args.kwargs
+        assert kwargs["random_seed"] == 20261009
+        assert kwargs["use_gpu"] is False
+
+    @patch('cli_anything.acloudviewer.acloudviewer_cli._get_colmap')
+    def test_rejects_negative_seed_before_running(self, mock_colmap, tmp_path):
+        db = tmp_path / "database.db"
+        db.write_bytes(b"")
+        result = CliRunner().invoke(cli, [
+            'reconstruct', 'match', str(db), '--random-seed', '-1'])
+        assert result.exit_code != 0
+        mock_colmap.assert_not_called()
+
+
+class TestReconstructSparse:
+    """`reconstruct sparse` forwards mapper options losslessly and fails closed."""
+
+    def _paths(self, tmp_path):
+        db = tmp_path / "database.db"
+        db.write_bytes(b"")
+        images = tmp_path / "images"
+        images.mkdir()
+        return str(db), str(images), str(tmp_path / "sparse")
+
+    @pytest.mark.parametrize("method,backend_call", [
+        ("incremental", "mapper"),
+        ("hierarchical", "hierarchical_mapper"),
+    ])
+    @patch('cli_anything.acloudviewer.acloudviewer_cli._get_colmap')
+    def test_forwards_options_and_seed(self, mock_colmap, tmp_path, method,
+                                       backend_call):
+        colmap = Mock()
+        getattr(colmap, backend_call).return_value = {"status": "completed"}
+        mock_colmap.return_value = colmap
+        db, images, out = self._paths(tmp_path)
+
+        result = CliRunner().invoke(cli, [
+            'reconstruct', 'sparse', '-d', db, '--image-path', images,
+            '-o', out, '--method', method, '--random-seed', '7',
+            '--mapper-option', 'Mapper.min_num_matches=42',
+            '--mapper-option', 'Mapper.ba_global_function_tolerance=1e-7',
+        ])
+
+        assert result.exit_code == 0, result.output
+        getattr(colmap, backend_call).assert_called_once_with(db, images, out, {
+            "Mapper.min_num_matches": "42",
+            "Mapper.ba_global_function_tolerance": "1e-7",
+            "Mapper.random_seed": "7",
+        })
+
+    @pytest.mark.parametrize("extra_args,message", [
+        (['--mapper-option', 'Mapper.min_num_matches=1',
+          '--mapper-option', 'Mapper.min_num_matches=2'], "duplicates"),
+        (['--random-seed', '1', '--mapper-option', 'Mapper.random_seed=2'],
+         "conflicts"),
+        (['--mapper-option', 'Mapper.min_num_matches'], "KEY=VALUE"),
+        (['--mapper-option', '--Mapper.min_num_matches=1'], "KEY=VALUE"),
+        (['--mapper-option', '=1'], "KEY=VALUE"),
+    ])
+    @patch('cli_anything.acloudviewer.acloudviewer_cli._get_colmap')
+    def test_rejects_ambiguous_options_before_running(self, mock_colmap,
+                                                      tmp_path, extra_args,
+                                                      message):
+        db, images, out = self._paths(tmp_path)
+        result = CliRunner().invoke(cli, [
+            'reconstruct', 'sparse', '-d', db, '--image-path', images,
+            '-o', out] + extra_args)
+
+        assert result.exit_code != 0
+        assert message in result.output
+        mock_colmap.assert_not_called()

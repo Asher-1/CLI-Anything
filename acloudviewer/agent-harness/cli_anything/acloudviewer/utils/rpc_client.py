@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 import sys
@@ -39,18 +40,27 @@ class RPCError(Exception):
 class ACloudViewerRPCClient:
     """Synchronous wrapper around a WebSocket JSON-RPC connection.
 
-    Provides typed convenience methods for every RPC method exposed by
-    qJSonRPCPlugin (33 methods).  All calls log request/response at DEBUG
-    level and errors at ERROR level to aid diagnosis.
+    Provides typed convenience methods for the RPC methods exposed by
+    qJSonRPCPlugin (``methods.list`` is the authoritative registry).  All
+    calls log request/response at DEBUG level and errors at ERROR level to
+    aid diagnosis.
     """
 
-    def __init__(self, url: str = "ws://localhost:6001"):
+    def __init__(self, url: str = "ws://127.0.0.1:6001"):
         self._url = url
         self._ws = None
 
     def connect(self) -> None:
         import websockets.sync.client as ws_sync
-        self._ws = ws_sync.connect(self._url)
+        # The server is the local GUI (it listens on loopback only):
+        # - max_size: aicore.batch embeds the whole batch manifest, which
+        #   exceeds websockets' 1 MiB default for large batches;
+        # - proxy: websockets >= 15 routes ws:// through HTTP(S)_PROXY unless
+        #   NO_PROXY lists the host, which breaks the loopback connection.
+        options: dict[str, Any] = {"max_size": None}
+        if "proxy" in inspect.signature(ws_sync.connect).parameters:
+            options["proxy"] = None
+        self._ws = ws_sync.connect(self._url, **options)
 
     def close(self) -> None:
         if self._ws:
@@ -74,13 +84,20 @@ class ACloudViewerRPCClient:
         _log.debug("RPC >>> %s", request_json)
         try:
             self._ws.send(request_json)
-            raw = self._ws.recv()
+            while True:
+                raw = self._ws.recv()
+                _log.debug("RPC <<< %s", raw[:2000] if len(raw) > 2000 else raw)
+                response = json.loads(raw)
+                # A reply to an earlier call abandoned mid-wait (interrupt,
+                # MCP cancellation) is still queued on this connection; a
+                # null id answers a request the server could not parse.
+                if response.get("id") in (request["id"], None):
+                    break
+                _log.warning("RPC dropped stale reply id=%s while calling '%s'",
+                             response.get("id"), method)
         except Exception as exc:
             _log.error("RPC connection error calling '%s': %s", method, exc)
             raise
-
-        _log.debug("RPC <<< %s", raw[:2000] if len(raw) > 2000 else raw)
-        response = json.loads(raw)
 
         if "error" in response:
             err = response["error"]
@@ -100,6 +117,18 @@ class ACloudViewerRPCClient:
 
     def list_methods(self) -> list[dict]:
         return self.call("methods.list")
+
+    def aicore_batch(self, command: str, options: dict[str, Any],
+                     result_json: str = "", timeout_ms: int = 1_800_000) -> dict:
+        """Run one registered AICore plugin batch command."""
+        params: dict[str, Any] = {
+            "command": command,
+            "options": options,
+            "timeout_ms": timeout_ms,
+        }
+        if result_json:
+            params["result_json"] = result_json
+        return self.call("aicore.batch", params)
 
     # ── File I/O ────────────────────────────────────────────────────────
 

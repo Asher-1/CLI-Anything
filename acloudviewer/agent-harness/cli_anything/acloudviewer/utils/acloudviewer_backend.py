@@ -15,6 +15,7 @@ Cross-platform support:
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import re
@@ -27,6 +28,9 @@ from typing import Any
 IS_WINDOWS = platform.system() == "Windows"
 IS_MACOS = platform.system() == "Darwin"
 
+from cli_anything.acloudviewer.core.ai_registry import (
+    list_ai_commands, resolve_ai_command,
+)
 from .rpc_client import ACloudViewerRPCClient, RPCError
 
 POINT_CLOUD_FORMATS = {
@@ -113,7 +117,7 @@ def _polyline_bounding_box(path: str):
 class ACloudViewerBackend:
     """Unified backend: auto-selects GUI (RPC) or headless (binary CLI) mode."""
 
-    def __init__(self, mode: str = "auto", rpc_url: str = "ws://localhost:6001"):
+    def __init__(self, mode: str = "auto", rpc_url: str = "ws://127.0.0.1:6001"):
         self._mode = mode
         self._rpc_url = rpc_url
         self._rpc: ACloudViewerRPCClient | None = None
@@ -451,8 +455,10 @@ class ACloudViewerBackend:
         binary = self._resolve_exe(binary)
         cmd = [binary, "-SILENT"] + args
         env = self._build_env_for_binary(binary)
+        # errors="replace": child logs echo user paths, which need not decode
+        # in the locale codec (cp936 / ASCII); a log byte must not fail a run.
         result = subprocess.run(
-            cmd, capture_output=True, text=True,
+            cmd, capture_output=True, text=True, errors="replace",
             timeout=timeout, env=env)
         if result.returncode != 0:
             combined = (result.stderr + result.stdout).strip()
@@ -465,6 +471,139 @@ class ACloudViewerBackend:
                 raise BackendError(
                     f"CLI failed (exit {result.returncode}): {combined[:500]}")
         return result
+
+    @staticmethod
+    def _plugin_command_args(command: str, options: dict[str, Any]) -> list[str]:
+        """Convert typed option values to one ``-COMMAND KEY VALUE...`` argv.
+
+        Arrays repeat a key and booleans become 1/0, matching the C++ batch
+        parser. Nested mappings are rejected instead of being stringified.
+        """
+        keyword = command.strip().lstrip("-").upper()
+        if not re.fullmatch(r"[A-Z][A-Z0-9_]*", keyword):
+            raise BackendError(f"Invalid plugin command: {command}")
+        args = [f"-{keyword}"]
+        for raw_key, raw_value in options.items():
+            key = str(raw_key).strip().upper()
+            if not re.fullmatch(r"[A-Z][A-Z0-9_]*", key):
+                raise BackendError(f"Invalid plugin option: {raw_key}")
+            if key == "HELP" and isinstance(raw_value, bool):
+                if raw_value:
+                    args.append("HELP")
+                continue
+            values = raw_value if isinstance(raw_value, (list, tuple)) else [raw_value]
+            if not values:
+                raise BackendError(f"Plugin option {key} has an empty value list")
+            for value in values:
+                if isinstance(value, dict) or value is None:
+                    raise BackendError(
+                        f"Plugin option {key} must be a scalar or scalar list")
+                if isinstance(value, bool):
+                    value = "1" if value else "0"
+                args += [key, str(value)]
+        return args
+
+    def ai_list(self) -> list[dict]:
+        """List AICore batch tasks known to the harness."""
+        return list_ai_commands()
+
+    def ai_run(self, task: str, options: dict[str, Any],
+               timeout: int = 1800) -> dict:
+        """Run one AICore batch command and return its parsed manifest."""
+        spec = resolve_ai_command(task)
+        normalized = dict(options)
+        result_path_value = normalized.get("RESULT_JSON", normalized.get("result_json"))
+        temporary = not result_path_value
+        if temporary:
+            handle = tempfile.NamedTemporaryFile(
+                prefix="acv_aicore_", suffix=".json", delete=False)
+            handle.close()
+            result_path = handle.name
+            # The command expects to create the file; an empty pre-created file
+            # is harmless but removing it gives clearer missing-result errors.
+            Path(result_path).unlink(missing_ok=True)
+            normalized["RESULT_JSON"] = result_path
+        else:
+            result_path = str(result_path_value)
+
+        try:
+            # aicore.batch spawns the same headless child inside the GUI, so a
+            # local binary is the shorter path: no WebSocket hop and no GUI
+            # event loop on the critical path. RPC remains for remote GUIs.
+            if self._mode == "gui" and not self._binary:
+                response = self._rpc.aicore_batch(
+                    spec.command, normalized, result_json=result_path,
+                    timeout_ms=timeout * 1000)
+                manifest = response.get("manifest", {})
+                if not manifest:
+                    raise BackendError("aicore.batch returned no manifest")
+                return response
+
+            args = ["-VERBOSE", "-NO_TIMESTAMP"] + self._plugin_command_args(
+                spec.command, normalized)
+            completed = self._run_cli(args, timeout=timeout)
+            path = Path(result_path)
+            if not path.is_file():
+                combined = (completed.stderr + completed.stdout).strip()
+                # An older/partial install rejects the flag outright; name the
+                # binary instead of burying that line in the plugin-load log.
+                if f"Unknown or misplaced command: '-{spec.command}'" in combined:
+                    raise BackendError(
+                        f"{self._binary} does not provide -{spec.command} "
+                        f"(its {task} plugin is missing or too old); set "
+                        "ACV_BINARY to an ACloudViewer build that ships it")
+                raise BackendError(
+                    f"{spec.command} returned no RESULT_JSON: {combined[-1000:]}")
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+            if completed.returncode != 0 or manifest.get("failed", 0):
+                raise BackendError(
+                    f"{spec.command} failed: {json.dumps(manifest, default=str)}")
+            return {
+                "command": spec.command,
+                "exit_code": completed.returncode,
+                "result_json": "" if temporary else result_path,
+                "manifest": manifest,
+                "stdout": completed.stdout[-10000:],
+                "stderr": completed.stderr[-5000:],
+            }
+        finally:
+            if temporary:
+                Path(result_path).unlink(missing_ok=True)
+
+    def ai_schema(self, task: str, timeout: int = 60) -> dict:
+        """Ask the command binary for its machine-readable HELP schema."""
+        response = self.ai_run(task, {"HELP": True}, timeout=timeout)
+        schema = response.get("manifest", {})
+        if (schema.get("schema") != "acloudviewer.aicore.batch/1" or
+                "keyword" not in schema or "options" not in schema):
+            raise BackendError(f"Unexpected command schema for {task}")
+        return schema
+
+    def plugin_run(self, command: str, args: list[str] | None = None,
+                   options: dict[str, Any] | None = None,
+                   timeout: int = 300) -> dict:
+        """Pass through any normal plugin CLI command in an isolated process.
+
+        ``args`` preserves commands with positional/legacy syntax; ``options``
+        supplies KEY VALUE pairs for modern commands. This is deliberately a
+        headless subprocess even while the harness is in GUI mode, so a plugin
+        command cannot mutate the RPC server's parser state.
+        """
+        argv = ["-NO_TIMESTAMP"] + self._plugin_command_args(command, options or {})
+        if args:
+            argv.extend(str(value) for value in args)
+        completed = self._run_cli(argv, timeout=timeout)
+        if completed.returncode != 0:
+            combined = (completed.stderr + completed.stdout).strip()
+            raise BackendError(
+                f"Plugin command {command} failed ({completed.returncode}): "
+                f"{combined[-2000:]}")
+        return {
+            "command": command.strip().lstrip("-").upper(),
+            "exit_code": completed.returncode,
+            "stdout": completed.stdout[-10000:],
+            "stderr": completed.stderr[-5000:],
+        }
 
     @staticmethod
     def _resolve_exe(binary_path: str) -> str:
@@ -2806,6 +2945,7 @@ class ACloudViewerBackend:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                errors="replace",
                 env=env
             )
             return {

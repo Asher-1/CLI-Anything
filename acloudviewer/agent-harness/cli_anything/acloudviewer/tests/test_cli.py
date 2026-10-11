@@ -1,15 +1,11 @@
 """CLI help and structure tests."""
 
 import os
-import platform
 import subprocess
 import sys
 import json
 import pytest
 from pathlib import Path
-
-IS_MACOS = platform.system() == "Darwin"
-_skip_sibr_on_macos = pytest.mark.skipif(IS_MACOS, reason="SIBR not supported on macOS")
 
 _HARNESS_ROOT = str(Path(__file__).resolve().parent.parent.parent.parent)
 _CLI_CMD = [sys.executable, "-m", "cli_anything.acloudviewer"]
@@ -48,12 +44,30 @@ class TestCLIHelp:
         "export --help",
         "clear --help",
         "methods --help",
+        "ai --help",
+        "ai run --help",
+        "plugin run --help",
     ])
     def test_subcommand_help(self, cmd):
         r = _run(cmd.split())
         assert r.returncode == 0, (
             f"CLI '{cmd}' failed (rc={r.returncode}):\n"
             f"stdout: {r.stdout[:1000]}\nstderr: {r.stderr[:1000]}")
+
+    def test_ai_registry(self):
+        r = _run(["--json", "--mode", "headless", "ai", "list"])
+        assert r.returncode == 0
+        data = json.loads(r.stdout)
+        assert len(data) >= 17
+        assert {item["name"] for item in data} >= {"ocr", "sam3", "trellis"}
+
+    def test_ai_and_plugin_subcommands(self):
+        for group, commands in (("ai", ["list", "schema", "run"]),
+                                ("plugin", ["run"])):
+            r = _run([group, "--help"])
+            assert r.returncode == 0
+            for command in commands:
+                assert command in r.stdout
 
     def test_process_subcommands(self):
         r = _run(["process", "--help"])
@@ -112,7 +126,6 @@ class TestCLIHelp:
         for cmd in ["apply", "apply-file"]:
             assert cmd in r.stdout, f"Missing transform subcommand: {cmd}"
 
-    @_skip_sibr_on_macos
     def test_sibr_subcommands(self):
         r = _run(["sibr", "--help"])
         assert r.returncode == 0
@@ -132,6 +145,28 @@ class TestReconstructSubcommands:
                      "simplify-mesh", "texture-mesh", "convert-model",
                      "analyze-model", "mesh", "delaunay-mesh"]:
             assert cmd in r.stdout, f"Missing reconstruct subcommand: {cmd}"
+
+    def test_reconstruct_auto_exposes_mapper_and_seed(self):
+        r = _run(["reconstruct", "auto", "--help"])
+        assert r.returncode == 0
+        assert "--mapper" in r.stdout
+        assert "hierarchical" in r.stdout and "global" in r.stdout
+        assert "--random-seed" in r.stdout
+
+
+class TestNarrowOutputEncoding:
+    """Windows runners redirect stdout with the cp1252 locale encoding."""
+
+    def test_human_output_survives_cp1252(self):
+        env = os.environ.copy()
+        env["PYTHONPATH"] = _HARNESS_ROOT + os.pathsep + env.get("PYTHONPATH", "")
+        env["PYTHONIOENCODING"] = "cp1252"
+        r = subprocess.run(_CLI_CMD + ["formats"], capture_output=True,
+                           text=True, encoding="cp1252", timeout=30, env=env)
+        assert r.returncode == 0, (
+            f"formats failed under cp1252 (rc={r.returncode}):\n"
+            f"stdout: {r.stdout[:500]}\nstderr: {r.stderr[:500]}")
+        assert "Point Cloud" in r.stdout
 
 
 class TestHeadlessMode:

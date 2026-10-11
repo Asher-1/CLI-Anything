@@ -268,6 +268,23 @@ CloudCompare-compatible CLI flags:
 
 **Special:** `.drc` (Draco) `.ifc` `.stp` `.step` (CAD)
 
+### AICore Batch and Generic Plugin Commands
+
+| Command | Native path | Description |
+|---------|-------------|-------------|
+| `ai list` | `core/ai_registry.py` | Stable task name -> native command (17 AICore tasks) |
+| `ai schema TASK` | `-<COMMAND> HELP RESULT_JSON <tmp>` | Options/defaults reported by the installed plugin |
+| `ai run TASK ...` | `-<COMMAND> KEY VALUE ... RESULT_JSON <path>` | External-data batch inference; returns the `acloudviewer.aicore.batch/1` manifest |
+| `plugin run COMMAND ...` | `-<COMMAND> [KEY VALUE...] [--arg...]` | Ordinary/third-party plugin passthrough |
+
+The registry stores identity only (name, command, summary, input shape); the
+binary's HELP schema is the sole owner of options. Shortcut flags (`--image`,
+`--input-dir`, `--input-list`, `--out-dir`, `--model`, `--device`, `--threads`,
+`--download`) are valid only when the task schema lists that key; native
+parsers reject unknown keys. Both commands spawn an isolated headless child
+when a local binary exists; GUI mode uses JSON-RPC `aicore.batch` only when no
+local binary is available.
+
 ### JSON-RPC API (48+ methods)
 
 GUI-mode RPC methods exposed by the `qJSonRPCPlugin`:
@@ -350,13 +367,14 @@ reconstructions for novel view synthesis and rendering:
 **Note**: SIBR tools are not available on macOS. Requires ACloudViewer built with
 `-DPLUGIN_STANDARD_QSIBR=ON` CMake flag.
 
-### MCP Server (178 tools)
+### MCP Server (182 tools)
 
-The MCP server exposes 178 tools for AI agent frameworks (OpenClaw, Cursor,
+The MCP server exposes 182 tools for AI agent frameworks (OpenClaw, Cursor,
 Claude Code):
 
 | Category | Count | Tools |
 |----------|-------|-------|
+| **AICore & Generic Plugins** | 4 | `list_ai_tasks`, `get_ai_schema`, `run_ai_batch`, `run_plugin_command` |
 | **File I/O** | 5 | `open_file`, `convert_format`, `batch_convert`, `list_formats`, `export_entity` |
 | **Processing** | 10 | `subsample`, `compute_normals`, `sor_filter`, `crop`, `density`, `curvature`, `roughness`, `color_banding`, `stat_test`, `rasterize` |
 | **Scalar Fields** | 18 | `set_active_sf`, `remove_all_sfs`, `remove_sf`, `rename_sf`, `sf_arithmetic`, `sf_operation`, `coord_to_sf`, `sf_gradient`, `filter_sf`, `sf_color_scale`, `sf_convert_to_rgb`, `cloud_get_scalar_fields`, `cloud_set_active_sf`, `cloud_remove_sf`, `cloud_remove_all_sfs`, `cloud_rename_sf`, `cloud_filter_sf`, `cloud_coord_to_sf` |
@@ -382,7 +400,7 @@ Claude Code):
 | **Transform** | 2 | `transform_apply`, `transform_apply_file` |
 | **Utility** | 2 | `get_info`, `list_rpc_methods` |
 
-**Total**: 178 tools supporting both headless CLI and GUI RPC modes.
+**Total**: 182 tools supporting both headless CLI and GUI RPC modes.
 
 ## RPC Robustness: Automatic Fallback
 
