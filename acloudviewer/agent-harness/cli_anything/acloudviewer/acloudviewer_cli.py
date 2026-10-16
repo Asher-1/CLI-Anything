@@ -3600,5 +3600,93 @@ def main():
     cli()
 
 
+# ── Spirula Studio (3DGS training; BUILD_SPIRULA) ────────────────────────
+
+
+def _get_spirula():
+    from cli_anything.acloudviewer.utils.spirula_backend import SpirulaBackend
+    return SpirulaBackend()
+
+
+@cli.group("spirula")
+def spirula_group():
+    """[Headless] Spirula Studio 3DGS training (standalone executable)."""
+    pass
+
+
+@spirula_group.command("version")
+@handle_error
+def spirula_version():
+    """Show the spirula executable version and location."""
+    backend = _get_spirula()
+    output({"version": backend.version(), "exe": backend._binary})
+
+
+@spirula_group.command("devices")
+@click.option("--timeout", type=int, default=10,
+              help="Enumeration bound in seconds (Vulkan runtime required)")
+@handle_error
+def spirula_devices(timeout):
+    """List compute devices usable by the spirula Vulkan backend."""
+    output(_get_spirula().devices(timeout=timeout))
+
+
+@spirula_group.command("train")
+@click.argument("dataset", type=click.Path(exists=True))
+@click.option("--output-name", "-n", default=None,
+              help="Run directory name under outputs/ (upstream layout)")
+@click.option("--device", default="auto",
+              help=" spirula --device selector: auto|index|name|uuid:hex")
+@click.option("--extra-args", "-x", default="",
+              help="Verbatim extra spirula train arguments")
+@click.option("--timeout", type=int, default=3600)
+@handle_error
+def spirula_train(dataset, output_name, device, extra_args, timeout):
+    """Train a 3DGS model headlessly from a dataset folder."""
+    result = _get_spirula().train(dataset, output_name=output_name,
+                                  device=device, extra_args=extra_args,
+                                  timeout=timeout)
+    get_session().snapshot(f"spirula train {dataset}")
+    output(result)
+
+
+@spirula_group.command("mesh")
+@click.argument("run_dir", type=click.Path(exists=True))
+@click.option("--extra-args", "-x", default="")
+@click.option("--timeout", type=int, default=3600)
+@handle_error
+def spirula_mesh(run_dir, extra_args, timeout):
+    """Extract a mesh from a trained run directory."""
+    args = [run_dir] + (extra_args.split() if extra_args else [])
+    output(_get_spirula().run("mesh", args, timeout=timeout))
+
+
+@spirula_group.command("run")
+@click.argument("subcommand",
+                type=click.Choice(["sfm", "sam", "geometry", "e57", "lidar",
+                                   "partition", "encode"]))
+@click.argument("args", nargs=-1, type=click.UNPROCESSED)
+@click.option("--timeout", type=int, default=3600)
+@handle_error
+def spirula_run(subcommand, args, timeout):
+    """Passthrough for any other headless spirula subcommand."""
+    output(_get_spirula().run(subcommand, list(args), timeout=timeout))
+
+
+@spirula_group.command("progress")
+@click.argument("run_dir", type=click.Path(exists=True))
+@handle_error
+def spirula_progress(run_dir):
+    """Structured progress from a spirula run directory (zero-patch)."""
+    output(_get_spirula().progress(run_dir))
+
+
+@spirula_group.command("launch")
+@handle_error
+def spirula_launch():
+    """Start the official Spirula Studio GUI (detached)."""
+    pid = _get_spirula().launch_gui()
+    output({"launched": True, "pid": pid})
+
 if __name__ == "__main__":
     main()

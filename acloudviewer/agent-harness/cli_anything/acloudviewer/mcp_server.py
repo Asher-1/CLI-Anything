@@ -2042,6 +2042,62 @@ async def list_tools() -> list[Tool]:
                 "required": ["command"],
             },
         ),
+        # ── Spirula Studio (3DGS training; BUILD_SPIRULA) ───────────────
+        Tool(
+            name="spirula_version",
+            description="Show the spirula executable version and location.",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="spirula_devices",
+            description="List compute devices usable by the spirula Vulkan backend.",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="spirula_train",
+            description="Train a 3DGS model headlessly from a dataset folder "
+                        "(COLMAP model, Nerfstudio transforms.json, or plain images).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "dataset": {"type": "string"},
+                    "output_name": {"type": "string",
+                                    "description": "Run directory name under outputs/"},
+                    "device": {"type": "string", "default": "auto",
+                               "description": "auto|index|name|uuid:hex"},
+                    "extra_args": {"type": "string", "default": "",
+                                   "description": "Verbatim extra spirula train arguments"},
+                    "timeout": {"type": "integer", "default": 3600},
+                },
+                "required": ["dataset"],
+            },
+        ),
+        Tool(
+            name="spirula_run",
+            description="Generic passthrough for a headless spirula subcommand "
+                        "(sfm, mesh, geometry, e57, lidar, partition, encode).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "subcommand": {"type": "string"},
+                    "args": {"type": "array", "items": {"type": "string"}},
+                    "timeout": {"type": "integer", "default": 3600},
+                },
+                "required": ["subcommand"],
+            },
+        ),
+        Tool(
+            name="spirula_progress",
+            description="Structured progress from a spirula run directory "
+                        "(checkpoints, latest step, splat.ply readiness).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "run_dir": {"type": "string"},
+                },
+                "required": ["run_dir"],
+            },
+        ),
     ]
 
 
@@ -3204,6 +3260,35 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
             else:
                 return _error(f"Unknown SIBR tool: {name}")
+
+        elif name == "spirula_version":
+            from cli_anything.acloudviewer.utils.spirula_backend import SpirulaBackend
+            return _result({"version": SpirulaBackend().version(),
+                            "exe": SpirulaBackend().find_binary()})
+
+        elif name == "spirula_devices":
+            from cli_anything.acloudviewer.utils.spirula_backend import SpirulaBackend
+            return _result(SpirulaBackend().devices())
+
+        elif name == "spirula_train":
+            from cli_anything.acloudviewer.utils.spirula_backend import SpirulaBackend
+            return _result(SpirulaBackend().train(
+                arguments["dataset"],
+                output_name=arguments.get("output_name"),
+                device=arguments.get("device", "auto"),
+                extra_args=arguments.get("extra_args", ""),
+                timeout=arguments.get("timeout", 3600)))
+
+        elif name == "spirula_run":
+            from cli_anything.acloudviewer.utils.spirula_backend import SpirulaBackend
+            return _result(SpirulaBackend().run(
+                arguments["subcommand"],
+                list(arguments.get("args", [])),
+                timeout=arguments.get("timeout", 3600)))
+
+        elif name == "spirula_progress":
+            from cli_anything.acloudviewer.utils.spirula_backend import SpirulaBackend
+            return _result(SpirulaBackend().progress(arguments["run_dir"]))
 
         else:
             return _error(f"Unknown tool: {name}")
