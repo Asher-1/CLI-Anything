@@ -530,9 +530,9 @@ Key method groups:
 | **Transform** | `transform.apply` |
 | **COLMAP** | `colmap.reconstruct`, `colmap.run` |
 
-## MCP Server (182 Tools)
+## MCP Server (187 Tools)
 
-An optional MCP server exposes 182 tools for integration with AI agents:
+An optional MCP server exposes 187 tools for integration with AI agents:
 
 ```bash
 pip install -e .
@@ -596,7 +596,7 @@ pip install -e ".[dev]"
 python -m pytest cli_anything/acloudviewer/tests/ -v
 ```
 
-Test suite covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (182 tools), and session management.
+Test suite covering CLI structure, format maps, backend logic, RPC client wrappers (20 new cloud analysis/SF/normals wrappers), MCP tool registration (187 tools), and session management.
 
 ## Methodology
 

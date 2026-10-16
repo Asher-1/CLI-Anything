@@ -367,9 +367,9 @@ reconstructions for novel view synthesis and rendering:
 **Note**: SIBR tools are not available on macOS. Requires ACloudViewer built with
 `-DPLUGIN_STANDARD_QSIBR=ON` CMake flag.
 
-### MCP Server (182 tools)
+### MCP Server (187 tools)
 
-The MCP server exposes 182 tools for AI agent frameworks (OpenClaw, Cursor,
+The MCP server exposes 187 tools for AI agent frameworks (OpenClaw, Cursor,
 Claude Code):
 
 | Category | Count | Tools |
@@ -399,8 +399,9 @@ Claude Code):
 | **Cloud Painting (GUI)** | 3 | `cloud_paint_uniform`, `cloud_paint_by_height`, `cloud_paint_by_scalar_field` |
 | **Transform** | 2 | `transform_apply`, `transform_apply_file` |
 | **Utility** | 2 | `get_info`, `list_rpc_methods` |
+| **Spirula (3DGS)** | 5 | `spirula_version`, `spirula_devices`, `spirula_train`, `spirula_run`, `spirula_progress` |
 
-**Total**: 182 tools supporting both headless CLI and GUI RPC modes.
+**Total**: 187 tools supporting both headless CLI and GUI RPC modes.
 
 ## RPC Robustness: Automatic Fallback
 

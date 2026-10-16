@@ -408,13 +408,13 @@ cli-anything-acloudviewer info
 cli-anything-acloudviewer --json info
 ```
 
-## MCP Server (182 tools)
+## MCP Server (187 tools)
 
 ```bash
 cli-anything-acloudviewer-mcp --mode auto
 ```
 
-The MCP server provides 182 tools across 22 categories for comprehensive 3D point cloud and mesh processing:
+The MCP server provides 187 tools across 24 categories for comprehensive 3D point cloud and mesh processing:
 
 **AICore & Generic Plugins (4):** `list_ai_tasks`, `get_ai_schema`, `run_ai_batch`, `run_plugin_command`
 
@@ -465,6 +465,8 @@ The MCP server provides 182 tools across 22 categories for comprehensive 3D poin
 **Transform (2):** `transform_apply`, `transform_apply_file`
 
 **Utility (2):** `get_info`, `list_rpc_methods`
+
+**Spirula (5):** `spirula_version`, `spirula_devices`, `spirula_train`, `spirula_run`, `spirula_progress`
 
 ## For AI Agents
 
