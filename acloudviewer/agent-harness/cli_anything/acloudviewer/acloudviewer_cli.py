@@ -2970,6 +2970,135 @@ def reconstruct_analyze_model(input_path):
     output(result)
 
 
+@reconstruct_group.command("bundle-adjust")
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@handle_error
+def reconstruct_bundle_adjust(input_path, output_path):
+    """Bundle-adjust a sparse model (Colmap bundle_adjuster)."""
+    result = _get_colmap().bundle_adjuster(input_path, output_path)
+    get_session().snapshot(f"reconstruct bundle-adjust {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("hierarchical-sparse")
+@click.option("--database", "database_path", type=click.Path(exists=True), required=True)
+@click.option("--image-path", type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@handle_error
+def reconstruct_hierarchical_sparse(database_path, image_path, output_path):
+    """Sparse reconstruction with hierarchical partitioning for large scenes (Colmap)."""
+    result = _get_colmap().hierarchical_mapper(database_path, image_path, output_path)
+    get_session().snapshot("reconstruct hierarchical-sparse")
+    output(result)
+
+
+@reconstruct_group.command("triangulate")
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@handle_error
+def reconstruct_triangulate(input_path, output_path):
+    """Triangulate known camera poses into new points (Colmap point_triangulator)."""
+    result = _get_colmap().point_triangulator(input_path, output_path)
+    get_session().snapshot(f"reconstruct triangulate {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("filter-points")
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@click.option("--min-track-len", type=int, default=2)
+@click.option("--max-reproj-error", type=float, default=4.0)
+@click.option("--min-tri-angle", type=float, default=1.5)
+@handle_error
+def reconstruct_filter_points(input_path, output_path, min_track_len,
+                              max_reproj_error, min_tri_angle):
+    """Filter sparse points by track/reprojection/angle thresholds (Colmap)."""
+    result = _get_colmap().point_filtering(
+        input_path, output_path,
+        min_track_len=min_track_len,
+        max_reproj_error=max_reproj_error,
+        min_tri_angle=min_tri_angle)
+    get_session().snapshot(f"reconstruct filter-points {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("register-images")
+@click.option("--database", "database_path", type=click.Path(exists=True), required=True)
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@handle_error
+def reconstruct_register_images(database_path, input_path, output_path):
+    """Register images with known poses into a model (Colmap image_registrator)."""
+    result = _get_colmap().image_registrator(database_path, input_path, output_path)
+    get_session().snapshot(f"reconstruct register-images {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("transform-model")
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@click.option("--transform", "transform_path", type=click.Path(exists=True), required=True,
+              help="Path to a 3x4/4x4 transform text file")
+@click.option("--inverse", is_flag=True, help="Apply the inverse transform")
+@handle_error
+def reconstruct_transform_model(input_path, output_path, transform_path, inverse):
+    """Apply a stored transform to a model (Colmap model_transformer)."""
+    result = _get_colmap().model_transformer(
+        input_path, output_path, transform_path, is_inverse=inverse)
+    get_session().snapshot(f"reconstruct transform-model {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("advancing-front")
+@click.argument("input_path", type=click.Path(exists=True),
+                help="Dense stereo workspace folder")
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@handle_error
+def reconstruct_advancing_front(input_path, output_path):
+    """Dense mesh via advancing-front from the stereo workspace (Colmap)."""
+    result = _get_colmap().advancing_front_mesher(input_path, output_path)
+    get_session().snapshot(f"reconstruct advancing-front {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("crop-model")
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@click.option("--boundary", default="", help="AABB min-x,y,z max-x,y,z")
+@click.option("--gps-transform-path", default="")
+@handle_error
+def reconstruct_crop_model(input_path, output_path, boundary, gps_transform_path):
+    """Crop a model to a boundary box (Colmap model_cropper)."""
+    result = _get_colmap().model_cropper(
+        input_path, output_path,
+        boundary=boundary, gps_transform_path=gps_transform_path)
+    get_session().snapshot(f"reconstruct crop-model {input_path}")
+    output(result)
+
+
+@reconstruct_group.command("create-database")
+@click.argument("database_path", type=click.Path())
+@handle_error
+def reconstruct_create_database(database_path):
+    """Create an empty COLMAP feature database (Colmap database_creator)."""
+    result = _get_colmap().database_creator(database_path)
+    get_session().snapshot(f"reconstruct create-database {database_path}")
+    output(result)
+
+
+@reconstruct_group.command("color-extract")
+@click.option("--image-path", type=click.Path(exists=True), required=True)
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--output", "-o", "output_path", type=click.Path(), required=True)
+@handle_error
+def reconstruct_color_extract(image_path, input_path, output_path):
+    """Extract image colors into a sparse model's points (Colmap color_extractor)."""
+    result = _get_colmap().color_extractor(image_path, input_path, output_path)
+    get_session().snapshot(f"reconstruct color-extract {input_path}")
+    output(result)
+
+
 # ── SIBR Dataset Tools (headless) ──
 
 @cli.group("sibr")

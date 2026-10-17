@@ -521,6 +521,90 @@ class ColmapBackend:
         self._run(args)
         return {"output": output_path, "status": "completed"}
 
+    def point_triangulator(
+        self,
+        input_path: str,
+        output_path: str,
+    ) -> dict:
+        """Triangulate existing camera poses into new points (Colmap point_triangulator)."""
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        self._run([
+            "point_triangulator",
+            "--input_path", input_path,
+            "--output_path", output_path,
+        ])
+        return {"output": output_path, "status": "completed"}
+
+    def point_filtering(
+        self,
+        input_path: str,
+        output_path: str,
+        min_track_len: int = 2,
+        max_reproj_error: float = 4.0,
+        min_tri_angle: float = 1.5,
+    ) -> dict:
+        """Filter sparse points by track length / reprojection / angle (Colmap point_filtering)."""
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        self._run([
+            "point_filtering",
+            "--input_path", input_path,
+            "--output_path", output_path,
+            "--min_track_len", str(min_track_len),
+            "--max_reproj_error", str(max_reproj_error),
+            "--min_tri_angle", str(min_tri_angle),
+        ])
+        return {"output": output_path, "status": "completed"}
+
+    def image_registrator(
+        self,
+        database_path: str,
+        input_path: str,
+        output_path: str,
+    ) -> dict:
+        """Register images with known poses into a model (Colmap image_registrator)."""
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        self._run([
+            "image_registrator",
+            "--database_path", database_path,
+            "--input_path", input_path,
+            "--output_path", output_path,
+        ])
+        return {"output": output_path, "status": "completed"}
+
+    def model_transformer(
+        self,
+        input_path: str,
+        output_path: str,
+        transform_path: str,
+        is_inverse: bool = False,
+    ) -> dict:
+        """Transform a model with a stored transform matrix (Colmap model_transformer)."""
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        args = [
+            "model_transformer",
+            "--input_path", input_path,
+            "--output_path", output_path,
+            "--transform_path", transform_path,
+        ]
+        if is_inverse:
+            args += ["--is_inverse", "1"]
+        self._run(args)
+        return {"output": output_path, "status": "completed"}
+
+    def advancing_front_mesher(
+        self,
+        input_path: str,
+        output_path: str,
+    ) -> dict:
+        """Dense mesh via advancing-front from the stereo workspace (Colmap advancing_front_mesher)."""
+        args = [
+            "advancing_front_mesher",
+            "--input_path", input_path,
+            "--output_path", output_path,
+        ]
+        self._run(args)
+        return {"output": output_path, "status": "completed"}
+
     def image_texturer(
         self,
         input_path: str,

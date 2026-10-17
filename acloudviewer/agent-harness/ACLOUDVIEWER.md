@@ -315,15 +315,26 @@ reconstruction:
 | `extract-features` (headless) | `feature_extractor` | Detect SIFT features from images |
 | `match` (headless) | `*_matcher` | Match features (exhaustive/sequential/vocab-tree/spatial) |
 | `sparse` (headless) | `mapper` | Incremental or hierarchical Structure-from-Motion |
+| `hierarchical-sparse` (headless) | `hierarchical_mapper` | Hierarchical SfM partitioning for large scenes |
+| `bundle-adjust` (headless) | `bundle_adjuster` | Bundle-adjust a sparse model |
 | `undistort` (headless) | `image_undistorter` | Undistort images and prepare dense workspace |
 | `dense-stereo` (headless) | `patch_match_stereo` | PatchMatch multi-view stereo depth map generation |
 | `fuse` (headless) | `stereo_fusion` | Fuse depth maps into dense colored point cloud |
 | `poisson` (headless) | `poisson_mesher` | Poisson surface reconstruction from point cloud |
 | `delaunay-mesh` (headless) | `delaunay_mesher` | Delaunay triangulation with visibility constraints |
+| `advancing-front` (headless) | `advancing_front_mesher` | Dense mesh via advancing-front from the stereo workspace |
+| `simplify-mesh` (headless) | `mesh_simplifier` | Simplify a mesh (edge-collapse, color-preserving) |
 | `texture-mesh` (headless) | `image_texturer` | Generate multi-view texture atlas for mesh |
+| `triangulate` (headless) | `point_triangulator` | Triangulate known camera poses into new points |
+| `filter-points` (headless) | `point_filtering` | Filter sparse points by track/reprojection/angle thresholds |
+| `register-images` (headless) | `image_registrator` | Register images with known poses into a model |
+| `transform-model` (headless) | `model_transformer` | Apply a stored transform to a model |
+| `crop-model` (headless) | `model_cropper` | Crop a model to a boundary box |
+| `color-extract` (headless) | `color_extractor` | Extract image colors into a sparse model's points |
+| `create-database` (headless) | `database_creator` | Create an empty COLMAP feature database |
 | `convert-model` (headless) | `model_converter` | Export sparse model to PLY/NVM/Bundler/VRML/etc. |
 | `analyze-model` (headless) | `model_analyzer` | Analyze sparse model and report statistics |
-| `run` (headless/GUI) | Any Colmap subcommand | Generic executor for all 44 Colmap subcommands |
+| `run` (headless/GUI) | Any Colmap subcommand | Generic executor for all Colmap subcommands |
 
 **Binary discovery for Colmap**: `COLMAP_PATH` env var > `colmap`/`Colmap` on
 `$PATH` > standard install locations per platform. On macOS, automatically
