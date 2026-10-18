@@ -104,8 +104,24 @@ class TestCLIHelp:
         r = _run(["view", "--help"])
         assert r.returncode == 0
         for cmd in ["screenshot", "camera", "orient", "zoom", "refresh",
-                     "perspective", "pointsize"]:
+                     "perspective", "pointsize", "list", "pick-entity",
+                     "pick-point", "select-region"]:
             assert cmd in r.stdout, f"Missing view subcommand: {cmd}"
+
+    def test_ui_qt_lingbotmap_subcommands(self):
+        for group, commands in (
+                ("ui", ["list-actions", "trigger-action"]),
+                ("qt", ["invoke"]),
+                ("lingbotmap", ["run-test-scene", "replay", "display"])):
+            r = _run([group, "--help"])
+            assert r.returncode == 0, r.stdout
+            for command in commands:
+                assert command in r.stdout, \
+                    f"Missing {group} subcommand: {command}"
+        r = _run(["lingbotmap", "replay", "--help"])
+        assert r.returncode == 0
+        for action in ["start", "pause", "stop", "seek"]:
+            assert action in r.stdout, f"Missing replay action: {action}"
 
     def test_cloud_subcommands(self):
         r = _run(["cloud", "--help"])

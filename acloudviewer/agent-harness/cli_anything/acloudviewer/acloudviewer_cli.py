@@ -748,6 +748,42 @@ def view_pointsize(action):
     output({"point_size": act})
 
 
+@view_group.command("list")
+@handle_error
+def view_list():
+    """List all 3D views with their active flag (agent-test probe)."""
+    output(get_backend().view_list())
+
+
+@view_group.command("pick-entity")
+@click.argument("x", type=float)
+@click.argument("y", type=float)
+@handle_error
+def view_pick_entity(x, y):
+    """Entity pick probe at logical pixel X Y (pickObject chain)."""
+    output(get_backend().view_pick_entity(x, y))
+
+
+@view_group.command("pick-point")
+@click.argument("x", type=float)
+@click.argument("y", type=float)
+@handle_error
+def view_pick_point(x, y):
+    """Point-pick probe at logical pixel X Y (octree chain)."""
+    output(get_backend().view_pick_point(x, y))
+
+
+@view_group.command("select-region")
+@click.argument("x1", type=float)
+@click.argument("y1", type=float)
+@click.argument("x2", type=float)
+@click.argument("y2", type=float)
+@handle_error
+def view_select_region(x1, y1, x2, y2):
+    """Selection probe over the logical-pixel rectangle X1 Y1 X2 Y2."""
+    output(get_backend().view_select_region(x1, y1, x2, y2))
+
+
 # ── Cloud (GUI) ──
 
 @cli.group("cloud")
@@ -1011,6 +1047,129 @@ def plugin_run(command, args, option_values, timeout):
         timeout=timeout)
     get_session().snapshot(f"plugin run {command}")
     output(result)
+
+
+# ── Generic UI drivers (GUI) ──
+
+@cli.group("ui")
+def ui_group():
+    """[GUI] Generic UI drivers: discover and trigger any QAction."""
+    pass
+
+
+@ui_group.command("list-actions")
+@handle_error
+def ui_list_actions():
+    """List every triggerable QAction (plugins, menus, toolbars)."""
+    output(get_backend().ui_list_actions())
+
+
+@ui_group.command("trigger-action")
+@click.argument("text")
+@handle_error
+def ui_trigger_action(text):
+    """Trigger the QAction whose text matches TEXT (exact, else unique
+    case-insensitive substring). This is how an agent opens any plugin
+    dialog, e.g. 'LingBot-Map Reconstruction'."""
+    output(get_backend().ui_trigger_action(text))
+
+
+@cli.group("qt")
+def qt_group():
+    """[GUI] Qt-reflection invoke on any Q_INVOKABLE/slot (qt.invokeMethod)."""
+    pass
+
+
+@qt_group.command("invoke")
+@click.option("--method", "method", required=True)
+@click.option("--class-contains", default="")
+@click.option("--object-contains", default="")
+@click.option("--arg", "args", multiple=True,
+              help="Literal argument (repeatable; JSON scalars parsed)")
+@click.option("--all", "invoke_all", is_flag=True,
+              help="Invoke on EVERY matching object, not just one")
+@handle_error
+def qt_invoke_cmd(method, class_contains, object_contains, args, invoke_all):
+    """Invoke METHOD on the object matching --class-contains/--object-contains.
+
+    Parameterized targets must take QVariant parameters (the RPC contract);
+    0-arg methods have no type constraint. Example:
+
+    qt invoke --method rpcStartReplay --class-contains LingbotMapDialog
+    """
+    parsed_args = []
+    for raw in args:
+        try:
+            parsed_args.append(json.loads(raw))
+        except (json.JSONDecodeError, ValueError):
+            parsed_args.append(raw)
+    result = get_backend().qt_invoke(
+        method, class_contains=class_contains,
+        object_contains=object_contains, args=list(parsed_args),
+        invoke_all=invoke_all)
+    output(result)
+
+
+# ── qLingbotMap replay/display automation (GUI) ──
+
+@cli.group("lingbotmap")
+def lingbotmap_group():
+    """[GUI] Drive the LingBot-Map plugin replay/display for regression
+    verification.
+
+    Entry path: `ui trigger-action "LingBot-Map Reconstruction"` opens the
+    dialog; `run-test-scene` selects a scene and clicks the real Run button.
+    Every command routes through the SAME signal chains the dialog buttons
+    emit, so a passing CLI flow is a passing user flow.
+    """
+    pass
+
+
+@lingbotmap_group.command("run-test-scene")
+@click.argument("scene")
+@handle_error
+def lingbotmap_run_test_scene(scene):
+    """Select test scene SCENE (int index or case-insensitive name
+    fragment, e.g. "Loop") and click the REAL Run button."""
+    value: Any = int(scene) if scene.isdigit() else scene
+    output(get_backend().lingbotmap_run_test_scene(value))
+
+
+@lingbotmap_group.command("replay")
+@click.argument("action",
+                type=click.Choice(["start", "pause", "stop", "seek"]))
+@click.option("--frame", type=int, default=None,
+              help="Target frame for seek (required for seek; refused "
+                   "while playing, official viewer semantics)")
+@handle_error
+def lingbotmap_replay_cmd(action, frame):
+    """Replay transport: start / pause / stop / seek --frame N.
+
+    start = Play (or Resume from pause), pause = freeze on the current
+    frame, stop = restore every frame and rewind.
+    """
+    output(get_backend().lingbotmap_replay(action, frame=frame))
+
+
+@lingbotmap_group.command("display")
+@click.option("--threshold", type=float, default=1.5, show_default=True,
+              help="Visibility threshold (>= materialization threshold)")
+@click.option("--point-size", type=int, default=3, show_default=True,
+              help="Point size in pixels")
+@click.option("--cam-size", type=int, default=260, show_default=True,
+              help="Camera frustum size, % of auto baseline")
+@click.option("--show-cameras/--no-show-cameras", default=True,
+              show_default=True)
+@click.option("--stride", type=int, default=3, show_default=True,
+              help="Show one frustum every N frames")
+@handle_error
+def lingbotmap_display_cmd(threshold, point_size, cam_size, show_cameras,
+                           stride):
+    """Commit the Result-display state (ABSOLUTE apply — the same five
+    values a manual slider release sends; pass all five for a
+    deterministic state)."""
+    output(get_backend().lingbotmap_display(
+        threshold, point_size, cam_size, show_cameras, stride))
 
 
 # ── Processing (headless) ──

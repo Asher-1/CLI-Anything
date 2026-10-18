@@ -909,6 +909,113 @@ class ACloudViewerBackend:
         return self._rpc.transform_apply(entity_id, matrix)
 
     # =====================================================================
+    # Generic UI drivers + view probes (GUI only via RPC)
+    # =====================================================================
+
+    def ui_list_actions(self) -> dict:
+        if self._mode != "gui":
+            raise BackendError("ui_list_actions requires GUI mode")
+        return self._rpc.call("ui.listActions", {})
+
+    def ui_trigger_action(self, text: str) -> dict:
+        if self._mode != "gui":
+            raise BackendError("ui_trigger_action requires GUI mode")
+        return self._rpc.call("ui.triggerAction", {"text": text})
+
+    def qt_invoke(self, method: str, class_contains: str = "",
+                  object_contains: str = "",
+                  args: list[Any] | None = None,
+                  invoke_all: bool = False) -> dict:
+        if self._mode != "gui":
+            raise BackendError("qt_invoke requires GUI mode")
+        params: dict[str, Any] = {"method": method}
+        if class_contains:
+            params["class_contains"] = class_contains
+        if object_contains:
+            params["object_contains"] = object_contains
+        if args:
+            params["args"] = args
+        if invoke_all:
+            params["all"] = True
+        return self._rpc.call("qt.invokeMethod", params)
+
+    def view_list(self) -> dict:
+        if self._mode != "gui":
+            raise BackendError("view_list requires GUI mode")
+        return self._rpc.call("view.list", {})
+
+    def view_pick_entity(self, x: float, y: float) -> dict:
+        if self._mode != "gui":
+            raise BackendError("view_pick_entity requires GUI mode")
+        return self._rpc.call("view.pickEntity", {"x": x, "y": y})
+
+    def view_pick_point(self, x: float, y: float) -> dict:
+        if self._mode != "gui":
+            raise BackendError("view_pick_point requires GUI mode")
+        return self._rpc.call("view.pickPoint", {"x": x, "y": y})
+
+    def view_select_region(self, x1: float, y1: float, x2: float,
+                           y2: float) -> dict:
+        if self._mode != "gui":
+            raise BackendError("view_select_region requires GUI mode")
+        return self._rpc.call("view.selectRegion",
+                              {"x1": x1, "y1": y1, "x2": x2, "y2": y2})
+
+    # =====================================================================
+    # qLingbotMap replay/display automation (GUI only via RPC)
+    #
+    # Drives the LingbotMapDialog Q_INVOKABLE surface through
+    # qt.invokeMethod — the dialog is the UI-state owner and its driver
+    # methods emit the exact signals the dialog buttons emit. The dialog
+    # must exist first: open it with ui_trigger_action("LingBot-Map
+    # Reconstruction") (see the lingbotmap CLI group help).
+    # =====================================================================
+
+    _LINGBOTMAP_DIALOG = "LingbotMapDialog"
+
+    def lingbotmap_run_test_scene(self, scene: str | int) -> dict:
+        if self._mode != "gui":
+            raise BackendError("lingbotmap_run_test_scene requires GUI mode")
+        return self.qt_invoke("rpcStartTestScene",
+                              class_contains=self._LINGBOTMAP_DIALOG,
+                              args=[scene])
+
+    def lingbotmap_replay(self, action: str,
+                          frame: int | None = None) -> dict:
+        if self._mode != "gui":
+            raise BackendError("lingbotmap_replay requires GUI mode")
+        method_by_action = {
+            "start": "rpcStartReplay",
+            "pause": "rpcPausePlayback",
+            "stop": "rpcStopReplay",
+        }
+        if action == "seek":
+            if frame is None:
+                raise BackendError("lingbotmap_replay seek requires --frame")
+            return self.qt_invoke("rpcSeekFrame",
+                                  class_contains=self._LINGBOTMAP_DIALOG,
+                                  args=[int(frame)])
+        if action not in method_by_action:
+            raise BackendError(
+                f"Unknown replay action '{action}'. "
+                f"Available: start, pause, stop, seek")
+        return self.qt_invoke(method_by_action[action],
+                              class_contains=self._LINGBOTMAP_DIALOG)
+
+    def lingbotmap_display(self, threshold: float, point_size: int,
+                           cam_size: int, show_cameras: bool,
+                           cam_stride: int) -> dict:
+        if self._mode != "gui":
+            raise BackendError("lingbotmap_display requires GUI mode")
+        # Absolute 5-value commit (rpcCommitResultDisplay): the SAME values a
+        # manual slider release sends, so the apply is deterministic.
+        return self.qt_invoke(
+            "rpcCommitResultDisplay",
+            class_contains=self._LINGBOTMAP_DIALOG,
+            args=[float(threshold), int(point_size), int(cam_size),
+                  bool(show_cameras), int(cam_stride)])
+
+    # =====================================================================
     # Processing — headless via ACloudViewer CLI, GUI via RPC
     # =====================================================================
 
