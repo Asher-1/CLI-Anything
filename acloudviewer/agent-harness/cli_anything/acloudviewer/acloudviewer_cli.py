@@ -3210,8 +3210,7 @@ def reconstruct_transform_model(input_path, output_path, transform_path, inverse
 
 
 @reconstruct_group.command("advancing-front")
-@click.argument("input_path", type=click.Path(exists=True),
-                help="Dense stereo workspace folder")
+@click.argument("input_path", type=click.Path(exists=True))
 @click.option("--output", "-o", "output_path", type=click.Path(), required=True)
 @handle_error
 def reconstruct_advancing_front(input_path, output_path):

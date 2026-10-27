@@ -153,6 +153,13 @@ class TestCLIHelp:
 
 
 class TestReconstructSubcommands:
+    def test_advancing_front_help_imports_cli_without_running_mesher(self):
+        # 真实子进程导入所有命令；无工作目录/模型时 HELP 仍必须正常退出。
+        r = _run(["--mode", "headless", "reconstruct", "advancing-front", "--help"])
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert "INPUT_PATH" in r.stdout and "--output" in r.stdout
+        assert "stereo workspace" in r.stdout.lower()
+
     def test_reconstruct_help(self):
         r = _run(["reconstruct", "--help"])
         assert r.returncode == 0
