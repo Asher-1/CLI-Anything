@@ -61,6 +61,14 @@ class TestCLIHelp:
         assert len(data) >= 17
         assert {item["name"] for item in data} >= {"ocr", "sam3", "trellis"}
 
+    def test_llm_is_discoverable_without_loading_a_model(self):
+        r = _run(["--json", "--mode", "headless", "ai", "list"])
+        assert r.returncode == 0, r.stderr
+        rows = [row for row in json.loads(r.stdout) if row["name"] == "llm"]
+        assert len(rows) == 1
+        assert rows[0]["command"] == "LLM_GENERATE"
+        assert rows[0]["input_shape"] == "text-or-images"
+
     def test_ai_and_plugin_subcommands(self):
         for group, commands in (("ai", ["list", "schema", "run"]),
                                 ("plugin", ["run"])):
@@ -154,7 +162,8 @@ class TestCLIHelp:
 
 class TestReconstructSubcommands:
     def test_advancing_front_help_imports_cli_without_running_mesher(self):
-        # 真实子进程导入所有命令；无工作目录/模型时 HELP 仍必须正常退出。
+        # Real subprocess imports every command; HELP must still exit cleanly
+        # without a working directory or models present.
         r = _run(["--mode", "headless", "reconstruct", "advancing-front", "--help"])
         assert r.returncode == 0, r.stdout + r.stderr
         assert "INPUT_PATH" in r.stdout and "--output" in r.stdout

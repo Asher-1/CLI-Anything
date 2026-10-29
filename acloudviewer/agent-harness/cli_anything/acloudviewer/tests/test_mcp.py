@@ -67,6 +67,15 @@ class TestMCPServerModule:
                 "run_plugin_command"} <= tool_names
 
     @pytest.mark.asyncio
+    async def test_list_ai_tasks_exposes_real_llm_registry(self, monkeypatch):
+        from cli_anything.acloudviewer.utils.acloudviewer_backend import ACloudViewerBackend
+        backend = ACloudViewerBackend.__new__(ACloudViewerBackend)
+        monkeypatch.setattr(mcp_server, "_get_backend", lambda: backend)
+        content = await mcp_server.call_tool("list_ai_tasks", {})
+        rows = [row for row in json.loads(content[0].text) if row["name"] == "llm"]
+        assert len(rows) == 1 and rows[0]["command"] == "LLM_GENERATE"
+
+    @pytest.mark.asyncio
     @patch('cli_anything.acloudviewer.mcp_server._get_backend')
     async def test_call_ai_and_plugin_tools(self, mock_get_backend):
         backend = Mock()

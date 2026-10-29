@@ -92,6 +92,27 @@ class TestBackendOperations:
 class TestPluginAndAICoreCommands:
     """Typed AICore registry and generic plugin passthrough."""
 
+    @pytest.mark.parametrize("name", ["llm", "LLM_GENERATE", "-LLM_GENERATE"])
+    def test_llm_resolves_to_generation_not_annotation(self, name):
+        from cli_anything.acloudviewer.core.ai_registry import resolve_ai_command
+        command = resolve_ai_command(name)
+        assert command.name == "llm"
+        assert command.command == "LLM_GENERATE"
+        assert command.input_shape == "text-or-images"
+
+    def test_llm_registry_and_prompt_encoding(self):
+        from cli_anything.acloudviewer.core.ai_registry import list_ai_commands
+        rows = [row for row in list_ai_commands() if row["name"] == "llm"]
+        assert len(rows) == 1 and rows[0]["command"] == "LLM_GENERATE"
+        assert ACloudViewerBackend._plugin_command_args("LLM_GENERATE", {
+            "PROMPT": "Answer in one word: Paris?", "SYSTEM": "Be concise.",
+            "TEMPERATURE": 0, "MAX_TOKENS": 128,
+            "IMAGE": ["first image.png", "second.png"],
+        }) == ["-LLM_GENERATE", "PROMPT", "Answer in one word: Paris?",
+               "SYSTEM", "Be concise.", "TEMPERATURE", "0",
+               "MAX_TOKENS", "128", "IMAGE", "first image.png",
+               "IMAGE", "second.png"]
+
     @patch.object(ACloudViewerBackend, 'find_binary', return_value="/path/to/acv")
     def test_ai_registry_and_argument_encoding(self, mock_find):
         backend = ACloudViewerBackend(mode="headless")

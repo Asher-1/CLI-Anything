@@ -33,8 +33,10 @@ _COMMANDS = (
     AICommand("trellis", "TRELLIS_GENERATE", "TRELLIS image-to-3D mesh/GLB generation"),
     AICommand("lingbot-map", "LINGBOT_MAP_RECONSTRUCT", "LingBot RGB sequence/video mapping", "sequence-or-video"),
     AICommand("anylabel", "ANYLABEL_INFER", "qAnyLabeling generic auto-annotation"),
+    AICommand("llm", "LLM_GENERATE", "Local LLM/VLM text generation", "text-or-images"),
     AICommand("map-anything", "MAP_ANYTHING_RECONSTRUCT", "MapAnything multiview reconstruction", "image-sets"),
     AICommand("sam3d", "SAM3D_GENERATE", "SAM3D image-to-3D generation"),
+    AICommand("openpcdet", "OPENPCDET_DETECT", "OpenPCDet LiDAR point cloud 3D object detection", "point-clouds"),
 )
 
 _BY_NAME = {item.name: item for item in _COMMANDS}

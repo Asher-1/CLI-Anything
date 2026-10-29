@@ -272,7 +272,7 @@ CloudCompare-compatible CLI flags:
 
 | Command | Native path | Description |
 |---------|-------------|-------------|
-| `ai list` | `core/ai_registry.py` | Stable task name -> native command (17 AICore tasks) |
+| `ai list` | `core/ai_registry.py` | Stable task name -> native command (18 AICore tasks) |
 | `ai schema TASK` | `-<COMMAND> HELP RESULT_JSON <tmp>` | Options/defaults reported by the installed plugin |
 | `ai run TASK ...` | `-<COMMAND> KEY VALUE ... RESULT_JSON <path>` | External-data batch inference; returns the `acloudviewer.aicore.batch/1` manifest |
 | `plugin run COMMAND ...` | `-<COMMAND> [KEY VALUE...] [--arg...]` | Ordinary/third-party plugin passthrough |
