@@ -31,6 +31,7 @@ _COMMANDS = (
     AICommand("lightglue", "LIGHTGLUE_MATCH", "SIFT/ALIKED + LightGlue image matching", "image-pairs"),
     AICommand("freesplatter", "FREESPLATTER_RECONSTRUCT", "Multiview 3D Gaussian reconstruction", "image-sets"),
     AICommand("trellis", "TRELLIS_GENERATE", "TRELLIS image-to-3D mesh/GLB generation"),
+    AICommand("instantmesh", "INSTANTMESH_GENERATE", "InstantMesh image-to-3D multi-view mesh/GLB generation"),
     AICommand("lingbot-map", "LINGBOT_MAP_RECONSTRUCT", "LingBot RGB sequence/video mapping", "sequence-or-video"),
     AICommand("anylabel", "ANYLABEL_INFER", "qAnyLabeling generic auto-annotation"),
     AICommand("llm", "LLM_GENERATE", "Local LLM/VLM text generation", "text-or-images"),
