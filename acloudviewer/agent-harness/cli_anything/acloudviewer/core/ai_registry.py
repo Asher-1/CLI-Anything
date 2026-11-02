@@ -36,6 +36,8 @@ _COMMANDS = (
     AICommand("anylabel", "ANYLABEL_INFER", "qAnyLabeling generic auto-annotation"),
     AICommand("llm", "LLM_GENERATE", "Local LLM/VLM text generation", "text-or-images"),
     AICommand("map-anything", "MAP_ANYTHING_RECONSTRUCT", "MapAnything multiview reconstruction", "image-sets"),
+    AICommand("querysplat", "QUERY_SPLAT", "QuerySplat multiview image-to-3DGS prediction", "image-sets"),
+    AICommand("vlx-seek", "VLXSEEK_RUN", "VLX-Seek fine-grained open-vocabulary grounding (detection/grounding/counting/region caption/region OCR)", "images"),
     AICommand("sam3d", "SAM3D_GENERATE", "SAM3D image-to-3D generation"),
     AICommand("openpcdet", "OPENPCDET_DETECT", "OpenPCDet LiDAR point cloud 3D object detection", "point-clouds"),
 )
