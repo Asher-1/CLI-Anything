@@ -50,6 +50,13 @@ permissions:
   id-token: write        # PyPI Trusted Publishing (OIDC)
   contents: read
 
+# Serialize concurrent runs (a push to main and a package tag pushed in the
+# same git push would otherwise race the skip-if-published check and turn
+# the loser into a spurious 400 File-already-exists failure).
+concurrency:
+  group: pypi-publish
+  cancel-in-progress: false
+
 env:
   # Packages with a bound Trusted Publisher and a real release history.
   # Everything else stays off until its publisher is bound (see above).

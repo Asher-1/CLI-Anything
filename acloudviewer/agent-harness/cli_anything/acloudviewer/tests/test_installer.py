@@ -783,7 +783,12 @@ class TestInstallClientsCLI:
     def test_dry_run_json(self):
         r = _run_cli(["--json", "install", "clients", "--dry-run", "--client", "cursor"])
         assert r.returncode == 0, r.stdout + r.stderr
-        data = json.loads(r.stdout)
+        try:
+            data = json.loads(r.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(
+                f"non-JSON stdout: {r.stdout[:300]!r} stderr={r.stderr[:300]!r}"
+            ) from exc
         assert data["dry_run"] is True
         assert data["mode"] == "auto"
         assert len(data["clients"]) == 1
@@ -1085,7 +1090,12 @@ class TestNewCLICommands:
         r = _run_cli(["--json", "install", "clients", "--remove", "--dry-run",
                       "--client", "cursor"])
         assert r.returncode == 0, r.stdout + r.stderr
-        data = json.loads(r.stdout)
+        try:
+            data = json.loads(r.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(
+                f"non-JSON stdout: {r.stdout[:300]!r} stderr={r.stderr[:300]!r}"
+            ) from exc
         assert data["remove"] is True
         assert data["clients"][0]["action"] == "dry-run"
 
