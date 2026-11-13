@@ -22,7 +22,7 @@ long_description = README.read_text(encoding="utf-8") if README.exists() else ""
 
 setup(
     name="cli-anything-acloudviewer",
-    version="3.2.0",
+    version="3.9.5",
     description="CLI harness for ACloudViewer — 3D point cloud and mesh processing via binary CLI and JSON-RPC, with Colmap reconstruction and SIBR pipelines",
     long_description=long_description,
     long_description_content_type="text/markdown",

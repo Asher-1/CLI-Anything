@@ -545,4 +545,4 @@ Reported in both text and JSON output (`"version": "3.9.5"`).
 
 ## Version
 
-3.2.0
+3.9.5

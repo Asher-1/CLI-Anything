@@ -81,12 +81,27 @@ jobs:
           dispatch = os.environ.get("DISPATCH_PACKAGE", "").strip()
           packages = os.environ["PACKAGES"].split()
           if ref_type == "tag":
-              # Explicit release: the resolver verifies tag vs setup.py.
-              pkg = ref_name.rpartition("-v")[0]
+              # Full resolver check up front: locate the package (the tag
+              # prefix may be the directory name or the PyPI distribution
+              # name) and verify the tag against setup.py. Unbound packages
+              # still die here via the PACKAGES gate, before any build step.
+              import subprocess, sys
+              check = subprocess.run(
+                  [sys.executable, ".github/scripts/resolve_publish_package.py",
+                   "--ref", ref_name], capture_output=True, text=True)
+              if check.returncode != 0:
+                  raise SystemExit("::error::tag " + ref_name + " rejected by "
+                                   "resolver: " + (check.stderr or check.stdout)
+                                   .strip()[-400:])
+              pkgdir = next((line.split("=", 1)[1]
+                             for line in check.stdout.splitlines()
+                             if line.startswith("pkgdir=")), "")
+              pkg = (pkgdir.split("/")[0] if "/agent-harness" in pkgdir
+                     else "cli-hub")
               if pkg not in packages:
                   raise SystemExit(
-                      "::error::tag targets " + repr(pkg) + ", which is not in "
-                      "PACKAGES (" + " ".join(packages) + "); bind its Trusted "
+                      "::error::tag resolves to " + repr(pkg) + ", which is not "
+                      "in PACKAGES (" + " ".join(packages) + "); bind its Trusted "
                       "Publisher on pypi.org and add it to PACKAGES first")
               targets = [{"package": "", "ref": ref_name, "verify": True}]
           elif dispatch:

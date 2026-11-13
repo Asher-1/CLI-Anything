@@ -50,7 +50,7 @@ from cli_anything.acloudviewer.utils.source_builder import (
 )
 from cli_anything.acloudviewer.utils.repl_skin import ReplSkin
 
-CLI_VERSION = "3.2.0"
+CLI_VERSION = "3.9.5"
 
 # ── Global state ─────────────────────────────────────────────────────────
 

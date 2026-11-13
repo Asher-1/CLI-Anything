@@ -51,6 +51,28 @@ def fail(message: str) -> int:
     return 1
 
 
+def _setup_for_pkg(pkg: str) -> pathlib.Path | None:
+    return next((pathlib.Path(pkg) / part for part in _SETUP_CANDIDATES
+                 if (pathlib.Path(pkg) / part).is_file()), None)
+
+
+def _find_by_pypi_name(prefix: str) -> pathlib.Path | None:
+    """Map a PyPI distribution name (e.g. cli-anything-acloudviewer) back to
+    its package directory: a tag may carry either the directory name or the
+    PyPI name as its prefix. Directory-to-name facts stay owned by each
+    setup.py, so new packages need no resolver maintenance."""
+    candidates = sorted(pathlib.Path(".").glob("*/agent-harness/setup.py")) + \
+        sorted(pathlib.Path(".").glob("*/setup.py"))
+    for setup in candidates:
+        try:
+            text = setup.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if _setup_field(text, "name") == prefix:
+            return setup
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package", default="",
@@ -69,8 +91,11 @@ def main() -> int:
         pkg, _, tag_version = args.ref.rpartition("-v")
         if not pkg or not tag_version:
             return fail(f"tag {args.ref!r} must be named <package>-v<version>")
-    setup = next((pathlib.Path(pkg) / part for part in _SETUP_CANDIDATES
-                  if (pathlib.Path(pkg) / part).is_file()), None)
+    setup = _setup_for_pkg(pkg)
+    if setup is None and tag_version is not None:
+        # Tag prefixes may use the PyPI distribution name instead of the
+        # package directory name (e.g. cli-anything-acloudviewer-v3.9.5).
+        setup = _find_by_pypi_name(pkg)
     if setup is None:
         return fail(f"no setup.py under {pkg}/agent-harness/ or {pkg}/")
     text = setup.read_text(encoding="utf-8")

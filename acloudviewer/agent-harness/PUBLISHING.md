@@ -18,8 +18,8 @@ release acloudviewer:
 
 ```bash
 # Preferred: explicit, tag-guarded (tag must match setup.py)
-git tag acloudviewer-v3.2.0
-git push origin acloudviewer-v3.2.0
+git tag acloudviewer-v3.9.5
+git push origin acloudviewer-v3.9.5
 ```
 
 A push to main also releases automatically: every package in the workflow's

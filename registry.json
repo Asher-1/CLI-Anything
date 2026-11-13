@@ -1517,7 +1517,7 @@
     {
       "name": "acloudviewer",
       "display_name": "ACloudViewer",
-      "version": "3.2.0",
+      "version": "3.9.5",
       "description": "3D point cloud and mesh processing via ACloudViewer binary CLI and JSON-RPC",
       "requires": "ACloudViewer binary on PATH or ACV_BINARY env var",
       "homepage": "https://asher-1.github.io/ACloudViewer",
