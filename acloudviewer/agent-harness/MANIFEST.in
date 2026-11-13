@@ -1,0 +1,4 @@
+# Long-description source: python -m build builds the wheel from the sdist,
+# so the README must ship inside the sdist or the wheel METADATA body ends
+# up empty (twine check: "long_description missing").
+include cli_anything/acloudviewer/README.md

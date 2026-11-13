@@ -40,6 +40,8 @@ _COMMANDS = (
     AICommand("vlx-seek", "VLXSEEK_RUN", "VLX-Seek fine-grained open-vocabulary grounding (detection/grounding/counting/region caption/region OCR)", "images"),
     AICommand("sam3d", "SAM3D_GENERATE", "SAM3D image-to-3D generation"),
     AICommand("openpcdet", "OPENPCDET_DETECT", "OpenPCDet LiDAR point cloud 3D object detection", "point-clouds"),
+    AICommand("ram", "RAM_TAG", "RAM/RAM++ image tagging and Tag2Text captioning"),
+    AICommand("relate-anything", "RELATE_ANYTHING_INFER", "RelateAnything scene relations over supplied object boxes", "image-sets"),
 )
 
 _BY_NAME = {item.name: item for item in _COMMANDS}

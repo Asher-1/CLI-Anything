@@ -14,8 +14,20 @@ cd acloudviewer/agent-harness
 pip install -e .
 ```
 
+One-line script (Linux / macOS): installs the harness, runs `check`, and
+registers the MCP server with detected AI clients
+(`ACV_SKIP_CLIENTS=1` to skip registration):
+
+```bash
+curl -LsSf https://raw.githubusercontent.com/Asher-1/CLI-Anything/main/acloudviewer/agent-harness/install.sh | sh
+```
+
 The ACloudViewer binary must be on `PATH`, or set the `ACV_BINARY`
-environment variable to its absolute path.
+environment variable to its absolute path. `cli-anything-acloudviewer
+install auto` downloads it from GitHub Releases automatically, and
+`cli-anything-acloudviewer install clients --all` merges the MCP server entry
+(`cli-anything-acloudviewer-mcp`) into the configs of detected clients
+(Claude Code, Claude Desktop, Codex, Cursor) with `.bak` backups.
 
 ## Command modes
 

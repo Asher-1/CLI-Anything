@@ -1,27 +1,104 @@
-name: Publish cli-hub-py to PyPI
+name: publish-cli-hub
+
+# The single PyPI release path for this multi-package repo (one setup.py
+# package per agent-harness, plus cli-hub at the repo root — 69 packages in
+# total). One resolver (.github/scripts/resolve_publish_package.py) locates
+# the package; setup.py owns the PyPI name and version facts.
+#
+# IMPORTANT — do not rename this file: the file name is the workflow name
+# bound in PyPI Trusted Publishers. cli-hub-py was bound with the original
+# single-package version of this file and has been released by it in
+# production (3 success / 3 skipped runs, including cli-hub-py 0.5.0 on
+# 2026-08-20); every package below must be bound with the same workflow
+# name "publish-cli-hub.yml".
+#
+# Three triggers, one logic:
+#   * push to main      — every enabled package is checked against PyPI and
+#                         any version that is not on PyPI yet is built and
+#                         published automatically. Advancing a version in
+#                         setup.py and pushing IS the release action (the
+#                         original cli-hub behavior, generalized).
+#   * tag <pkg>-v<ver>  — explicit release of one package; the tag must
+#                         match that package's setup.py version, and the
+#                         package must be in PACKAGES below.
+#   * workflow_dispatch — manual release of one package by name.
+#
+# Enabled packages (PACKAGES below): a package is published automatically
+# only after its Trusted Publisher is bound once on pypi.org (owner
+# Asher-1, repository CLI-Anything, workflow publish-cli-hub.yml,
+# environment pypi) — PyPI rejects uploads for unbound projects, so
+# enabling an unbound package would fail the run. Enabling one is two
+# steps: add it to PACKAGES and bind its publisher.
+#
+# Token fallback: if Trusted Publishing is not bound for a package, add
+# PYPI_API_TOKEN to the `pypi` GitHub environment and swap the publish step
+# for twine upload -u __token__ -p "$PYPI_API_TOKEN" dist/*
 
 on:
   push:
     branches: [main]
-    paths:
-      - "cli-hub/**"
-      - "!cli-hub/tests/**"
-      - "!cli-hub/README.md"
+    tags:
+      - "*-v*"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package directory name (e.g. acloudviewer)"
+        required: true
+        type: string
+
+permissions:
+  id-token: write        # PyPI Trusted Publishing (OIDC)
+  contents: read
+
+env:
+  # Packages with a bound Trusted Publisher and a real release history.
+  # Everything else stays off until its publisher is bound (see above).
+  PACKAGES: "acloudviewer cli-hub"
 
 jobs:
-  publish:
-    # Publishing uses PyPI Trusted Publishing (OIDC) — no tokens needed.
-    #
-    # One-time setup (required before this job can succeed):
-    #   1. Register the `cli-hub-py` name on PyPI (https://pypi.org/account/register/)
-    #   2. On the project page: Manage → Publishing → "Add a new pending publisher"
-    #      - GitHub repository owner: Asher-1
-    #      - GitHub repository name: CLI-Anything
-    #      - Workflow name: publish-cli-hub.yml
-    #   3. Approve the pending publisher.
+  plan:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # required for trusted publishing
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: targets
+        env:
+          DISPATCH_PACKAGE: ${{ github.event.inputs.package }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          ref_type = os.environ["GITHUB_REF_TYPE"]
+          ref_name = os.environ["GITHUB_REF_NAME"]
+          dispatch = os.environ.get("DISPATCH_PACKAGE", "").strip()
+          packages = os.environ["PACKAGES"].split()
+          if ref_type == "tag":
+              # Explicit release: the resolver verifies tag vs setup.py.
+              pkg = ref_name.rpartition("-v")[0]
+              if pkg not in packages:
+                  raise SystemExit(
+                      "::error::tag targets " + repr(pkg) + ", which is not in "
+                      "PACKAGES (" + " ".join(packages) + "); bind its Trusted "
+                      "Publisher on pypi.org and add it to PACKAGES first")
+              targets = [{"package": "", "ref": ref_name, "verify": True}]
+          elif dispatch:
+              targets = [{"package": dispatch, "ref": "", "verify": False}]
+          else:
+              # Branch push: check every enabled package against PyPI; the
+              # per-package skip step keeps unchanged versions inert.
+              targets = [{"package": p, "ref": "", "verify": False}
+                         for p in packages]
+          print("matrix=" + json.dumps({"include": targets}))
+          PY
+
+  publish:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    environment: pypi
     steps:
       - uses: actions/checkout@v4
 
@@ -29,29 +106,40 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Check if version already published
-        id: check
+      - name: Resolve package and verify tag/version
+        id: pkg
         run: |
-          VERSION=$(python -c "import re; print(re.search(r'version=\"([^\"]+)\"', open('cli-hub/setup.py').read()).group(1))")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/cli-hub-py/$VERSION/json")
-          if [ "$STATUS" = "200" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Version $VERSION already on PyPI — skipping."
+          if [ "${{ matrix.verify }}" = "true" ]; then
+            python .github/scripts/resolve_publish_package.py \
+              --ref "${{ matrix.ref }}" --output "$GITHUB_OUTPUT"
           else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "Version $VERSION not on PyPI — will publish."
+            python .github/scripts/resolve_publish_package.py \
+              --package "${{ matrix.package }}" --output "$GITHUB_OUTPUT"
           fi
 
-      - name: Build package
-        if: steps.check.outputs.skip == 'false'
+      - name: Skip if version already on PyPI
+        id: check
         run: |
-          pip install build
-          cd cli-hub
-          python -m build
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://pypi.org/pypi/${{ steps.pkg.outputs.name }}/${{ steps.pkg.outputs.version }}/json")
+          if [ "$STATUS" = "200" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Version ${{ steps.pkg.outputs.version }} already on PyPI - skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Version ${{ steps.pkg.outputs.version }} not on PyPI - will publish."
+          fi
 
-      - name: Publish to PyPI
-        if: steps.check.outputs.skip == 'false'
+      - name: Build sdist and wheel
+        if: steps.check.outputs.skip != 'true'
+        working-directory: ${{ steps.pkg.outputs.pkgdir }}
+        run: |
+          python -m pip install build twine
+          python -m build
+          twine check dist/*
+
+      - name: Publish to PyPI (Trusted Publishing)
+        if: steps.check.outputs.skip != 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: cli-hub/dist/
+          packages-dir: ${{ steps.pkg.outputs.pkgdir }}/dist

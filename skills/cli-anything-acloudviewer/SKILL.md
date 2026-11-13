@@ -43,7 +43,55 @@ cli-anything-acloudviewer install auto
 # Optionally install cloudViewer Python package (for Python bindings)
 cli-anything-acloudviewer install wheel
 cli-anything-acloudviewer install wheel --cpu-only
+
+# One-line script alternative (Linux / macOS): harness install + check +
+# MCP client registration; set ACV_SKIP_CLIENTS=1 to skip registration
+curl -LsSf https://raw.githubusercontent.com/Asher-1/CLI-Anything/main/acloudviewer/agent-harness/install.sh | sh
+
+# Register the bundled MCP server with detected AI clients (writes .bak backups)
+cli-anything-acloudviewer install clients --all          # every detected client
+cli-anything-acloudviewer install clients --dry-run      # preview, no writes
+cli-anything-acloudviewer install clients --client codex --client cursor --mode headless
 ```
+
+### Register MCP Clients
+
+`install clients` detects **Claude Code** (`~/.claude.json`), **Claude
+Desktop** (platform `claude_desktop_config.json`), **Codex**
+(`~/.codex/config.toml`), and **Cursor** (`~/.cursor/mcp.json`), then merges
+one `acloudviewer` entry (`cli-anything-acloudviewer-mcp`) into each client's
+own config, saving a `<file>.bak` backup before the first modification.
+`--mode auto|gui|headless` selects the backend written into the config;
+non-TTY callers (agents, CI) must pass `--all` or `--client`. An invalid
+existing config aborts that client instead of being overwritten.
+
+### Source Build, Health Check, and Model Prefetch
+
+```bash
+# Review the plan without cloning/building (Linux apt+pyenv script; macOS/Windows conda)
+cli-anything-acloudviewer install source --dry-run
+cli-anything-acloudviewer install source --branch main --jobs 8 -y
+
+# Health: installation + RPC reachability + AICore registry
+cli-anything-acloudviewer --json doctor [--skip-rpc] [--rpc-url ws://...]
+
+# Which tasks can prefetch models headlessly (binary schema is the truth)
+cli-anything-acloudviewer --json install models --list
+# Prefetch one task through its native DOWNLOAD=1 path
+cli-anything-acloudviewer install models --task ocr --image ./page.png
+```
+
+`install source` mirrors `docs/guides/compiling_doc`: Linux runs the
+repository's idempotent `setup_and_build_acloudviewer_linux.sh` (apt + pyenv,
+no conda), macOS/Windows create the `cloudViewer` conda env from `.ci/*.yml`
+and configure with `-DBUILD_WITH_CONDA=ON`. `install models` judges
+DOWNLOAD support by a zero-side-effect DOWNLOAD parser probe against the
+actual binary (prepare-form commands accept the token; the legacy
+handleSchemaHelp bridge — map-anything, yolo-track, sam3d — rejects it with
+"Unknown argument"), so the verdict follows whatever form the shipped
+binary uses and never relies on a hardcoded task list. Old binaries may
+answer `--list` rows with a "plugin missing or too old" error instead of a
+verdict; that is a version-drift signal, not a DOWNLOAD verdict.
 
 Supported platforms: Ubuntu 18.04-24.04, macOS (ARM64/x86_64), Windows (x86_64).
 Download page: https://asher-1.github.io/ACloudViewer/
@@ -86,7 +134,8 @@ cli-anything-acloudviewer  # REPL (general)
 
 Every AICore plugin (RMBG, DeepLSD, RF-DETR, YOLO, YOLO tracking, DA3,
 FaceDetect, GKD, OCR, SAM3, LightGlue, FreeSplatter, TRELLIS, LingbotMap,
-AnyLabeling, MapAnything, SAM3D) exposes one native batch command. Always ask
+AnyLabeling, MapAnything, SAM3D, OpenPCDet, QuerySplat, VLX-Seek, RAM,
+RelateAnything) exposes one native batch command. Always ask
 the installed binary for the task schema before running it; option names and
 defaults are owned by the plugin, not by this harness.
 
@@ -121,10 +170,15 @@ Installation diagnostics and auto-install commands.
 | Command | Description |
 |---------|-------------|
 | `check` | Check installation status, detect version, suggest fixes |
+| `doctor` | Full health check: installation + RPC connectivity + plugin registry |
 | `install app` | Download and install ACloudViewer desktop binary |
 | `install app --from-file` | Install from a local .run/.dmg/.exe file |
 | `install wheel` | Download and install cloudViewer Python wheel |
 | `install auto` | Auto-detect missing components and install them |
+| `install clients` | Register MCP server with detected AI clients (Claude Code/Desktop, Codex, Cursor) |
+| `install clients --remove` | Remove the acloudviewer entry (symmetric undo, `.bak` backup kept) |
+| `install source` | One-command source build from `docs/guides/compiling_doc` (Linux apt+pyenv script; macOS/Windows conda) |
+| `install models` | Headless AICore model prefetch via native `DOWNLOAD=1`; `--list` shows the prefetch matrix |
 
 ### File I/O
 
@@ -491,4 +545,4 @@ Reported in both text and JSON output (`"version": "3.9.5"`).
 
 ## Version
 
-3.1.0
+3.2.0

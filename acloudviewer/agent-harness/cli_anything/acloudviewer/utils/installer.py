@@ -1028,3 +1028,300 @@ def format_check_report(status: dict) -> str:
                     lines.append(f"    {detail_line}")
 
     return "\n".join(lines)
+
+
+# ── MCP client registration ──────────────────────────────────────────────
+#
+# Registers the bundled MCP server (cli-anything-acloudviewer-mcp) with the
+# AI clients found on this machine: Claude Code, Claude Desktop, Codex, and
+# Cursor. Each client keeps its own config file; this module only merges one
+# named entry into it and saves a `<file>.bak` copy before the first
+# modification. Invalid/unreadable existing configs abort that client with
+# InstallError instead of being overwritten.
+
+MCP_SERVER_KEY = "acloudviewer"
+MCP_COMMAND = "cli-anything-acloudviewer-mcp"
+MCP_MODES = ("auto", "gui", "headless")
+
+
+@dataclass
+class ClientTarget:
+    """One registrable MCP client and how it was detected."""
+    key: str                 # claude-code | claude-desktop | codex | cursor
+    title: str
+    config_path: Path | None # None when the platform cannot provide a path
+    detected: bool
+    detail: str              # why detected / not detected
+
+
+def mcp_server_entry(mode: str = "auto") -> dict:
+    """Build the MCP server entry written into client configs."""
+    if mode not in MCP_MODES:
+        raise InstallError(f"Invalid MCP mode: {mode} (expected one of {MCP_MODES})")
+    return {
+        "type": "stdio",
+        "command": MCP_COMMAND,
+        "args": ["--mode", mode],
+    }
+
+
+def _claude_desktop_config_path() -> Path | None:
+    """claude_desktop_config.json location per platform."""
+    if IS_WINDOWS:
+        appdata = os.environ.get("APPDATA")
+        if not appdata:
+            return None
+        return Path(appdata) / "Claude" / "claude_desktop_config.json"
+    if IS_MACOS:
+        return Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    return Path.home() / ".config" / "Claude" / "claude_desktop_config.json"
+
+
+def detect_mcp_clients() -> list[ClientTarget]:
+    """Detect AI clients that can consume the bundled MCP server."""
+    home = Path.home()
+    clients: list[ClientTarget] = []
+
+    claude_bin = shutil.which("claude")
+    claude_cfg = home / ".claude.json"
+    claude_detected = bool(claude_bin or claude_cfg.exists() or (home / ".claude").is_dir())
+    claude_detail = f"command: {claude_bin}" if claude_bin else (
+        "config found" if claude_cfg.exists() else "not detected")
+    clients.append(ClientTarget(
+        key="claude-code", title="Claude Code",
+        config_path=claude_cfg, detected=claude_detected, detail=claude_detail,
+    ))
+
+    desktop_cfg = _claude_desktop_config_path()
+    desktop_detected = bool(desktop_cfg and (desktop_cfg.exists() or desktop_cfg.parent.is_dir()))
+    desktop_detail = "config dir found" if desktop_detected else "not detected"
+    clients.append(ClientTarget(
+        key="claude-desktop", title="Claude Desktop",
+        config_path=desktop_cfg, detected=desktop_detected, detail=desktop_detail,
+    ))
+
+    codex_bin = shutil.which("codex")
+    codex_cfg = home / ".codex" / "config.toml"
+    codex_detected = bool(codex_bin or codex_cfg.parent.is_dir())
+    codex_detail = f"command: {codex_bin}" if codex_bin else (
+        "config dir found" if codex_cfg.parent.is_dir() else "not detected")
+    clients.append(ClientTarget(
+        key="codex", title="Codex CLI",
+        config_path=codex_cfg, detected=codex_detected, detail=codex_detail,
+    ))
+
+    cursor_bin = shutil.which("cursor")
+    cursor_cfg = home / ".cursor" / "mcp.json"
+    cursor_detected = bool(cursor_bin or cursor_cfg.parent.is_dir())
+    cursor_detail = f"command: {cursor_bin}" if cursor_bin else (
+        "config dir found" if cursor_cfg.parent.is_dir() else "not detected")
+    clients.append(ClientTarget(
+        key="cursor", title="Cursor",
+        config_path=cursor_cfg, detected=cursor_detected, detail=cursor_detail,
+    ))
+
+    return clients
+
+
+def _backup_file(path: Path) -> Path:
+    backup = path.with_name(path.name + ".bak")
+    shutil.copy2(path, backup)
+    return backup
+
+
+def _upsert_json_mcp_server(path: Path, entry: dict, server_key: str = MCP_SERVER_KEY) -> dict:
+    """Merge the MCP server entry into a JSON client config.
+
+    Returns {"path", "backup", "action"} with action created|updated|unchanged.
+    Raises InstallError for an existing non-JSON or non-object config so user
+    data is never destroyed.
+    """
+    if path.exists():
+        try:
+            config = json.loads(path.read_text(encoding="utf-8") or "{}")
+        except (json.JSONDecodeError, OSError) as e:
+            raise InstallError(
+                f"{path} is not valid JSON ({e}); fix or remove it, then re-run"
+            ) from e
+        if not isinstance(config, dict):
+            raise InstallError(f"{path} does not contain a JSON object")
+
+        servers = config.get("mcpServers")
+        if not isinstance(servers, dict):
+            servers = {}
+        if servers.get(server_key) == entry:
+            return {"path": str(path), "backup": None, "action": "unchanged"}
+
+        backup = _backup_file(path)
+        servers[server_key] = dict(entry)
+        config["mcpServers"] = servers
+        action = "updated"
+    else:
+        config = {"mcpServers": {server_key: dict(entry)}}
+        backup = None
+        action = "created"
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    return {"path": str(path), "backup": str(backup) if backup else None, "action": action}
+
+
+def _upsert_toml_mcp_server(path: Path, mode: str, server_key: str = MCP_SERVER_KEY) -> dict:
+    """Merge the MCP server entry into a TOML client config (Codex).
+
+    Line-based section replace/append: the `[mcp_servers.<key>]` section runs
+    from its header to the next `[` header or EOF. Text outside that section
+    is preserved byte-for-byte.
+    """
+    header = f"[mcp_servers.{server_key}]"
+    block = [header, f'command = "{MCP_COMMAND}"', f'args = ["--mode", "{mode}"]']
+    block_text = "\n".join(block)
+
+    if path.exists():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        start = next(
+            (i for i, ln in enumerate(lines) if ln.strip() == header), None,
+        )
+        if start is not None:
+            end = len(lines)
+            for j in range(start + 1, len(lines)):
+                if lines[j].startswith("["):
+                    end = j
+                    break
+            if "\n".join(lines[start:end]).strip() == block_text:
+                return {"path": str(path), "backup": None, "action": "unchanged"}
+            backup = _backup_file(path)
+            lines[start:end] = block
+            action = "updated"
+        else:
+            backup = _backup_file(path)
+            if lines and lines[-1].strip():
+                lines.append("")
+            lines.extend(block)
+            action = "updated"
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return {"path": str(path), "backup": str(backup), "action": action}
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(block_text + "\n", encoding="utf-8")
+    return {"path": str(path), "backup": None, "action": "created"}
+
+
+def register_mcp_client(target: ClientTarget, mode: str = "auto", dry_run: bool = False) -> dict:
+    """Register the MCP server entry with one client target."""
+    if dry_run:
+        exists = bool(target.config_path and target.config_path.exists())
+        return {
+            "client": target.key, "title": target.title,
+            "config": str(target.config_path) if target.config_path else None,
+            "action": "dry-run", "exists": exists,
+            "entry": mcp_server_entry(mode),
+        }
+    if target.config_path is None:
+        return {
+            "client": target.key, "title": target.title, "config": None,
+            "action": "skipped",
+            "message": "config path unavailable on this platform",
+        }
+    if target.key == "codex":
+        result = _upsert_toml_mcp_server(target.config_path, mode)
+    else:
+        result = _upsert_json_mcp_server(target.config_path, mcp_server_entry(mode))
+    result["client"] = target.key
+    result["title"] = target.title
+    return result
+
+
+def _remove_json_mcp_server(path: Path, server_key: str = MCP_SERVER_KEY) -> dict:
+    """Remove the MCP server entry from a JSON client config.
+
+    Returns {"path", "backup", "action"} with action removed|absent. The
+    entry is only deleted when it looks like ours (command matches), so a
+    same-named entry pointing elsewhere is reported instead of destroyed.
+    """
+    config = json.loads(path.read_text(encoding="utf-8") or "{}")
+    servers = config.get("mcpServers") if isinstance(config.get("mcpServers"), dict) else {}
+    entry = servers.get(server_key)
+    if entry is None:
+        return {"path": str(path), "backup": None, "action": "absent"}
+    command = entry.get("command") if isinstance(entry, dict) else None
+    if command and command != MCP_COMMAND:
+        return {"path": str(path), "backup": None, "action": "conflict",
+                "message": f"'{server_key}' points at '{command}', not "
+                           f"'{MCP_COMMAND}'; remove it manually"}
+    backup = _backup_file(path)
+    del servers[server_key]
+    path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    return {"path": str(path), "backup": str(backup), "action": "removed"}
+
+
+def _remove_toml_mcp_server(path: Path, server_key: str = MCP_SERVER_KEY) -> dict:
+    """Remove the MCP server section from a TOML client config (Codex)."""
+    header = f"[mcp_servers.{server_key}]"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    start = next((i for i, ln in enumerate(lines) if ln.strip() == header), None)
+    if start is None:
+        return {"path": str(path), "backup": None, "action": "absent"}
+    section_text = "\n".join(lines[start + 1:next(
+        (j for j in range(start + 1, len(lines)) if lines[j].startswith("[")),
+        len(lines))]).strip()
+    if f'command = "{MCP_COMMAND}"' not in section_text:
+        return {"path": str(path), "backup": None, "action": "conflict",
+                "message": f"'{server_key}' does not point at '{MCP_COMMAND}'; "
+                           "remove it manually"}
+    backup = _backup_file(path)
+    end = next((j for j in range(start + 1, len(lines))
+                if lines[j].startswith("[")), len(lines))
+    del lines[start:end]
+    # Drop a dangling blank separator left behind at the tail.
+    while lines and not lines[-1].strip() and start == len(lines):
+        lines.pop()
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    return {"path": str(path), "backup": str(backup), "action": "removed"}
+
+
+def remove_mcp_client(target: ClientTarget, dry_run: bool = False) -> dict:
+    """Remove the MCP server entry from one client target (symmetric undo)."""
+    if dry_run:
+        return {
+            "client": target.key, "title": target.title,
+            "config": str(target.config_path) if target.config_path else None,
+            "action": "dry-run",
+            "exists": bool(target.config_path and target.config_path.exists()),
+        }
+    if target.config_path is None or not target.config_path.exists():
+        return {
+            "client": target.key, "title": target.title,
+            "config": str(target.config_path) if target.config_path else None,
+            "action": "absent",
+        }
+    if target.key == "codex":
+        result = _remove_toml_mcp_server(target.config_path)
+    else:
+        result = _remove_json_mcp_server(target.config_path)
+    result["client"] = target.key
+    result["title"] = target.title
+    return result
+
+
+def format_client_report(
+    targets: list[ClientTarget],
+    results: list[dict] | None = None,
+) -> str:
+    """Format client detection and registration results for human output."""
+    lines: list[str] = []
+    lines.append("MCP clients:")
+    for t in targets:
+        mark = "\u2705" if t.detected else "\u26a0\ufe0f"
+        lines.append(f"  {mark} {t.title} [{t.key}] — {t.detail}")
+        lines.append(f"    config: {t.config_path or 'N/A'}")
+    if results:
+        lines.append("")
+        lines.append("Registration:")
+        for r in results:
+            lines.append(f"  \u2022 {r['title']}: {r['action']} → {r.get('config')}")
+            if r.get("backup"):
+                lines.append(f"    backup: {r['backup']}")
+            if r.get("message"):
+                lines.append(f"    note:   {r['message']}")
+    return "\n".join(lines)

@@ -18,6 +18,7 @@ import json
 import os
 import shlex
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Optional
 
@@ -32,14 +33,24 @@ from cli_anything.acloudviewer.utils.acloudviewer_backend import (
     ACloudViewerBackend, BackendError,
     POINT_CLOUD_FORMATS, MESH_FORMATS, IMAGE_FORMATS,
 )
+from cli_anything.acloudviewer.core.ai_registry import list_ai_commands
 from cli_anything.acloudviewer.utils.installer import (
     detect_platform, fetch_releases, get_latest_release,
     find_matching_wheel, find_matching_app,
     install_wheel, install_app,
     check_installation, format_check_report,
+    detect_mcp_clients, format_client_report, register_mcp_client,
+    remove_mcp_client,
     InstallError, HOMEPAGE,
 )
+from cli_anything.acloudviewer.utils.source_builder import (
+    REPO_URL as SOURCE_REPO_URL,
+    DEFAULT_SOURCE_DIR, DEFAULT_PREFIX, SourceBuildError,
+    plan_source_build, run_source_build, verify_build,
+)
 from cli_anything.acloudviewer.utils.repl_skin import ReplSkin
+
+CLI_VERSION = "3.2.0"
 
 # ── Global state ─────────────────────────────────────────────────────────
 
@@ -255,7 +266,7 @@ def cli(ctx, use_json, mode, rpc_url):
     _backend = ACloudViewerBackend(mode=mode, rpc_url=rpc_url)
 
     if ctx.invoked_subcommand is None:
-        skin = ReplSkin("acloudviewer", version="3.1.0")
+        skin = ReplSkin("acloudviewer", version=CLI_VERSION)
         skin.info(f"Mode: {_backend.mode}")
         if _backend.mode == "gui":
             skin.info(f"RPC: {rpc_url}")
@@ -305,6 +316,87 @@ def cmd_check():
         click.echo(format_check_report(status))
 
 
+def _probe_rpc(url: str, timeout: float) -> dict:
+    """One RPC health probe, bounded by a wall-clock timeout."""
+    from cli_anything.acloudviewer.utils.rpc_client import ACloudViewerRPCClient
+
+    def _attempt() -> dict:
+        client = ACloudViewerRPCClient(url)
+        client.connect()
+        try:
+            pong = client.ping()
+            methods = client.list_methods()
+            return {"reachable": True, "ping": pong,
+                    "methods": len(methods) if isinstance(methods, list) else None}
+        finally:
+            client.close()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_attempt)
+        try:
+            return future.result(timeout=timeout)
+        except Exception as e:                    # noqa: BLE001 - reported, not raised
+            return {"reachable": False, "error": f"{type(e).__name__}: {e}"[:200]}
+
+
+@cli.command("doctor")
+@click.option("--rpc-url", default=None,
+              help="RPC endpoint (default: ws://127.0.0.1:6001)")
+@click.option("--rpc-timeout", type=float, default=5.0, show_default=True,
+              help="Wall-clock timeout for the RPC probe, seconds")
+@click.option("--skip-rpc", is_flag=True,
+              help="Skip the GUI RPC health checks")
+@handle_error
+def cmd_doctor(rpc_url, rpc_timeout, skip_rpc):
+    """Full health check: installation + RPC connectivity + plugin registry.
+
+    Extends `check` (installation only) with the GUI-side facts: whether the
+    JSON-RPC plugin is listening on 6001, and how many AICore batch tasks the
+    registry knows. Exit payload is JSON-ready for agents.
+    """
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+    status = check_installation()
+    registry = list_ai_commands()
+    rpc_url = rpc_url or "ws://127.0.0.1:6001"
+
+    if skip_rpc:
+        rpc_result: dict = {"reachable": None, "skipped": True}
+    else:
+        rpc_result = _probe_rpc(rpc_url, rpc_timeout)
+
+    doctor = {
+        "installation": {
+            "binary": status["binary"],
+            "python_package": status["python_package"],
+            "ready": status["ready"],
+        },
+        "rpc": {"url": rpc_url, **rpc_result},
+        "ai_registry": {"tasks": len(registry),
+                        "commands": sorted(i["command"] for i in registry)},
+        "verdict": ("healthy" if (status["ready"] and
+                                  (rpc_result.get("reachable") or
+                                   rpc_result.get("reachable") is None))
+                    else "binary-ready (RPC unreachable - start ACloudViewer "
+                         "with the qJSonRPCPlugin for GUI control)"
+                    if status["ready"]
+                    else "not installed"),
+    }
+    if _json_output:
+        output(doctor)
+        return
+    click.echo(format_check_report(status))
+    click.echo("")
+    click.echo(f"RPC ({rpc_url}): "
+               + ("reachable" if rpc_result.get("reachable") else
+                  "skipped" if rpc_result.get("reachable") is None
+                  else f"unreachable ({rpc_result.get('error')})"))
+    if rpc_result.get("reachable"):
+        click.echo(f"  ping:    {rpc_result.get('ping')}")
+        click.echo(f"  methods: {rpc_result.get('methods')}")
+    click.echo(f"AI registry: {len(registry)} batch tasks")
+    click.echo(f"Verdict: {doctor['verdict']}")
+
+
 @cli.group("install")
 def install_group():
     """Install ACloudViewer components (binary app or Python wheel)."""
@@ -319,7 +411,7 @@ def install_group():
 @handle_error
 def install_wheel_cmd(channel, cpu_only, pip_args):
     """Download and install the cloudViewer Python wheel."""
-    skin = ReplSkin("acloudviewer", version="3.1.0")
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
     plat = detect_platform()
 
     skin.info(f"Platform: {plat.os_id} {plat.os_version}, "
@@ -364,7 +456,7 @@ def install_wheel_cmd(channel, cpu_only, pip_args):
 @handle_error
 def install_app_cmd(channel, cpu_only, install_dir, local_file):
     """Download and install the ACloudViewer desktop application binary."""
-    skin = ReplSkin("acloudviewer", version="3.1.0")
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
 
     if local_file:
         from cli_anything.acloudviewer.utils.installer import install_app_from_file
@@ -424,7 +516,7 @@ def install_app_cmd(channel, cpu_only, install_dir, local_file):
 @handle_error
 def install_auto_cmd(channel, cpu_only):
     """Auto-detect missing components and install them."""
-    skin = ReplSkin("acloudviewer", version="3.1.0")
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
     plat = detect_platform()
     status = check_installation()
 
@@ -466,6 +558,289 @@ def install_auto_cmd(channel, cpu_only):
                 skin.error(f"Wheel install failed: {e}")
         else:
             skin.warning(f"No matching wheel found. Visit {HOMEPAGE}")
+
+
+@install_group.command("clients")
+@click.option("--client", "clients",
+              type=click.Choice(["claude-code", "claude-desktop", "codex", "cursor"]),
+              multiple=True, help="Register only these clients (repeatable)")
+@click.option("--all", "register_all", is_flag=True,
+              help="Register every detected client (required for non-interactive shells)")
+@click.option("--remove", "remove_entry", is_flag=True,
+              help="Remove the acloudviewer entry instead of adding it (symmetric undo)")
+@click.option("--mode", type=click.Choice(["auto", "gui", "headless"]),
+              default="auto", show_default=True,
+              help="Backend mode written into each client config")
+@click.option("--dry-run", is_flag=True,
+              help="Show what would be written without modifying files")
+@handle_error
+def install_clients_cmd(clients, register_all, remove_entry, mode, dry_run):
+    """Register (or with --remove, unregister) the MCP server with detected AI clients.
+
+    Merges one `acloudviewer` entry into each client's own config file after
+    saving a `<file>.bak` backup next to it; --remove deletes that same entry
+    (only when it points at this MCP server) with the same backup. Non-
+    interactive callers (agents, CI) must pass --all or --client.
+    """
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+    targets = detect_mcp_clients()
+
+    if clients:
+        by_key = {t.key: t for t in targets}
+        selected = [by_key[k] for k in clients]
+        for t in selected:
+            if not t.detected:
+                skin.warning(f"{t.title} not detected ({t.detail}); processing anyway")
+    elif register_all:
+        selected = [t for t in targets if t.detected and t.config_path is not None]
+    elif sys.stdin.isatty() and not _json_output:
+        selected = []
+        verb = "Remove MCP server entry from" if remove_entry else \
+            "Register MCP server with"
+        for t in targets:
+            if t.config_path is None:
+                continue
+            state = "detected" if t.detected else "not detected"
+            if click.confirm(f"{verb} {t.title} ({state})?", default=False):
+                selected.append(t)
+    else:
+        skin.error(
+            "Non-interactive shell: pass --all to process every detected "
+            "client, or --client <name> for specific ones."
+        )
+        return
+
+    if not selected:
+        skin.info("No MCP client configs were modified.")
+        output({"mode": mode, "remove": remove_entry, "dry_run": dry_run,
+                "clients": []})
+        return
+
+    if remove_entry:
+        results = [remove_mcp_client(t, dry_run=dry_run) for t in selected]
+    else:
+        results = [register_mcp_client(t, mode=mode, dry_run=dry_run)
+                   for t in selected]
+    payload = {"mode": mode, "remove": remove_entry, "dry_run": dry_run,
+               "clients": results}
+    if _json_output:
+        output(payload)
+    else:
+        click.echo(format_client_report(targets, results))
+
+
+@install_group.command("source")
+@click.option("--dir", "source_dir", type=click.Path(file_okay=False),
+              default=None,
+              help="Existing clone or checkout target "
+                   "(default: ~/ACloudViewer-src)")
+@click.option("--repo", default=SOURCE_REPO_URL, show_default=True,
+              help="ACloudViewer git repository to clone")
+@click.option("--branch", default=None,
+              help="Branch or tag to clone (default: repository default)")
+@click.option("--prefix", type=click.Path(file_okay=False), default=None,
+              help="CMAKE_INSTALL_PREFIX (default: ~/install)")
+@click.option("--jobs", "-j", type=int, default=None,
+              help="Parallel build jobs (default: capped at 12)")
+@click.option("--cpu-only", is_flag=True,
+              help="Disable CUDA module (Windows explicit; the Linux script "
+                   "auto-detects CUDA anyway)")
+@click.option("--skip-env/--with-env", default=False,
+              help="Skip conda env creation / SDK setup steps "
+                   "(Linux: the setup script is idempotent and self-skips)")
+@click.option("--skip-build", is_flag=True,
+              help="Configure only (Linux: passed through to the setup script)")
+@click.option("--dry-run", is_flag=True,
+              help="Print the full plan without cloning or building")
+@click.option("--yes", "-y", is_flag=True,
+              help="Non-interactive: proceed without confirmation")
+@handle_error
+def install_source_cmd(source_dir, repo, branch, prefix, jobs, cpu_only,
+                       skip_env, skip_build, dry_run, yes):
+    """One-command source build from docs/guides/compiling_doc.
+
+    Linux uses apt + pyenv via the repository's idempotent one-click script;
+    macOS and Windows use conda environments from .ci/*.yml. This is a long
+    (hours) operation - run --dry-run first to review the plan.
+    """
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+    target = Path(source_dir).expanduser() if source_dir else DEFAULT_SOURCE_DIR
+
+    if not target.exists() and not dry_run:
+        skin.info(f"Cloning {repo} → {target} ...")
+        clone_argv = ["git", "clone", "--depth", "1", repo, str(target)]
+        if branch:
+            clone_argv = ["git", "clone", "--depth", "1", "--branch",
+                          branch, repo, str(target)]
+        completed = subprocess.run(clone_argv)
+        if completed.returncode != 0:
+            skin.error(f"git clone failed (exit {completed.returncode})")
+            return
+    elif target.exists() and not (target / "CMakeLists.txt").is_file() and not dry_run:
+        skin.error(f"{target} exists but is not the ACloudViewer source tree "
+                   "(no CMakeLists.txt); pass --dir explicitly.")
+        return
+
+    try:
+        plan = plan_source_build(
+            source_dir=target,
+            prefix=Path(prefix).expanduser() if prefix else DEFAULT_PREFIX,
+            jobs=jobs, cpu_only=cpu_only, skip_env=skip_env,
+            skip_build=skip_build)
+    except SourceBuildError as e:
+        skin.error(str(e))
+        return
+
+    if dry_run:
+        if _json_output:
+            output({"platform": plan.platform,
+                    "steps": [{"name": s.name, "argv": s.argv,
+                               "optional": s.optional}
+                              for s in plan.steps],
+                    "notes": plan.notes})
+        else:
+            click.echo(plan.describe())
+            click.echo("\n(dry-run) nothing was cloned, built, or installed.")
+        return
+
+    if not yes and sys.stdin.isatty() and not _json_output:
+        click.echo(plan.describe())
+        if not click.confirm(f"\nProceed with the {plan.platform} source "
+                             "build (hours, GB of disk)?", default=False):
+            skin.info("Aborted.")
+            return
+
+    skin.info(f"Starting {plan.platform} source build ({len(plan.steps)} "
+              "steps) ...")
+    try:
+        results = run_source_build(plan, echo=click.echo)
+    except SourceBuildError as e:
+        skin.error(str(e))
+        return
+
+    binary = verify_build(plan)
+    payload = {"platform": plan.platform, "source_dir": str(plan.source_dir),
+               "prefix": str(plan.prefix), "steps": results,
+               "binary": binary}
+    if binary:
+        skin.info(f"Built binary: {binary}")
+        skin.info(f"  export ACV_BINARY={binary}")
+    else:
+        skin.warning("Build finished, but no ACloudViewer binary was found "
+                     "in the build tree or prefix; check the step output.")
+    output(payload)
+
+
+@install_group.command("models")
+@click.option("--task", default=None,
+              help="Prefetch models for one task through its native batch "
+                   "command (injects DOWNLOAD=1)")
+@click.option("--list", "list_matrix", is_flag=True,
+              help="Show which tasks support headless prefetch "
+                   "(binary schema is the source of truth)")
+@click.option("--image", "images", multiple=True, type=click.Path(exists=True),
+              help="Minimal input image (repeatable; same as ai run)")
+@click.option("--input-dir", type=click.Path(exists=True, file_okay=False))
+@click.option("--input-list", type=click.Path(exists=True, dir_okay=False))
+@click.option("--model")
+@click.option("--device")
+@click.option("--threads", type=int)
+@click.option("--out-dir", type=click.Path(file_okay=False), default=None,
+              help="Model cache/output dir "
+                   "(default: ~/cloudViewer_data/extract/<task>)")
+@click.option("--option", "extra_options", multiple=True,
+              help="Additional task option KEY=VALUE (repeatable)")
+@click.option("--timeout", type=int, default=3600, show_default=True)
+@handle_error
+def install_models_cmd(task, list_matrix, images, input_dir, input_list,
+                       model, device, threads, out_dir, extra_options, timeout):
+    """Headless AICore model prefetch (no GUI needed).
+
+    The binary catalog owns model names, URLs, and SHA-256 digests; this
+    command only drives the plugin's native DOWNLOAD=1 path. Support is
+    judged by a zero-side-effect DOWNLOAD parser probe against the actual
+    binary, not a hardcoded list: ecvAICoreBatch::prepare() commands accept
+    the token (the fetch runs through the shared ecvModelDownloader), while
+    the handleSchemaHelp legacy bridge (map-anything, yolo-track, sam3d)
+    rejects it with "Unknown argument". The probe therefore stays truthful
+    even if a command migrates between the two forms. Tasks that reject
+    DOWNLOAD must prefetch through the GUI dialog.
+    """
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+    backend = get_backend()
+
+    if list_matrix or not task:
+        if not list_matrix:
+            skin.error("Pass --task <name> (see ai list) or --list for the "
+                       "headless prefetch matrix.")
+            return
+        rows = []
+        for item in list_ai_commands():
+            name = item["name"]
+            try:
+                supported = _probe_download_support(backend, name)
+                rows.append({"task": name, "command": item["command"],
+                             "headless_prefetch": supported})
+            except BackendError as e:
+                rows.append({"task": name, "command": item["command"],
+                             "headless_prefetch": None,
+                             "error": str(e)[-200:]})
+        output(rows)
+        return
+
+    try:
+        supported = _probe_download_support(backend, task)
+    except BackendError as e:
+        skin.error(str(e))
+        return
+    if not supported:
+        skin.error(
+            f"Task '{task}' rejects DOWNLOAD in its headless parser (legacy "
+            "handleSchemaHelp bridge command); prefetch it through the GUI "
+            "dialog (ecvModelDownloader) or place catalog GGUFs under "
+            "~/cloudViewer_data/extract/ manually.")
+        return
+
+    options = _parse_key_values(extra_options)
+    if images:
+        options["IMAGE"] = list(images)
+    for key, value in (("INPUT_DIR", input_dir), ("INPUT_LIST", input_list),
+                       ("MODEL", model), ("DEVICE", device),
+                       ("THREADS", threads)):
+        if value is not None:
+            options[key] = value
+    options["DOWNLOAD"] = True
+    options.setdefault("OUT_DIR", out_dir or
+                       str(Path.home() / "cloudViewer_data" / "extract" / task))
+    result = backend.ai_run(task, options, timeout=timeout)
+    get_session().snapshot(f"install models {task}")
+    output(result)
+
+
+def _probe_download_support(backend: "ACloudViewerBackend", task: str,
+                            timeout: int = 60) -> bool:
+    """Probe whether the binary's parser consumes DOWNLOAD for a task.
+
+    A zero-side-effect `DOWNLOAD 1` probe (no inputs, so every command fails
+    before model load): ecvAICoreBatch::prepare() commands accept the token
+    and fail later on the missing OUT_DIR, while legacy handleSchemaHelp
+    bridge commands reject it with "Unknown argument". The verdict follows
+    whichever form the shipped binary uses, so migrating a command between
+    the two forms flips it automatically — no hardcoded task list to drift.
+    """
+    try:
+        backend.ai_run(task, {"DOWNLOAD": True}, timeout=timeout)
+        return True  # defensive: never observed (OUT_DIR is required)
+    except BackendError as exc:
+        message = str(exc)
+        if "Unknown argument" in message:
+            return False
+        if "does not provide" in message:
+            # The binary lacks the task itself (old build); surface that.
+            raise
+        # Missing-argument / validation failures mean the parser accepted
+        # DOWNLOAD and got further — the capability is present.
+        return True
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -519,7 +894,7 @@ def cmd_batch_convert(input_dir, output_dir, output_format, filter_ext):
 @handle_error
 def cmd_formats():
     """List all supported file formats."""
-    skin = ReplSkin("acloudviewer", version="3.1.0")
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
     if _json_output:
         output(ACloudViewerBackend.supported_formats())
     else:
@@ -3782,7 +4157,7 @@ def repl(project_path):
     global _repl_mode
     _repl_mode = True
 
-    skin = ReplSkin("acloudviewer", version="3.1.0")
+    skin = ReplSkin("acloudviewer", version=CLI_VERSION)
 
     if project_path:
         sess = get_session()
