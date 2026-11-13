@@ -96,6 +96,11 @@ class ReplSkin:
     across all CLI harnesses built with the cli-anything methodology.
     """
 
+    # Process-wide flag: when the CLI runs with --json, stdout is a machine
+    # channel carrying exactly one JSON document. Status messages routed
+    # through _emit then go to stderr so they never corrupt that channel.
+    json_mode: bool = False
+
     def __init__(self, software: str, version: str = "1.0.0",
                  history_file: str | None = None, skill_path: str | None = None):
         """Initialize the REPL skin.
@@ -151,6 +156,10 @@ class ReplSkin:
         if not self._color:
             return text
         return f"{code}{text}{_RESET}"
+
+    def _emit(self, text: str) -> None:
+        """Route a status line: stdout normally, stderr in --json mode."""
+        print(text, file=sys.stderr if self.json_mode else sys.stdout)
 
     # ── Banner ────────────────────────────────────────────────────────
 
@@ -272,7 +281,7 @@ class ReplSkin:
     def success(self, message: str):
         """Print a success message with green checkmark."""
         icon = self._c(_GREEN + _BOLD, "✓")
-        print(f"  {icon} {self._c(_GREEN, message)}")
+        self._emit(f"  {icon} {self._c(_GREEN, message)}")
 
     def error(self, message: str):
         """Print an error message with red cross."""
@@ -282,16 +291,16 @@ class ReplSkin:
     def warning(self, message: str):
         """Print a warning message with yellow triangle."""
         icon = self._c(_YELLOW + _BOLD, "⚠")
-        print(f"  {icon} {self._c(_YELLOW, message)}")
+        self._emit(f"  {icon} {self._c(_YELLOW, message)}")
 
     def info(self, message: str):
         """Print an info message with blue dot."""
         icon = self._c(_BLUE, "●")
-        print(f"  {icon} {self._c(_LIGHT_GRAY, message)}")
+        self._emit(f"  {icon} {self._c(_LIGHT_GRAY, message)}")
 
     def hint(self, message: str):
         """Print a subtle hint message."""
-        print(f"  {self._c(_DARK_GRAY, message)}")
+        self._emit(f"  {self._c(_DARK_GRAY, message)}")
 
     def section(self, title: str):
         """Print a section header."""

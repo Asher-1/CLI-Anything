@@ -646,10 +646,21 @@ from cli_anything.acloudviewer.utils.installer import (
 
 _HARNESS_ROOT = str(Path(__file__).resolve().parent.parent.parent.parent)
 
+# A bare HOME with no client config dirs: forces every --client target
+# into the "not detected" branch, i.e. the exact CI-runner scenario.
+_EMPTY_HOME = tempfile.mkdtemp(prefix="acv-test-bare-home-")
 
-def _run_cli(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+
+def _run_cli(args: list[str], timeout: int = 60,
+             env_home: str | None = None) -> subprocess.CompletedProcess:
     env = os.environ.copy()
     env["PYTHONPATH"] = _HARNESS_ROOT + os.pathsep + env.get("PYTHONPATH", "")
+    if env_home is not None:
+        # Reproduce a bare CI runner: no client config dirs under HOME and
+        # no client binaries on PATH, so every --client target is
+        # "not detected" (the skin.warning path).
+        env["HOME"] = env_home
+        env["PATH"] = ""
     return subprocess.run(
         [sys.executable, "-m", "cli_anything.acloudviewer"] + args,
         capture_output=True, text=True, timeout=timeout, env=env)
@@ -781,8 +792,12 @@ class TestInstallClientsCLI:
     """CLI wiring: dry-run must not touch the filesystem."""
 
     def test_dry_run_json(self):
-        r = _run_cli(["--json", "install", "clients", "--dry-run", "--client", "cursor"])
+        r = _run_cli(["--json", "install", "clients", "--dry-run", "--client", "cursor"],
+                     env_home=_EMPTY_HOME)
         assert r.returncode == 0, r.stdout + r.stderr
+        # Regression (CI runners): the "not detected" warning must go to
+        # stderr; stdout carries exactly the JSON document.
+        assert "not detected" in r.stderr, r.stderr[:300]
         try:
             data = json.loads(r.stdout)
         except json.JSONDecodeError as exc:
@@ -998,13 +1013,17 @@ class TestSourceBuilderRun:
             run_source_build(plan2, runner=runner, echo=lambda *_: None)
 
     def test_verify_build_finds_binary(self, tmp_path):
+        # _find_binary_in_dir matches the *current* platform's layout
+        # (Windows looks for .exe/.bat; see IS_WINDOWS in installer.py).
+        binary_name = "ACloudViewer.exe" if sys.platform == "win32" \
+            else "ACloudViewer"
         build_dir = tmp_path / "build_app" / "bin"
         build_dir.mkdir(parents=True)
-        (build_dir / "ACloudViewer").write_text("#!/bin/sh\n")
+        (build_dir / binary_name).write_text("#!/bin/sh\n")
         plan = BuildPlan(platform="linux", source_dir=tmp_path,
                          build_dir=tmp_path / "build_app",
                          prefix=tmp_path / "install")
-        assert verify_build(plan) == str(build_dir / "ACloudViewer")
+        assert verify_build(plan) == str(build_dir / binary_name)
 
 
 # ── doctor / install models helpers ──────────────────────────────────────
@@ -1088,8 +1107,9 @@ class TestNewCLICommands:
 
     def test_install_clients_remove_dry_run(self):
         r = _run_cli(["--json", "install", "clients", "--remove", "--dry-run",
-                      "--client", "cursor"])
+                      "--client", "cursor"], env_home=_EMPTY_HOME)
         assert r.returncode == 0, r.stdout + r.stderr
+        assert "not detected" in r.stderr, r.stderr[:300]
         try:
             data = json.loads(r.stdout)
         except json.JSONDecodeError as exc:

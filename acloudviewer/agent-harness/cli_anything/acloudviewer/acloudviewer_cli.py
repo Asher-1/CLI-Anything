@@ -263,6 +263,7 @@ def cli(ctx, use_json, mode, rpc_url):
     """
     global _json_output, _backend
     _json_output = use_json
+    ReplSkin.json_mode = use_json
     _backend = ACloudViewerBackend(mode=mode, rpc_url=rpc_url)
 
     if ctx.invoked_subcommand is None:
@@ -593,7 +594,7 @@ def install_clients_cmd(clients, register_all, remove_entry, mode, dry_run):
                 skin.warning(f"{t.title} not detected ({t.detail}); processing anyway")
     elif register_all:
         selected = [t for t in targets if t.detected and t.config_path is not None]
-    elif sys.stdin.isatty() and not _json_output:
+    elif sys.stdin.isatty() and sys.stdout.isatty() and not _json_output:
         selected = []
         verb = "Remove MCP server entry from" if remove_entry else \
             "Register MCP server with"
