@@ -22,12 +22,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      # macos-13 (x64) instead of macos-latest (arm64): on 2026-11-13 the
-      # arm64 pool left four queued macOS jobs stuck with zero executed
-      # steps for ~22 minutes before the system recycled them (cancelled,
-      # no logs), while ubuntu/windows and the x64 macOS pool kept serving.
+      # macOS label history on 2026-11-13/14, both annotation-verified:
+      #  * macos-13 is retired by GitHub — jobs target it forever queue and
+      #    are later recycled with the check annotation
+      #    "repository invocation blocked" (two runs lost ~6-7h this way).
+      #  * macos-latest (arm64) intermittently hits real capacity limits
+      #    (annotation: "Due to capacity constraints, jobs targeting macOS
+      #    arm64 runners ..."); the pool does serve when load drops — the
+      #    same matrix went success on arm64 earlier the same day. The suite
+      #    is pure Python (architecture-independent), so arm64 is fine and
+      #    a queued-out run converges on rerun.
       matrix:
-        os: [ubuntu-latest, macos-13, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.12"]
     defaults:
       run:
