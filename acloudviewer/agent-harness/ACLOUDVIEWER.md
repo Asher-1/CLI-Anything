@@ -61,6 +61,23 @@ When a bare binary (not `.sh`/`.bat`) is found, the backend automatically
 sets platform-appropriate library paths (`LD_LIBRARY_PATH` on Linux,
 `DYLD_LIBRARY_PATH` on macOS, `PATH` on Windows) and `PYTHONPATH`.
 
+### Release Channels
+
+Two independent install paths expose the same stable / preview split:
+
+| Channel | Harness (`install-app` / `install-auto`) | npm bootstrap | Source |
+|---------|------------------------------------------|---------------|--------|
+| **Stable** | `--channel stable` (default) | `npm i -g @asher-1/acloudviewer` (`latest`) | Latest official `v<version>` release |
+| **Preview** | `--channel beta` | `npm i -g @asher-1/acloudviewer@next` | Rolling `main-devel` prerelease |
+| **Any** | `--channel any` | `@<exact-version>` | Most recent / specific release |
+
+The harness selects a GitHub release by its `prerelease` flag (`stable` = first
+non-prerelease, `beta` = first prerelease = `main-devel`). The npm package
+mirrors the app version: `latest` only ever points at a stable release, while
+each complete `main-devel` asset wave publishes `X.Y.Z-dev.<timestamp>` under
+`next` without moving `latest`. So `--channel beta` and `@next` track the same
+rolling development build.
+
 ### Auto-Install & Diagnostics (`utils/installer.py`)
 
 When the binary is not found, the CLI provides interactive installation

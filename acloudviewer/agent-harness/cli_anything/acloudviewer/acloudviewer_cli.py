@@ -41,6 +41,7 @@ from cli_anything.acloudviewer.utils.installer import (
     check_installation, format_check_report,
     detect_mcp_clients, format_client_report, register_mcp_client,
     remove_mcp_client,
+    cuda_compatibility_gate, run_source_build_handoff, REQUIRED_CUDA,
     InstallError, HOMEPAGE,
 )
 from cli_anything.acloudviewer.utils.source_builder import (
@@ -195,15 +196,27 @@ def _prompt_install_if_missing(skin: ReplSkin) -> str | None:
 
     plat = detect_platform()
     gpu_choices = {"1": False, "2": True}
+    cpu_only = True
     if plat.has_nvidia_gpu:
         skin.info("")
         skin.info("  NVIDIA GPU detected. Choose variant:")
-        skin.info("    [1] CUDA  — GPU-accelerated (larger download)")
-        skin.info("    [2] CPU   — CPU-only (smaller download)")
-        gpu_input = click.prompt("  Select", type=click.Choice(["1", "2"]), default="1")
+        skin.info("    [1] CUDA  — GPU-accelerated (larger download; driver checked)")
+        skin.info("    [2] CPU   — CPU-only (smaller download, default)")
+        gpu_input = click.prompt("  Select", type=click.Choice(["1", "2"]), default="2")
         cpu_only = gpu_choices[gpu_input]
-    else:
-        cpu_only = True
+    if not cpu_only:
+        try:
+            decision = cuda_compatibility_gate()
+        except InstallError as e:
+            skin.error(f"  {e}")
+            return None
+        if decision == "source":
+            try:
+                run_source_build_handoff()
+            except InstallError as e:
+                skin.error(f"  {e}")
+            return None
+        cpu_only = decision == "cpu"
 
     skin.info("")
     try:
@@ -407,17 +420,50 @@ def install_group():
 @install_group.command("wheel")
 @click.option("--channel", type=click.Choice(["stable", "beta", "any"]),
               default="stable", help="Release channel")
-@click.option("--cpu-only", is_flag=True, help="Install CPU-only variant")
+@click.option("--cuda", is_flag=True,
+              help="Opt into the GPU wheel (default: CPU-only; the GPU wheel "
+                   "bundles the CUDA runtime and is much larger). The NVIDIA "
+                   "driver is checked before download, same as install app.")
+@click.option("--force-cuda", is_flag=True,
+              help="Bypass the CUDA driver check (nvidia-smi misreports on "
+                   "some setups; the wheel may fail at runtime)")
+@click.option("--cpu-only", is_flag=True,
+              help="CPU-only variant (the default; kept for compatibility)")
 @click.option("--pip-args", default="", help="Extra args passed to pip install")
 @handle_error
-def install_wheel_cmd(channel, cpu_only, pip_args):
+def install_wheel_cmd(channel, cuda, force_cuda, cpu_only, pip_args):
     """Download and install the cloudViewer Python wheel."""
     skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+    if cuda and cpu_only:
+        skin.error("--cuda and --cpu-only are mutually exclusive.")
+        return
+    cpu_only = not cuda
     plat = detect_platform()
 
     skin.info(f"Platform: {plat.os_id} {plat.os_version}, "
               f"Python {plat.python_version[0]}.{plat.python_version[1]}, "
               f"arch={plat.arch}")
+
+    # Same pre-download gate as the desktop flavor: the GPU wheel bundles
+    # the CUDA runtime, so an incompatible driver wastes the same bandwidth
+    # for the same unusable result.
+    if cuda:
+        if plat.os_id == "macos":
+            skin.error("macOS has no CUDA wheel; install the CPU wheel "
+                       "(the default — re-run without --cuda).")
+            return
+        try:
+            decision = cuda_compatibility_gate(force=force_cuda)
+        except InstallError as e:
+            skin.error(str(e))
+            return
+        if decision == "source":
+            try:
+                run_source_build_handoff()
+            except InstallError as e:
+                skin.error(str(e))
+            return
+        cpu_only = decision == "cpu"
 
     try:
         release = get_latest_release(channel=channel)
@@ -428,10 +474,17 @@ def install_wheel_cmd(channel, cpu_only, pip_args):
 
     asset = find_matching_wheel(release, plat, cpu_only=cpu_only)
     if not asset:
-        skin.error(
-            f"No matching wheel found for {plat.python_tag} / {plat.manylinux_tag}.\n"
-            f"  Visit {HOMEPAGE} to download manually."
-        )
+        if cuda and not cpu_only:
+            skin.error(
+                f"--cuda requested but no matching CUDA wheel for "
+                f"{plat.python_tag} / {plat.manylinux_tag}; re-run without "
+                f"--cuda for the CPU wheel."
+            )
+        else:
+            skin.error(
+                f"No matching wheel found for {plat.python_tag} / {plat.manylinux_tag}.\n"
+                f"  Visit {HOMEPAGE} to download manually."
+            )
         return
 
     skin.info(f"Package: {asset.name} ({asset.size_mb:.0f} MB)")
@@ -449,15 +502,27 @@ def install_wheel_cmd(channel, cpu_only, pip_args):
 @install_group.command("app")
 @click.option("--channel", type=click.Choice(["stable", "beta", "any"]),
               default="stable", help="Release channel")
-@click.option("--cpu-only", is_flag=True, help="CPU-only variant (smaller download)")
+@click.option("--cuda", is_flag=True,
+              help="Opt into the CUDA build (default: CPU). The NVIDIA driver "
+                   "is checked before download; incompatible hosts get a "
+                   "re-check / abort / CPU choice.")
+@click.option("--force-cuda", is_flag=True,
+              help="Bypass the CUDA driver check (nvidia-smi misreports on "
+                   "some setups; the app may fail at runtime)")
+@click.option("--cpu-only", is_flag=True,
+              help="CPU-only variant (the default; kept for compatibility)")
 @click.option("--install-dir", type=click.Path(), default=None,
               help="Install location (default: ~/.local/share/ACloudViewer)")
 @click.option("--from-file", "local_file", type=click.Path(exists=True), default=None,
               help="Install from a local .run/.dmg/.exe file instead of downloading")
 @handle_error
-def install_app_cmd(channel, cpu_only, install_dir, local_file):
+def install_app_cmd(channel, cuda, force_cuda, cpu_only, install_dir, local_file):
     """Download and install the ACloudViewer desktop application binary."""
     skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+
+    if cuda and cpu_only:
+        skin.error("--cuda and --cpu-only are mutually exclusive.")
+        return
 
     if local_file:
         from cli_anything.acloudviewer.utils.installer import install_app_from_file
@@ -478,6 +543,26 @@ def install_app_cmd(channel, cpu_only, install_dir, local_file):
     skin.info(f"Platform: {plat.os_id} {plat.os_version}, arch={plat.arch}, "
               f"NVIDIA GPU: {'yes' if plat.has_nvidia_gpu else 'no'}")
 
+    # CUDA is explicit opt-in; GPU presence alone never selects it.
+    cpu_only = not cuda
+    if cuda:
+        if plat.os_id == "macos":
+            skin.error("macOS has no CUDA build; install the CPU build "
+                       "(the default — re-run without --cuda).")
+            return
+        try:
+            decision = cuda_compatibility_gate(force=force_cuda)
+        except InstallError as e:
+            skin.error(str(e))
+            return
+        if decision == "source":
+            try:
+                run_source_build_handoff()
+            except InstallError as e:
+                skin.error(str(e))
+            return
+        cpu_only = decision == "cpu"
+
     try:
         release = get_latest_release(channel=channel)
     except InstallError as e:
@@ -491,6 +576,11 @@ def install_app_cmd(channel, cpu_only, install_dir, local_file):
             f"No matching installer found for this platform.\n"
             f"  Visit {HOMEPAGE} to download manually."
         )
+        return
+    if cuda and not cpu_only and "-cpu-" in asset.name:
+        # Explicit --cuda must not be silently swapped for a CPU asset.
+        skin.error("--cuda requested but this release has no CUDA installer "
+                   "for this platform; re-run without --cuda for the CPU build.")
         return
 
     skin.info(f"Installer: {asset.name} ({asset.size_mb:.0f} MB)")
@@ -513,11 +603,21 @@ def install_app_cmd(channel, cpu_only, install_dir, local_file):
 @install_group.command("auto")
 @click.option("--channel", type=click.Choice(["stable", "beta", "any"]),
               default="stable", help="Release channel")
-@click.option("--cpu-only", is_flag=True, help="CPU-only variant")
+@click.option("--cuda", is_flag=True,
+              help="Opt into CUDA builds (default: CPU; driver checked before download)")
+@click.option("--force-cuda", is_flag=True,
+              help="Bypass the CUDA driver check (nvidia-smi misreports on "
+                   "some setups; the app may fail at runtime)")
+@click.option("--cpu-only", is_flag=True,
+              help="CPU-only variant (the default; kept for compatibility)")
 @handle_error
-def install_auto_cmd(channel, cpu_only):
+def install_auto_cmd(channel, cuda, force_cuda, cpu_only):
     """Auto-detect missing components and install them."""
     skin = ReplSkin("acloudviewer", version=CLI_VERSION)
+    if cuda and cpu_only:
+        skin.error("--cuda and --cpu-only are mutually exclusive.")
+        return
+    cpu_only = not cuda
     plat = detect_platform()
     status = check_installation()
 
@@ -525,6 +625,28 @@ def install_auto_cmd(channel, cpu_only):
         skin.info("Everything is already installed!")
         output(status)
         return
+
+    if cuda and plat.os_id == "macos":
+        skin.error("macOS has no CUDA build; install the CPU build "
+                   "(the default — re-run without --cuda).")
+        return
+    # Gate whenever ANY CUDA download is about to happen — the wheel branch
+    # below consumes cpu_only too, so a present binary must not skip the gate
+    # for a missing GPU wheel.
+    if cuda and (not status["binary"]["found"]
+                 or not status["python_package"]["found"]):
+        try:
+            decision = cuda_compatibility_gate(force=force_cuda)
+        except InstallError as e:
+            skin.error(str(e))
+            return
+        if decision == "source":
+            try:
+                run_source_build_handoff()
+            except InstallError as e:
+                skin.error(str(e))
+            return
+        cpu_only = decision == "cpu"
 
     try:
         release = get_latest_release(channel=channel)

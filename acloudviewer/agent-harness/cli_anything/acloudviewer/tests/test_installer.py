@@ -26,6 +26,10 @@ from cli_anything.acloudviewer.utils.installer import (
     _detect_linux_distro,
     _detect_glibc_version,
     _detect_nvidia_gpu,
+    _nvidia_driver_report,
+    cuda_driver_supported,
+    cuda_compatibility_gate,
+    REQUIRED_CUDA,
     _find_binary_in_dir,
     _download_with_progress,
     IS_MACOS,
@@ -203,12 +207,342 @@ class TestDetectGlibcVersion:
 
 class TestDetectNvidiaGpu:
     def test_found(self):
-        with patch("shutil.which", return_value="/usr/bin/nvidia-smi"):
+        r = MagicMock(returncode=0)
+        with patch("cli_anything.acloudviewer.utils.installer.subprocess.run", return_value=r):
             assert _detect_nvidia_gpu() is True
 
     def test_not_found(self):
-        with patch("shutil.which", return_value=None):
+        with patch("cli_anything.acloudviewer.utils.installer.subprocess.run",
+                   side_effect=FileNotFoundError):
             assert _detect_nvidia_gpu() is False
+
+    def test_present_but_broken_driver(self):
+        # nvidia-smi on PATH but exiting non-zero is not a usable GPU.
+        r = MagicMock(returncode=9)
+        with patch("cli_anything.acloudviewer.utils.installer.subprocess.run", return_value=r):
+            assert _detect_nvidia_gpu() is False
+
+
+# ── CUDA driver compatibility gate ───────────────────────────────────────
+
+_SMI_BANNER = (
+    "Mon Nov 16 19:38:57 2026\n"
+    "+---------------------------------------------------------------------------+\n"
+    "| NVIDIA-SMI 580.95.05    Driver Version: 580.95.05    CUDA Version: 13.0   |\n"
+    "+---------------------------------------------------------------------------+\n"
+)
+
+
+class TestCudaDriverReport:
+    def _run(self, stdout, returncode=0):
+        return MagicMock(returncode=returncode, stdout=stdout)
+
+    def test_parses_banner(self):
+        with patch("cli_anything.acloudviewer.utils.installer.subprocess.run",
+                   return_value=self._run(_SMI_BANNER)):
+            assert _nvidia_driver_report() == ("580.95.05", "13.0")
+
+    def test_nonzero_exit_is_none(self):
+        with patch("cli_anything.acloudviewer.utils.installer.subprocess.run",
+                   return_value=self._run(_SMI_BANNER, returncode=1)):
+            assert _nvidia_driver_report() is None
+
+    def test_missing_binary_is_none(self):
+        with patch("cli_anything.acloudviewer.utils.installer.subprocess.run",
+                   side_effect=FileNotFoundError):
+            assert _nvidia_driver_report() is None
+
+    def test_supported_matrix(self):
+        # Compatibility is per CUDA MAJOR: any 12.x driver runs a 12.x build
+        # (minor-version compatibility); only a lower major is incompatible.
+        assert cuda_driver_supported(("580.95.05", "13.0")) is True
+        assert cuda_driver_supported(("560.35.03", "12.6")) is True
+        assert cuda_driver_supported(("550.54.14", "12.4")) is True   # same major
+        assert cuda_driver_supported(("525.60.13", "12.0")) is True   # same major
+        assert cuda_driver_supported(("470.256.02", "11.4")) is False  # major mismatch
+        assert cuda_driver_supported(None) is False
+
+
+class TestCudaCompatibilityGate:
+    _MOD = "cli_anything.acloudviewer.utils.installer"
+
+    def test_compatible_proceeds(self):
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("580.95.05", "13.0")):
+            assert cuda_compatibility_gate(interactive=False) == "cuda"
+
+    def test_same_major_minor_gap_proceeds(self):
+        # 12.0 driver vs 12.6 build: compatible, no prompt at all.
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("525.60.13", "12.0")):
+            assert cuda_compatibility_gate(interactive=False) == "cuda"
+
+    def test_non_interactive_incompatible_raises(self):
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("470.256.02", "11.4")):
+            with pytest.raises(InstallError, match="non-interactive"):
+                cuda_compatibility_gate(interactive=False)
+
+    def test_non_interactive_major_mismatch_mentions_source(self):
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("470.256.02", "11.4")):
+            with pytest.raises(InstallError, match="install source"):
+                cuda_compatibility_gate(interactive=False)
+
+    def test_force_bypasses(self):
+        with patch(f"{self._MOD}._nvidia_driver_report", return_value=None):
+            assert cuda_compatibility_gate(force=True, interactive=False) == "cuda"
+
+    def test_choice_cpu_falls_back(self):
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("470.256.02", "11.4")), \
+             patch("builtins.input", return_value="3"):
+            assert cuda_compatibility_gate(interactive=True) == "cpu"
+
+    def test_choice_default_is_cpu(self):
+        with patch(f"{self._MOD}._nvidia_driver_report", return_value=None), \
+             patch("builtins.input", return_value=""):
+            assert cuda_compatibility_gate(interactive=True) == "cpu"
+
+    def test_choice_abort_raises(self):
+        with patch(f"{self._MOD}._nvidia_driver_report", return_value=None), \
+             patch("builtins.input", return_value="2"):
+            with pytest.raises(InstallError, match="aborted"):
+                cuda_compatibility_gate(interactive=True)
+
+    def test_choice_recheck_then_compatible(self):
+        # [1] re-probes the driver: after the user upgrades, the gate passes.
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   side_effect=[("470.256.02", "11.4"), ("580.95.05", "13.0")]), \
+             patch("builtins.input", return_value="1") as mock_input:
+            assert cuda_compatibility_gate(interactive=True) == "cuda"
+            assert mock_input.call_count == 1
+
+    def test_choice_source_on_major_mismatch(self):
+        # Option 4 exists only when the driver's CUDA major is too old.
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("470.256.02", "11.4")), \
+             patch("builtins.input", return_value="4"):
+            assert cuda_compatibility_gate(interactive=True) == "source"
+
+    def test_choice_4_without_driver_falls_back_to_cpu(self):
+        # No driver: option 4 is not offered; "4" must not trigger a build.
+        with patch(f"{self._MOD}._nvidia_driver_report", return_value=None), \
+             patch("builtins.input", return_value="4"):
+            assert cuda_compatibility_gate(interactive=True) == "cpu"
+
+    def test_eof_aborts(self):
+        with patch(f"{self._MOD}._nvidia_driver_report", return_value=None), \
+             patch("builtins.input", side_effect=EOFError):
+            with pytest.raises(InstallError, match="aborted"):
+                cuda_compatibility_gate(interactive=True)
+
+
+class TestSourceBuildHandoff:
+    _MOD = "cli_anything.acloudviewer.utils.installer"
+
+    def test_invokes_cli_one_click_source(self):
+        from cli_anything.acloudviewer.utils.installer import run_source_build_handoff
+        r = MagicMock(returncode=0)
+        with patch(f"{self._MOD}.subprocess.run", return_value=r) as mock_run:
+            run_source_build_handoff()
+        argv = mock_run.call_args[0][0]
+        assert argv[1:] == ["-m", "cli_anything.acloudviewer", "install", "source"]
+
+    def test_nonzero_exit_raises_with_resume_hint(self):
+        from cli_anything.acloudviewer.utils.installer import run_source_build_handoff
+        r = MagicMock(returncode=1)
+        with patch(f"{self._MOD}.subprocess.run", return_value=r):
+            with pytest.raises(InstallError, match="idempotent"):
+                run_source_build_handoff()
+
+
+class TestCudaDriverReportEdges:
+    """Parser/probe boundaries: timeout, malformed banner, missing fields."""
+    _MOD = "cli_anything.acloudviewer.utils.installer"
+
+    def test_timeout_is_none(self):
+        # A wedged nvidia-smi must not wedge the installer: timeout -> no
+        # usable driver report (same as a missing binary).
+        with patch(f"{self._MOD}.subprocess.run",
+                   side_effect=subprocess.TimeoutExpired(cmd="nvidia-smi", timeout=8)):
+            assert _nvidia_driver_report() is None
+
+    def test_detect_gpu_timeout_is_false(self):
+        with patch(f"{self._MOD}.subprocess.run",
+                   side_effect=subprocess.TimeoutExpired(cmd="nvidia-smi", timeout=8)):
+            assert _detect_nvidia_gpu() is False
+
+    def test_exit_zero_without_cuda_banner_is_none(self):
+        # exit 0 but no "CUDA Version:" line (e.g. a stub/wrapper binary):
+        # nothing parseable -> no report, never a guessed compatibility.
+        r = MagicMock(returncode=0, stdout="some unrelated output\n")
+        with patch(f"{self._MOD}.subprocess.run", return_value=r):
+            assert _nvidia_driver_report() is None
+
+    def test_missing_driver_version_is_unknown(self):
+        r = MagicMock(returncode=0, stdout="CUDA Version: 12.4\n")
+        with patch(f"{self._MOD}.subprocess.run", return_value=r):
+            assert _nvidia_driver_report() == ("unknown", "12.4")
+
+    def test_gate_keyboard_interrupt_aborts(self):
+        with patch("cli_anything.acloudviewer.utils.installer._nvidia_driver_report",
+                   return_value=None), \
+             patch("builtins.input", side_effect=KeyboardInterrupt):
+            with pytest.raises(InstallError, match="aborted"):
+                cuda_compatibility_gate(interactive=True)
+
+
+# ── CLI wiring regressions (audit 2026-11-16) ────────────────────────────
+# The gate's pure logic was covered, but the --cuda wiring of install
+# wheel/auto had NO tests — and both silently skipped the gate (H1/M1).
+# These CliRunner probes are fully mocked: no network, no real install.
+
+class TestCudaCliWiring:
+    _CLI = "cli_anything.acloudviewer.acloudviewer_cli"
+    _MOD = "cli_anything.acloudviewer.utils.installer"
+    _OLD_DRIVER = ("470.256.02", "11.4")  # CUDA major mismatch
+
+    def _runner(self):
+        from click.testing import CliRunner
+        return CliRunner()
+
+    def _cli(self):
+        from cli_anything.acloudviewer.acloudviewer_cli import cli
+        return cli
+
+    def _fake_wheel(self):
+        a = MagicMock()
+        a.name = "cloudviewer-3.9.5-cp311-cp311-manylinux_2_31_x86_64.whl"
+        a.size_mb = 557.0
+        return a
+
+    def _patch_release_and_wheel(self, asset):
+        release = MagicMock()
+        release.label = "probe"
+        return (
+            patch(f"{self._CLI}.get_latest_release", return_value=release),
+            patch(f"{self._CLI}.find_matching_wheel", return_value=asset),
+            patch(f"{self._CLI}.install_wheel",
+                  return_value={"status": "installed"}),
+        )
+
+    # -- install wheel ----------------------------------------------------
+
+    def test_wheel_cuda_incompatible_refuses_before_download(self):
+        # H1 regression: real gate + fake 11.x driver, non-TTY CliRunner.
+        p1, p2, p3 = self._patch_release_and_wheel(self._fake_wheel())
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=self._OLD_DRIVER), p1, p2, p3 as iw:
+            r = self._runner().invoke(self._cli(), ["install", "wheel", "--cuda"])
+        assert "non-interactive" in r.output
+        iw.assert_not_called()
+
+    def test_wheel_cuda_compatible_proceeds(self):
+        p1, p2, p3 = self._patch_release_and_wheel(self._fake_wheel())
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=("580.95.05", "13.0")), p1, p2 as fm, p3 as iw:
+            r = self._runner().invoke(self._cli(), ["install", "wheel", "--cuda"])
+        assert r.exit_code == 0
+        assert fm.call_args.kwargs.get("cpu_only") is False
+        iw.assert_called_once()
+
+    def test_wheel_gate_cpu_decision_selects_cpu_wheel(self):
+        p1, p2, p3 = self._patch_release_and_wheel(self._fake_wheel())
+        with patch(f"{self._CLI}.cuda_compatibility_gate", return_value="cpu"), \
+             p1, p2 as fm, p3 as iw:
+            r = self._runner().invoke(self._cli(), ["install", "wheel", "--cuda"])
+        assert r.exit_code == 0
+        assert fm.call_args.kwargs.get("cpu_only") is True
+        iw.assert_called_once()
+
+    def test_wheel_gate_source_decision_hands_off(self):
+        p1, p2, p3 = self._patch_release_and_wheel(self._fake_wheel())
+        with patch(f"{self._CLI}.cuda_compatibility_gate", return_value="source"), \
+             patch(f"{self._CLI}.run_source_build_handoff") as ho, p1, p2, p3 as iw:
+            r = self._runner().invoke(self._cli(), ["install", "wheel", "--cuda"])
+        assert r.exit_code == 0
+        ho.assert_called_once()
+        iw.assert_not_called()
+
+    def test_wheel_force_cuda_bypasses_gate(self):
+        p1, p2, p3 = self._patch_release_and_wheel(self._fake_wheel())
+        with patch(f"{self._MOD}._nvidia_driver_report", return_value=None), \
+             p1, p2, p3 as iw:
+            r = self._runner().invoke(
+                self._cli(), ["install", "wheel", "--cuda", "--force-cuda"])
+        assert r.exit_code == 0
+        iw.assert_called_once()
+
+    def test_wheel_cuda_macos_refused(self):
+        mac = _make_platform(os_name="macos", os_id="macos", os_version="14.0",
+                             arch="arm64")
+        with patch(f"{self._CLI}.detect_platform", return_value=mac), \
+             patch(f"{self._CLI}.install_wheel") as iw:
+            r = self._runner().invoke(self._cli(), ["install", "wheel", "--cuda"])
+        assert "macOS has no CUDA wheel" in r.output
+        iw.assert_not_called()
+
+    def test_wheel_cuda_cpu_only_mutually_exclusive(self):
+        with patch(f"{self._CLI}.install_wheel") as iw:
+            r = self._runner().invoke(
+                self._cli(), ["install", "wheel", "--cuda", "--cpu-only"])
+        assert "mutually exclusive" in r.output
+        iw.assert_not_called()
+
+    def test_wheel_cuda_no_cuda_asset_actionable_error(self):
+        p1, p2, p3 = self._patch_release_and_wheel(None)
+        with patch(f"{self._CLI}.cuda_compatibility_gate", return_value="cuda"), \
+             p1, p2, p3 as iw:
+            r = self._runner().invoke(self._cli(), ["install", "wheel", "--cuda"])
+        assert "no matching CUDA wheel" in r.output
+        iw.assert_not_called()
+
+    # -- install auto -----------------------------------------------------
+
+    def test_auto_cuda_binary_present_wheel_missing_still_gated(self):
+        # M1 regression: a present binary must not skip the gate for the
+        # missing GPU wheel (the wheel branch consumes cpu_only too).
+        status = {"ready": False, "binary": {"found": True},
+                  "python_package": {"found": False}}
+        p1, p2, p3 = self._patch_release_and_wheel(self._fake_wheel())
+        with patch(f"{self._CLI}.check_installation", return_value=status), \
+             patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=self._OLD_DRIVER), p1, p2, p3 as iw:
+            r = self._runner().invoke(self._cli(), ["install", "auto", "--cuda"])
+        assert "non-interactive" in r.output
+        iw.assert_not_called()
+
+    def test_auto_cuda_macos_refused(self):
+        mac = _make_platform(os_name="macos", os_id="macos", os_version="14.0",
+                             arch="arm64")
+        status = {"ready": False, "binary": {"found": False},
+                  "python_package": {"found": False}}
+        with patch(f"{self._CLI}.detect_platform", return_value=mac), \
+             patch(f"{self._CLI}.check_installation", return_value=status), \
+             patch(f"{self._CLI}.install_app") as ia:
+            r = self._runner().invoke(self._cli(), ["install", "auto", "--cuda"])
+        assert "macOS has no CUDA build" in r.output
+        ia.assert_not_called()
+
+    # -- install app (control: the already-wired path must stay wired) ----
+
+    def test_app_cuda_incompatible_refuses_zero_install(self):
+        with patch(f"{self._MOD}._nvidia_driver_report",
+                   return_value=self._OLD_DRIVER), \
+             patch(f"{self._CLI}.install_app") as ia:
+            r = self._runner().invoke(self._cli(), ["install", "app", "--cuda"])
+        assert "non-interactive" in r.output
+        ia.assert_not_called()
+
+    def test_app_gate_source_decision_hands_off(self):
+        with patch(f"{self._CLI}.cuda_compatibility_gate", return_value="source"), \
+             patch(f"{self._CLI}.run_source_build_handoff") as ho, \
+             patch(f"{self._CLI}.install_app") as ia:
+            r = self._runner().invoke(self._cli(), ["install", "app", "--cuda"])
+        assert r.exit_code == 0
+        ho.assert_called_once()
+        ia.assert_not_called()
 
 
 # ── Wheel matching ───────────────────────────────────────────────────────
@@ -320,6 +654,43 @@ class TestFindMatchingApp:
         a = find_matching_app(release, plat, cpu_only=False)
         assert a is not None
         assert "-cpu-" in a.name
+
+    @patch("cli_anything.acloudviewer.utils.installer.IS_LINUX", True)
+    @patch("cli_anything.acloudviewer.utils.installer.IS_MACOS", False)
+    @patch("cli_anything.acloudviewer.utils.installer.IS_WINDOWS", False)
+    def test_linux_missing_exact_tag_falls_back_to_older(self):
+        # 22.04 host, exact tag absent: pick the newest OLDER build (20.04),
+        # never the newer 24.04 one (its glibc floor exceeds the host).
+        assets = [
+            _make_asset("ACloudViewer-3.9.4-ubuntu20.04-cpu-amd64.run"),
+            _make_asset("ACloudViewer-3.9.4-ubuntu24.04-cpu-amd64.run"),
+        ]
+        plat = _make_platform(os_version="22.04", glibc_version="2.35")
+        a = find_matching_app(_make_release(assets=assets), plat, cpu_only=True)
+        assert a is not None
+        assert "ubuntu20.04" in a.name
+
+    @patch("cli_anything.acloudviewer.utils.installer.IS_LINUX", True)
+    @patch("cli_anything.acloudviewer.utils.installer.IS_MACOS", False)
+    @patch("cli_anything.acloudviewer.utils.installer.IS_WINDOWS", False)
+    def test_linux_never_newer_than_host(self):
+        # 20.04 host (glibc 2.31) with only 22.04 builds: no compatible
+        # asset — never silently install a glibc the host cannot satisfy.
+        assets = [_make_asset("ACloudViewer-3.9.4-ubuntu22.04-cpu-amd64.run")]
+        plat = _make_platform()
+        assert find_matching_app(_make_release(assets=assets), plat,
+                                 cpu_only=True) is None
+
+    @patch("cli_anything.acloudviewer.utils.installer.IS_LINUX", True)
+    @patch("cli_anything.acloudviewer.utils.installer.IS_MACOS", False)
+    @patch("cli_anything.acloudviewer.utils.installer.IS_WINDOWS", False)
+    def test_linux_non_lts_ubuntu(self):
+        # Ubuntu 24.10 (glibc 2.40) has no exact-tagged build; the newest
+        # compatible published tag here is ubuntu22.04.
+        plat = _make_platform(os_version="24.10", glibc_version="2.40")
+        a = find_matching_app(self._release(), plat, cpu_only=True)
+        assert a is not None
+        assert "ubuntu22.04" in a.name
 
     @patch("cli_anything.acloudviewer.utils.installer.IS_LINUX", False)
     @patch("cli_anything.acloudviewer.utils.installer.IS_MACOS", True)

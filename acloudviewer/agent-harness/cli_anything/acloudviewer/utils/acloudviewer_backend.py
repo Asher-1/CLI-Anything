@@ -383,7 +383,8 @@ class ACloudViewerBackend:
         """Prompt user to install ACloudViewer when running interactively."""
         from .installer import (
             detect_platform, get_latest_release, find_matching_app,
-            install_app, InstallError, HOMEPAGE,
+            install_app, cuda_compatibility_gate, run_source_build_handoff,
+            InstallError, HOMEPAGE,
         )
 
         print("\n  ACloudViewer binary not found.")
@@ -404,12 +405,25 @@ class ACloudViewerBackend:
         plat = detect_platform()
         cpu_only = True
         if plat.has_nvidia_gpu:
-            print("  NVIDIA GPU detected:  [1] CUDA (larger)  [2] CPU-only (smaller)")
+            print("  NVIDIA GPU detected:  [1] CUDA (larger, driver checked)  [2] CPU-only (default)")
             try:
-                gv = input("  Select [1]: ").strip()
+                gv = input("  Select [2]: ").strip()
             except (EOFError, KeyboardInterrupt):
                 return None
-            cpu_only = (gv == "2")
+            cpu_only = (gv != "1")
+        if not cpu_only:
+            try:
+                decision = cuda_compatibility_gate()
+            except InstallError as e:
+                print(f"  {e}")
+                return None
+            if decision == "source":
+                try:
+                    run_source_build_handoff()
+                except InstallError as e:
+                    print(f"  {e}")
+                return None
+            cpu_only = decision == "cpu"
 
         try:
             print("  Querying GitHub releases ...")

@@ -133,7 +133,52 @@ def _detect_glibc_version() -> str:
 
 
 def _detect_nvidia_gpu() -> bool:
-    return shutil.which("nvidia-smi") is not None
+    # A present-but-broken driver (nvidia-smi exists, exits non-zero) is not
+    # a usable GPU — run it instead of only checking PATH.
+    try:
+        r = subprocess.run(["nvidia-smi", "-L"], capture_output=True, timeout=8)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+# CUDA runtime the published CUDA installers are built against: Linux
+# docker/docker_build.sh (nvidia/cuda:12.6.3) and Windows windows.yml
+# (CUDA_VERSION 12.6.0). Keep in sync when CI bumps the CUDA toolkit.
+# Mirrors npm/bin/acloudviewer.js REQUIRED_CUDA.
+REQUIRED_CUDA = (12, 6)
+
+
+def _nvidia_driver_report() -> tuple[str, str] | None:
+    """(driver_version, max_supported_cuda) from the nvidia-smi banner.
+
+    The banner's "CUDA Version: X.Y" is the highest CUDA runtime the driver
+    supports — the exact quantity the compatibility decision needs, so no
+    driver->CUDA mapping table has to be maintained here.
+    """
+    try:
+        r = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=8)
+        out = r.stdout or ""
+        if r.returncode != 0:
+            return None
+    except Exception:
+        return None
+    cuda = re.search(r"CUDA Version:\s*(\d+\.\d+)", out)
+    if not cuda:
+        return None
+    driver = re.search(r"Driver Version:\s*([\d.]+)", out)
+    return (driver.group(1) if driver else "unknown", cuda.group(1))
+
+
+def cuda_driver_supported(report: tuple[str, str] | None) -> bool:
+    # CUDA guarantees compatibility WITHIN a major version (minor-version
+    # compatibility: a 12.x build runs on any driver supporting CUDA 12.y);
+    # only a lower MAJOR (e.g. an 11.x driver vs a 12.x build) is a real
+    # incompatibility. A higher driver major runs older runtimes fine.
+    if not report:
+        return False
+    major = int(report[1].split(".")[0])
+    return major >= REQUIRED_CUDA[0]
 
 
 # ── GitHub release discovery ─────────────────────────────────────────────
@@ -318,26 +363,29 @@ def find_matching_app(
 ) -> ReleaseAsset | None:
     """Find the desktop app installer for this platform."""
     if IS_LINUX:
-        ubuntu_tag = plat.ubuntu_tag
-        if not ubuntu_tag:
-            ubuntu_tag = _closest_ubuntu_tag(plat.glibc_version)
+        # Closest-compatible: never a build whose glibc floor exceeds the
+        # host; a missing exact tag falls back to the newest older build
+        # (glibc is backward compatible). Flavor fallback applies per tag.
         cuda_tag = "cpu" if cpu_only else "cuda"
-        candidates = [
-            a for a in release.assets
-            if a.name.startswith("ACloudViewer-")
-            and a.name.endswith(".run")
-            and ubuntu_tag in a.name
-            and f"-{cuda_tag}-" in a.name
-        ]
-        if not candidates and not cpu_only:
+        for ubuntu_tag in _linux_tag_candidates(plat):
             candidates = [
                 a for a in release.assets
                 if a.name.startswith("ACloudViewer-")
                 and a.name.endswith(".run")
                 and ubuntu_tag in a.name
-                and "-cpu-" in a.name
+                and f"-{cuda_tag}-" in a.name
             ]
-        return candidates[0] if candidates else None
+            if not candidates and not cpu_only:
+                candidates = [
+                    a for a in release.assets
+                    if a.name.startswith("ACloudViewer-")
+                    and a.name.endswith(".run")
+                    and ubuntu_tag in a.name
+                    and "-cpu-" in a.name
+                ]
+            if candidates:
+                return candidates[0]
+        return None
 
     elif IS_MACOS:
         arch_tag = plat.arch_tag
@@ -369,6 +417,33 @@ def find_matching_app(
     return None
 
 
+# Published Linux builds are tagged by their BUILD Ubuntu; each tag implies a
+# minimum glibc (the build host's). glibc is backward compatible: a host can
+# run any build whose floor <= its own glibc, never a newer one. Selection is
+# "closest compatible": exact distro tag first, then older tags newest-first.
+# Mirrors npm/bin/acloudviewer.js UBUNTU_GLIBC_FLOORS / linuxTagCandidates.
+_UBUNTU_GLIBC_FLOORS = (
+    ("ubuntu24.04", 2.39),
+    ("ubuntu22.04", 2.35),
+    ("ubuntu20.04", 2.31),
+    ("ubuntu18.04", 2.27),
+)
+
+
+def _linux_tag_candidates(plat: PlatformInfo) -> list[str]:
+    tags = []
+    if plat.ubuntu_tag:
+        tags.append(plat.ubuntu_tag)
+    try:
+        host = float(plat.glibc_version)
+    except (ValueError, TypeError):
+        host = 2.31  # unknown glibc: conservative default
+    for tag, floor in _UBUNTU_GLIBC_FLOORS:
+        if floor <= host and tag not in tags:
+            tags.append(tag)
+    return tags
+
+
 def _closest_ubuntu_tag(glibc_version: str) -> str:
     glibc_to_ubuntu = {
         "2.27": "ubuntu18.04",
@@ -395,6 +470,97 @@ def _closest_ubuntu_tag(glibc_version: str) -> str:
 
 class InstallError(Exception):
     pass
+
+
+def cuda_compatibility_gate(force: bool = False, interactive: bool | None = None) -> str:
+    """Pre-download gate for the explicitly requested CUDA flavor.
+
+    Returns "cuda" (proceed), "cpu" (user chose the CPU build) or "source"
+    (user chose a source build through the CLI one-click command — offered
+    only on a CUDA MAJOR mismatch, where compiling against the host's own
+    older toolkit is the one path that can produce a compatible binary).
+    Raises InstallError on abort or in a non-interactive shell. Mirrors
+    npm/bin/acloudviewer.js cudaGate. `interactive` overrides TTY detection
+    (used by tests).
+    """
+    need_maj = REQUIRED_CUDA[0]
+    if interactive is None:
+        interactive = sys.stdin.isatty()
+    while True:
+        report = _nvidia_driver_report()
+        if cuda_driver_supported(report):
+            print(f"  CUDA driver check: OK (driver {report[0]}, "
+                  f"supports CUDA <= {report[1]}; build needs CUDA {need_maj}.x).")
+            return "cuda"
+        # Major mismatch = driver exists but its CUDA major is older than
+        # the build's; no driver at all is a different failure (a CUDA
+        # source build would still need a driver, so option 4 is not
+        # offered there).
+        major_mismatch = report is not None
+        reason = (
+            f"driver {report[0]} supports up to CUDA {report[1]}, but this "
+            f"build requires CUDA {need_maj}.x (CUDA major versions are not "
+            "cross-compatible)"
+            if report else
+            "no working NVIDIA driver detected (nvidia-smi unavailable or failed)"
+        )
+        print(f"  CUDA compatibility check failed: {reason}.")
+        if force:
+            print("  --force-cuda given; bypassing the driver gate "
+                  "(the app may fail at runtime).")
+            return "cuda"
+        if not interactive:
+            source_hint = (
+                "build from source against your own CUDA toolkit "
+                "(cli-anything-acloudviewer install source); "
+                if major_mismatch else ""
+            )
+            raise InstallError(
+                "refusing to download the CUDA installer in a non-interactive "
+                "shell. Options: install the CPU build (the default — re-run "
+                "without --cuda); upgrade the NVIDIA driver and re-run with "
+                f"--cuda; {source_hint}or pass --force-cuda to bypass this check."
+            )
+        print("    [1] I upgraded/switched the driver — re-check now")
+        print("    [2] Abort (install nothing)")
+        print("    [3] Install the CPU build instead")
+        if major_mismatch:
+            print("    [4] Build from source via the CLI one-click command "
+                  "(uses your own CUDA toolkit; hours-long)")
+        choices = "1/2/3/4" if major_mismatch else "1/2/3"
+        try:
+            choice = input(f"  Select [{choices}] (default 3): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            raise InstallError("aborted.")
+        if choice == "1":
+            continue
+        if choice == "2":
+            raise InstallError("aborted: CUDA driver incompatible and user chose to stop.")
+        if choice == "4" and major_mismatch:
+            return "source"
+        print("  Falling back to the CPU build as chosen.")
+        return "cpu"
+
+
+def run_source_build_handoff() -> None:
+    """Option-4 handoff: run the CLI's one-click source build in-process.
+
+    Uses `sys.executable -m cli_anything.acloudviewer install source` so the
+    exact published command (clone + env + configure + build + install, with
+    its own plan review/confirmation) is reused — no PATH dependency and no
+    duplicated build logic. Mirrors npm/bin/acloudviewer.js sourceBuildViaCli
+    (which must pip-install the harness first because it lives outside it).
+    """
+    print("  Handing over to: cli-anything-acloudviewer install source")
+    r = subprocess.run(
+        [sys.executable, "-m", "cli_anything.acloudviewer", "install", "source"],
+    )
+    if r.returncode != 0:
+        raise InstallError(
+            f"source build exited with code {r.returncode}; re-run "
+            "'cli-anything-acloudviewer install source' to resume "
+            "(the one-click script is idempotent)."
+        )
 
 
 def _progress_bar(current: int, total: int, width: int = 30) -> str:
@@ -958,12 +1124,15 @@ def _binary_install_hint(plat: PlatformInfo) -> str:
     auto_cmd = "cli-anything-acloudviewer install app"
     if IS_LINUX:
         tag = plat.ubuntu_tag or _closest_ubuntu_tag(plat.glibc_version)
-        cuda = "cuda" if plat.has_nvidia_gpu else "cpu"
+        # CPU is the default flavor; CUDA is explicit opt-in (--cuda) and
+        # gated on driver compatibility before download.
         return (
             f"Auto-install: {auto_cmd}\n"
-            f"  Manual: download ACloudViewer-*-{tag}-{cuda}-amd64.run\n"
+            f"  Manual: download ACloudViewer-*-{tag}-cpu-amd64.run\n"
             f"    chmod +x *.run && ./*.run --root ~/ACloudViewer "
             f"--accept-licenses --accept-messages --confirm-command install\n"
+            f"  GPU build: add --cuda (needs an NVIDIA driver supporting CUDA "
+            f"{'.'.join(str(x) for x in REQUIRED_CUDA)}+)\n"
             f"  Or set: export ACV_BINARY=/path/to/ACloudViewer"
         )
     elif IS_MACOS:
