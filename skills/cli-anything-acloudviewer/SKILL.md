@@ -30,8 +30,8 @@ If ACloudViewer is not installed, the CLI will **interactively prompt** you to d
 cli-anything-acloudviewer check
 
 # Auto-install desktop app (detects platform, downloads from GitHub Releases)
-cli-anything-acloudviewer install app                    # CUDA version (if GPU detected)
-cli-anything-acloudviewer install app --cpu-only          # CPU-only (smaller download)
+cli-anything-acloudviewer install app                    # CPU build (default)
+cli-anything-acloudviewer install app --cuda             # CUDA build (driver checked before download)
 cli-anything-acloudviewer install app --channel beta      # Latest beta build
 
 # Install from a local .run/.dmg/.exe file (no download needed)
@@ -42,7 +42,8 @@ cli-anything-acloudviewer install auto
 
 # Optionally install cloudViewer Python package (for Python bindings)
 cli-anything-acloudviewer install wheel
-cli-anything-acloudviewer install wheel --cpu-only
+cli-anything-acloudviewer install wheel            # CPU-only wheel (default)
+cli-anything-acloudviewer install wheel --cuda     # GPU wheel (bundles CUDA runtime; driver checked before download)
 
 # One-line script alternative (Linux / macOS): harness install + check +
 # MCP client registration; set ACV_SKIP_CLIENTS=1 to skip registration

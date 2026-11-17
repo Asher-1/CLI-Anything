@@ -403,6 +403,15 @@ class TestCudaCliWiring:
     _MOD = "cli_anything.acloudviewer.utils.installer"
     _OLD_DRIVER = ("470.256.02", "11.4")  # CUDA major mismatch
 
+    @pytest.fixture(autouse=True)
+    def _linux_platform(self):
+        # Pin the platform: without this, the real host leaks in and the
+        # macOS --cuda refusal fires first on macOS runners (CI regression).
+        # The macOS-specific tests re-patch detect_platform inside the test.
+        with patch(f"{self._CLI}.detect_platform",
+                   return_value=_make_platform()):
+            yield
+
     def _runner(self):
         from click.testing import CliRunner
         return CliRunner()
